@@ -4,13 +4,22 @@
  * Licensed as Affero GPL unless an explicitly proprietary license has been obtained.
  */
 
-namespace magic.endpoint.services.init
+using System.IO;
+using Microsoft.Extensions.Configuration;
+
+namespace magic.endpoint.services.utilities
 {
+    /*
+     * Utility class for Magic endpoint.
+     */
     static class Utilities
     {
-        public static bool IsLegalHttpName(string folder)
+        /*
+         * Returns true if request URL contains only legal characters.
+         */
+        public static bool IsLegalHttpName(string requestUrl)
         {
-            foreach (var idx in folder)
+            foreach (var idx in requestUrl)
             {
                 switch (idx)
                 {
@@ -27,6 +36,15 @@ namespace magic.endpoint.services.init
                 }
             }
             return true;
+        }
+
+        public static string GetRootFolder(IConfiguration configuration)
+        {
+            // Figuring out what our root folder is.
+            var rootFolder = configuration["magic:endpoint:root-folder"] ?? "~/files/";
+            return rootFolder
+                .Replace("~", Directory.GetCurrentDirectory())
+                .Replace("\\", "/");
         }
     }
 }

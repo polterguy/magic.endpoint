@@ -6,30 +6,43 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using magic.node;
-using magic.signals.contracts;
-using magic.endpoint.services.init;
 using magic.node.extensions;
+using magic.signals.contracts;
+using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
 
-namespace magic.endpoint.services
+namespace magic.endpoint.services.slots
 {
-    [Slot(Name = "system.endpoint")]
-    public class Endpoint : ISlot
+    /// <summary>
+    /// [system.endpoint] slot for retrieving the arguments and meta
+    /// information your Magic endpoint can handle.
+    /// </summary>
+    [Slot(Name = "magic.endpoint.get-arguments")]
+    public class GetArguments : ISlot
     {
-        readonly ISignaler _signaler;
+        readonly IConfiguration _configuration;
 
-        public Endpoint(ISignaler signaler)
+        /// <summary>
+        /// Creates an instance of your type.
+        /// </summary>
+        /// <param name="configuration">Configuration of your application.</param>
+        public GetArguments(IConfiguration configuration)
         {
-            _signaler = signaler ?? throw new ArgumentNullException();
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
-        public void Signal(Node input)
+        /// <summary>
+        /// Implementation of your slot.
+        /// </summary>
+        /// <param name="signaler">Signaler used to raise signal.</param>
+        /// <param name="input">Arguments to your slot.</param>
+        public void Signal(ISignaler signaler, Node input)
         {
             // Retrieving arguments to invocation.
-            var url = input.Children.First(x => x.Name == "url").GetEx<string>(_signaler);
-            var verb = input.Children.First(x => x.Name == "verb").GetEx<string>(_signaler);
+            var url = input.Children.First(x => x.Name == "url").GetEx<string>();
+            var verb = input.Children.First(x => x.Name == "verb").GetEx<string>();
             if (!Utilities.IsLegalHttpName(url))
                 throw new ApplicationException($"Oops, '{url}' is not a valid HTTP URL for Magic");
 
@@ -46,10 +59,12 @@ namespace magic.endpoint.services
 
             // Cleaning out results.
             input.Clear();
-            input.Value = null;
+
+            // Figuring out what our root folder is.
+            var rootFolder = Utilities.GetRootFolder(_configuration);
 
             // Opening file, and trying to find its [.arguments] node.
-            var filename = RootResolver.Root + url.TrimStart('/') + "." + verb + ".hl";
+            var filename = rootFolder + url.TrimStart('/') + "." + verb + ".hl";
             if (!File.Exists(filename))
                 throw new ApplicationException($"No endpoint found at '{url}' for verb '{verb}'");
 

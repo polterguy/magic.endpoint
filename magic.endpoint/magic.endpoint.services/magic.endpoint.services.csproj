@@ -2,6 +2,25 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>magic.endpoint.services</PackageId>
+    <Authors>Thomas Hansen</Authors>
+    <Company>Thomas Hansen</Company>
+    <Copyright>Thomas Hansen, thomas@gaiasoul.com</Copyright>
+    <Description>Service implementations for magic.endpoint.</Description>
+    <PackageProjectUrl>https://github.com/polterguy/magic.endpoint</PackageProjectUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/polterguy/magic.endpoint/master/LICENSE</PackageLicenseUrl>
+    <PackageIconUrl>https://polterguy.github.io/favicon.ico</PackageIconUrl>
+    <PackOnBuild>true</PackOnBuild>
+    <PackageVersion>1.1.4</PackageVersion>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/polterguy/magic.endpoint.git</RepositoryUrl>
+    <PackageTags>http, rest, json, api, Hyperlambda</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DocumentationFile>bin/Release/netstandard2.0/magic.http.contracts.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,13 +30,13 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="2.2.0" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="5.5.0" />
+    <PackageReference Include="magic.lambda" Version="1.1.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\magic.endpoint.contracts\magic.endpoint.contracts.csproj" />
-    <ProjectReference Include="..\..\..\lib\magic.common.contracts\magic.common.contracts.csproj" />
-    <ProjectReference Include="..\..\..\lib\magic.signals\magic.signals.contracts\magic.signals.contracts.csproj" />
-    <ProjectReference Include="..\..\..\lib\magic.node\magic.node.csproj" />
-    <ProjectReference Include="..\..\..\lib\magic.node.extensions\magic.node.extensions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="slots\" />
   </ItemGroup>
 </Project>

@@ -7,24 +7,38 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using Swashbuckle.AspNetCore.Swagger;
 using magic.node;
 using magic.signals.contracts;
-using magic.endpoint.services.init;
+using magic.endpoint.services.utilities;
 
 namespace magic.endpoint.services
 {
+    /// <summary>
+    /// [.swagger-dox.generic] slot for creating Swagger documentation from
+    /// custom Hyperlambda endpoints.
+    /// </summary>
     [Slot(Name = ".swagger-dox.generic")]
     public class SwaggerDox : ISlot
     {
-        readonly ISignaler _signaler;
+        readonly IConfiguration _configuration;
 
-        public SwaggerDox(ISignaler signaler)
+        /// <summary>
+        /// Creates an instance of your type.
+        /// </summary>
+        /// <param name="configuration">Configuration of your application.</param>
+        public SwaggerDox(IConfiguration configuration)
         {
-            _signaler = signaler ?? throw new ArgumentNullException(nameof(signaler));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
-        public void Signal(Node input)
+        /// <summary>
+        /// Implementation of slot.
+        /// </summary>
+        /// <param name="signaler">Signaler used to raise signal.</param>
+        /// <param name="input">Arguments to slot.</param>
+        public void Signal(ISignaler signaler, Node input)
         {
             var doc = input.Value as SwaggerDocument;
             var toRemove = new List<string>(doc.Paths.Keys.Where(x => x == "/api/hl/{url}"));
@@ -32,26 +46,40 @@ namespace magic.endpoint.services
             {
                 doc.Paths.Remove(idx);
             }
-            AddCustomEndpoints(doc, RootResolver.Root);
+            var rootFolder = Utilities.GetRootFolder(_configuration);
+            AddCustomEndpoints(doc, rootFolder,rootFolder);
         }
 
         #region [ -- Private helper methods -- ]
 
-        void AddCustomEndpoints(SwaggerDocument doc, string currentFolder)
+        /*
+         * Recusrively adds all dynamic Hyperlambda endpoints by traversing
+         * the root folder on disc, to look for Hyperlambda endpoints.
+         */
+        void AddCustomEndpoints(
+            SwaggerDocument doc,
+            string rootFolder,
+            string currentFolder)
         {
             foreach (var idx in Directory.GetDirectories(currentFolder))
             {
-                var folder = "/" + idx.Substring(RootResolver.Root.Length);
+                var folder = "/" + idx.Substring(rootFolder.Length);
                 if (Utilities.IsLegalHttpName(folder))
-                    AddAllVerbs(doc, idx);
+                    AddAllVerbs(doc, rootFolder, idx);
             }
         }
 
-        void AddAllVerbs(SwaggerDocument doc, string folder)
+        /*
+         * Adds all HTTP verbs in the specified folder.
+         */
+        void AddAllVerbs(
+            SwaggerDocument doc,
+            string rootFolder,
+            string folder)
         {
             foreach (var idxFile in Directory.GetFiles(folder, "*.hl"))
             {
-                var filename = "/" + idxFile.Substring(RootResolver.Root.Length).Replace("\\", "/");
+                var filename = "/" + idxFile.Substring(rootFolder.Length).Replace("\\", "/");
                 if (Utilities.IsLegalHttpName(filename.Substring(0, filename.IndexOf(".", StringComparison.InvariantCulture))))
                 {
                     var fileInfo = new FileInfo(filename);
@@ -64,7 +92,7 @@ namespace magic.endpoint.services
                             case "put":
                             case "post":
                             case "delete":
-                                AddVerb(doc, splits[1], filename, idxFile);
+                                AddVerb(doc, splits[1], filename);
                                 break;
                         }
                     }
@@ -72,14 +100,16 @@ namespace magic.endpoint.services
             }
         }
 
+        /*
+         * Adds one single verb for the specified filename to the Swagger doc.
+         */
         private void AddVerb(
             SwaggerDocument doc, 
             string verb, 
-            string filename, 
-            string fullFilename)
+            string filename)
         {
             // Figuring out which key to use, and making sure we put an item into dictionary for URL.
-            var itemType = filename.Substring(0, filename.IndexOf(".")); ;
+            var itemType = filename.Substring(0, filename.IndexOf(".", StringComparison.InvariantCulture)); ;
             var key = "/api/hl" + itemType;
             if (!doc.Paths.ContainsKey(key))
             {
@@ -91,7 +121,7 @@ namespace magic.endpoint.services
             var item = doc.Paths[key];
 
             // Creating our operation item.
-            var tag = filename.Substring(0, filename.IndexOf(".")).Trim('/');
+            var tag = filename.Substring(0, filename.IndexOf(".", StringComparison.InvariantCulture)).Trim('/');
             var operation = new Operation
             {
                 Tags = new List<string> { tag },

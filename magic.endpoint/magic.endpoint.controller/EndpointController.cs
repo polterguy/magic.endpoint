@@ -11,9 +11,11 @@ using magic.endpoint.contracts;
 namespace magic.endpoint.controller
 {
     /// <summary>
-    /// IO controller for manipulating files and folders on your server
+    /// Hyperlambda controller for evaluating a Hyperlambda file, from a URL
+    /// and a verb, allowing the caller tooptionally pass in arguments, if the
+    /// endpoint can accept arguments.
     /// </summary>
-    [Route("api/hl")]
+    [Route("magic")]
     [Consumes("application/json")]
     [Produces("application/json")]
     public class EndpointController : ControllerBase
@@ -21,8 +23,9 @@ namespace magic.endpoint.controller
         readonly IExecutor _executor;
 
         /// <summary>
-        /// Creates a new Hyperlambda endpoint controller.
+        /// Creates a new instance of your type.
         /// </summary>
+        /// <param name="executor">Service implementation.</param>
         public EndpointController(IExecutor executor)
         {
             _executor = executor ?? throw new ArgumentNullException(nameof(executor));
@@ -31,6 +34,7 @@ namespace magic.endpoint.controller
         /// <summary>
         /// Executes a dynamically registered Hyperlambda HTTP GET endpoint.
         /// </summary>
+        /// <param name="url">The requested URL.</param>
         [HttpGet]
         [Route("{*url}")]
         public ActionResult Get(string url)
@@ -41,6 +45,7 @@ namespace magic.endpoint.controller
         /// <summary>
         /// Executes a dynamically registered Hyperlambda HTTP DELETE endpoint.
         /// </summary>
+        /// <param name="url">The requested URL.</param>
         [HttpDelete]
         [Route("{*url}")]
         public ActionResult Delete(string url)
@@ -51,6 +56,8 @@ namespace magic.endpoint.controller
         /// <summary>
         /// Executes a dynamically registered Hyperlambda HTTP POST endpoint.
         /// </summary>
+        /// <param name="url">The requested URL.</param>
+        /// <param name="payload">Payload from client.</param>
         [HttpPost]
         [Route("{*url}")]
         public ActionResult Post(string url, [FromBody] dynamic payload)
@@ -61,6 +68,8 @@ namespace magic.endpoint.controller
         /// <summary>
         /// Executes a dynamically registered Hyperlambda HTTP PUT endpoint.
         /// </summary>
+        /// <param name="url">The requested URL.</param>
+        /// <param name="payload">Payload from client.</param>
         [HttpPut]
         [Route("{*url}")]
         public ActionResult Put(string url, [FromBody] dynamic payload)
@@ -70,6 +79,11 @@ namespace magic.endpoint.controller
 
         #region [ -- Private helper methods -- ]
 
+        /*
+         * Common helper method to construct a dictionary from the request's
+         * QUERY parameters, and evaluate the endpoint with the dictionary as
+         * its arguments.
+         */
         ActionResult Execute(Func<Dictionary<string, string>, ActionResult> functor)
         {
             var args = new Dictionary<string, string>();

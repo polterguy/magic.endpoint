@@ -5,43 +5,86 @@
 
 using System;
 using System.IO;
-using System.Net;
 using System.Linq;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json.Linq;
 using magic.node;
+using magic.node.extensions;
 using magic.signals.contracts;
 using magic.endpoint.contracts;
-using magic.endpoint.services.init;
+using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
 
 namespace magic.endpoint.services
 {
+    /// <summary>
+    /// Implementation of IExecutor contract, allowing you to
+    /// execute a dynamically created Hyperlambda endpoint.
+    /// </summary>
     public class Executor : IExecutor
     {
         readonly ISignaler _signaler;
+        readonly IConfiguration _configuration;
 
-        public Executor(ISignaler signaler)
+        /// <summary>
+        /// Creates an instance of your type.
+        /// </summary>
+        /// <param name="signaler">Signaler necessary evaluate endpoint.</param>
+        public Executor(ISignaler signaler, IConfiguration configuration)
         {
             _signaler = signaler ?? throw new ArgumentNullException(nameof(signaler));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
+        /// <summary>
+        /// Executes an HTTP GET endpoint with the specified URL and the
+        /// specified arguments.
+        /// </summary>
+        /// <param name="url">URL that was requested, mapping to some Hyperlambda
+        /// file on your server.</param>
+        /// <param name="args">Arguments to your endpoint.</param>
+        /// <returns>The result of the evaluation.</returns>
         public ActionResult ExecuteGet(string url, Dictionary<string, string> args)
         {
             return ExecuteUrl(url, "get", args);
         }
 
+        /// <summary>
+        /// Executes an HTTP DELETE endpoint with the specified URL and the
+        /// specified arguments.
+        /// </summary>
+        /// <param name="url">URL that was requested, mapping to some Hyperlambda
+        /// file on your server.</param>
+        /// <param name="args">Arguments to your endpoint.</param>
+        /// <returns>The result of the evaluation.</returns>
         public ActionResult ExecuteDelete(string url, Dictionary<string, string> args)
         {
             return ExecuteUrl(url, "delete", args);
         }
 
+        /// <summary>
+        /// Executes an HTTP POST endpoint with the specified URL and the
+        /// specified payload.
+        /// </summary>
+        /// <param name="url">URL that was requested, mapping to some Hyperlambda
+        /// file on your server.</param>
+        /// <param name="payload">JSON payload to your endpoint.</param>
+        /// <returns>The result of the evaluation.</returns>
         public ActionResult ExecutePost(string url, JContainer payload)
         {
             return ExecuteUrl(url, "post", payload);
         }
 
+        /// <summary>
+        /// Executes an HTTP PUT endpoint with the specified URL and the
+        /// specified payload.
+        /// </summary>
+        /// <param name="url">URL that was requested, mapping to some Hyperlambda
+        /// file on your server.</param>
+        /// <param name="payload">JSON payload to your endpoint.</param>
+        /// <returns>The result of the evaluation.</returns>
         public ActionResult ExecutePut(string url, JContainer payload)
         {
             return ExecuteUrl(url, "put", payload);
@@ -49,26 +92,38 @@ namespace magic.endpoint.services
 
         #region [ -- Private helper methods -- ]
 
+        /*
+         * Executes a QUERY based HTTP URL.
+         */
         ActionResult ExecuteUrl(
             string url,
             string verb,
             Dictionary<string, string> arguments)
         {
-            // Sanity checking URL
+            // Sanity checking URL.
             if (!Utilities.IsLegalHttpName(url))
                 throw new ApplicationException("Illeal URL");
 
-            var path = RootResolver.Root + url + $".{verb}.hl";
+            // Retrieving root folder.
+            var rootFolder = Utilities.GetRootFolder(_configuration);
+
+            // Checking that file matching URL and verb actually exists.
+            var path = rootFolder + url + $".{verb}.hl";
             if (!File.Exists(path))
                 return new NotFoundResult();
 
+            /*
+             * Open file, parses it, and evaluates it with the specified
+             * arguments given by caller.
+             */
             using (var stream = File.OpenRead(path))
             {
                 var lambda = new Parser(stream).Lambda();
 
                 /*
-                 * Checking file [.arguments], and if given, removing them to make sure invocation of file
-                 * only has a single [.arguments] node.
+                 * Checking file [.arguments], and if given, removing them to
+                 * make sure invocation of file only has a single [.arguments]
+                 * node.
                  */
                 var fileArgs = lambda.Children.Where(x => x.Name == ".arguments").ToList();
                 if (fileArgs.Any())
@@ -79,7 +134,13 @@ namespace magic.endpoint.services
                     fileArgs.First().UnTie();
                 }
 
-                // Adding arguments from invocation to evaluated lambda node.
+                /*
+                 * Adding arguments from invocation to evaluated lambda node.
+                 *
+                 * Notice, this will also verify that no arguments are passed in
+                 * to endpoint,that also doesn't exist in the declaration
+                 * [.arguments] node of the file.
+                 */
                 if (arguments.Count > 0)
                 {
                     var argsNode = new Node(".arguments");
@@ -89,8 +150,10 @@ namespace magic.endpoint.services
                     lambda.Insert(0, argsNode);
                 }
 
+                // Evaluating file, now parametrized with arguments.
                 _signaler.Signal("eval", lambda);
 
+                // Converting returned nodes, if any, to JSON.
                 var result = GetReturnValue(lambda);
                 if (result != null)
                     return new OkObjectResult(result);
@@ -99,19 +162,30 @@ namespace magic.endpoint.services
             }
         }
 
+        /*
+         * Executes a URL that was given a JSON payload of some sort.
+         */
         ActionResult ExecuteUrl(
             string url,
             string verb,
             JContainer arguments)
         {
-            // Sanity checking URL
+            // Sanity checking URL.
             if (!Utilities.IsLegalHttpName(url))
                 throw new ApplicationException("Illeal URL");
 
-            var path = RootResolver.Root + url + $".{verb}.hl";
+            // Retrieving root folder.
+            var rootFolder = Utilities.GetRootFolder(_configuration);
+
+            // Checking that file matching URL and verb actually exists.
+            var path = rootFolder + url + $".{verb}.hl";
             if (!File.Exists(path))
                 return new NotFoundResult();
 
+            /*
+             * Open file, parses it, and evaluates it with the specified
+             * arguments given by caller.
+             */
             using (var stream = File.OpenRead(path))
             {
                 var lambda = new Parser(stream).Lambda();
@@ -139,7 +213,11 @@ namespace magic.endpoint.services
                     if (idxArg.Value == null)
                         convertedArgs.Add(idxArg.Clone()); // TODO: Recursively sanity check arguments.
                     else
-                        convertedArgs.Add(ConvertArgument(idxArg.Name, idxArg.Get<string>(), fileArgs.First().Children.FirstOrDefault(x => x.Name == idxArg.Name)));
+                        convertedArgs.Add(
+                            ConvertArgument(
+                                idxArg.Name,
+                                idxArg.Get<string>(),
+                                fileArgs.First().Children.FirstOrDefault(x => x.Name == idxArg.Name)));
                 }
                 lambda.Insert(0, convertedArgs);
 
@@ -153,14 +231,21 @@ namespace magic.endpoint.services
             }
         }
 
+        /*
+         * Converts the given input argument to the type specified in the
+         * declaration node.
+         */
         Node ConvertArgument(string name, string value, Node declaration)
         {
             if (declaration == null)
                 throw new ApplicationException($"I don't know how to handle the '{name}' argument");
 
-            return new Node(name, Parser.ConvertValue(value, declaration.Get<string>()));
+            return new Node(name, Parser.ConvertStringToken(value, declaration.Get<string>()));
         }
 
+        /*
+         * Creates a JContainer of some sort from the given lambda node.
+         */
         object GetReturnValue(Node lambda)
         {
             if (lambda.Value != null)
