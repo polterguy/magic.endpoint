@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.Net;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using magic.endpoint.contracts;
@@ -39,7 +40,7 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public ActionResult Get(string url)
         {
-            return Execute(((args) => _executor.ExecuteGet(url, args)));
+            return Execute(((args) => _executor.ExecuteGet(WebUtility.UrlDecode(url), args)));
         }
 
         /// <summary>
@@ -50,7 +51,7 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public ActionResult Delete(string url)
         {
-            return Execute(((args) => _executor.ExecuteDelete(url, args)));
+            return Execute(((args) => _executor.ExecuteDelete(WebUtility.UrlDecode(url), args)));
         }
 
         /// <summary>
@@ -62,7 +63,7 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public ActionResult Post(string url, [FromBody] dynamic payload)
         {
-            return _executor.ExecutePost(url, payload);
+            return _executor.ExecutePost(WebUtility.UrlDecode(url), payload);
         }
 
         /// <summary>
@@ -74,7 +75,7 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public ActionResult Put(string url, [FromBody] dynamic payload)
         {
-            return _executor.ExecutePut(url, payload);
+            return _executor.ExecutePut(WebUtility.UrlDecode(url), payload);
         }
 
         #region [ -- Private helper methods -- ]

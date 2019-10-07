@@ -152,10 +152,14 @@ namespace magic.endpoint.services
                 }
 
                 // Evaluating file, now parametrized with arguments.
-                _signaler.Signal("eval", lambda);
+                var evalResult = new Node();
+                _signaler.Scope("slots.result", evalResult, () =>
+                {
+                    _signaler.Signal("eval", lambda);
+                });
 
                 // Converting returned nodes, if any, to JSON.
-                var result = GetReturnValue(lambda);
+                var result = GetReturnValue(evalResult);
                 if (result != null)
                     return new OkObjectResult(result);
 
@@ -249,17 +253,20 @@ namespace magic.endpoint.services
          */
         object GetReturnValue(Node lambda)
         {
+            // Checking if we have a value.
             if (lambda.Value != null)
-            {
-                if (lambda.Value is IEnumerable<Node> list)
-                {
-                    var convert = new Node();
-                    convert.AddRange(list.ToList());
-                    _signaler.Signal(".to-json-raw", convert);
-                    return convert.Value as JToken;
-                }
                 return JToken.Parse(lambda.Get<string>());
+
+            // Checking if we have children.
+            if (lambda.Children.Any())
+            {
+                var convert = new Node();
+                convert.AddRange(lambda.Children.ToList());
+                _signaler.Signal(".to-json-raw", convert);
+                return convert.Value as JToken;
             }
+
+            // Nothing here ...
             return null;
         }
 
