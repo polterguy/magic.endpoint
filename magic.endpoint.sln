@@ -9,7 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "misc", "misc", "{0080EF1F-A
 		.travis.yml = .travis.yml
 		LICENSE = LICENSE
 		README.md = README.md
-		LICENSE-AFFERO = LICENSE-AFFERO
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "magic.endpoint.contracts", "magic.endpoint\magic.endpoint.contracts\magic.endpoint.contracts.csproj", "{4E0E5597-4C54-42A1-9BB7-9038CE2F8714}"
