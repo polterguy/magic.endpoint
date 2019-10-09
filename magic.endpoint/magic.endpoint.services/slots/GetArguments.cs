@@ -19,7 +19,7 @@ namespace magic.endpoint.services.slots
     /// [system.endpoint] slot for retrieving the arguments and meta
     /// information your Magic endpoint can handle.
     /// </summary>
-    [Slot(Name = "magic.endpoint.get-arguments")]
+    [Slot(Name = "endpoints.get-arguments")]
     public class GetArguments : ISlot
     {
         readonly IConfiguration _configuration;
@@ -64,7 +64,7 @@ namespace magic.endpoint.services.slots
             var rootFolder = Utilities.GetRootFolder(_configuration);
 
             // Opening file, and trying to find its [.arguments] node.
-            var filename = rootFolder + url.TrimStart('/') + "." + verb + ".hl";
+            var filename = rootFolder + url.TrimStart('/').Substring(6) + "." + verb + ".hl";
             if (!File.Exists(filename))
                 throw new ApplicationException($"No endpoint found at '{url}' for verb '{verb}'");
 

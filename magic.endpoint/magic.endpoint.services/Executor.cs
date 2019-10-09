@@ -226,9 +226,13 @@ namespace magic.endpoint.services
                 }
                 lambda.Insert(0, convertedArgs);
 
-                _signaler.Signal("eval", lambda);
+                var evalResult = new Node();
+                _signaler.Scope("slots.result", evalResult, () =>
+                {
+                    _signaler.Signal("eval", lambda);
+                });
 
-                var result = GetReturnValue(lambda);
+                var result = GetReturnValue(evalResult);
                 if (result != null)
                     return new OkObjectResult(result);
 

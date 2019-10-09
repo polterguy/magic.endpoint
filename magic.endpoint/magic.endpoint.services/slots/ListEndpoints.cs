@@ -20,7 +20,7 @@ namespace magic.endpoint.services.slots
     /// [system.endpoints] slot for returning all dynamica Hyperlambda endpoints
     /// for your application.
     /// </summary>
-    [Slot(Name = "magic.endpoint.list")]
+    [Slot(Name = "endpoints.list")]
     public class ListEndpoints : ISlot
     {
         readonly IConfiguration _configuration;
@@ -113,7 +113,7 @@ namespace magic.endpoint.services.slots
              * Creating our result node, and making sure we return path and verb.
              */
             var result = new Node("");
-            result.Add(new Node("path", path));
+            result.Add(new Node("path", "magic/" + path)); // Must add "Route" parts.
             result.Add(new Node("verb", verb));
 
             /*
