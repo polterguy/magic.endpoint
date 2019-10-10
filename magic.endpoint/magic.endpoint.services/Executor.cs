@@ -6,7 +6,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
@@ -47,7 +46,7 @@ namespace magic.endpoint.services
         /// file on your server.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public ActionResult ExecuteGet(string url, Dictionary<string, string> args)
+        public ActionResult ExecuteGet(string url, JContainer args)
         {
             return ExecuteUrl(url, "get", args);
         }
@@ -60,7 +59,7 @@ namespace magic.endpoint.services
         /// file on your server.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public ActionResult ExecuteDelete(string url, Dictionary<string, string> args)
+        public ActionResult ExecuteDelete(string url, JContainer args)
         {
             return ExecuteUrl(url, "delete", args);
         }
@@ -94,80 +93,6 @@ namespace magic.endpoint.services
         #region [ -- Private helper methods -- ]
 
         /*
-         * Executes a QUERY based HTTP URL.
-         */
-        ActionResult ExecuteUrl(
-            string url,
-            string verb,
-            Dictionary<string, string> arguments)
-        {
-            // Sanity checking URL.
-            if (!Utilities.IsLegalHttpName(url))
-                throw new ApplicationException("Illeal URL");
-
-            // Retrieving root folder.
-            var rootFolder = Utilities.GetRootFolder(_configuration);
-
-            // Checking that file matching URL and verb actually exists.
-            var path = rootFolder + url + $".{verb}.hl";
-            if (!File.Exists(path))
-                return new NotFoundResult();
-
-            /*
-             * Open file, parses it, and evaluates it with the specified
-             * arguments given by caller.
-             */
-            using (var stream = File.OpenRead(path))
-            {
-                var lambda = new Parser(stream).Lambda();
-
-                /*
-                 * Checking file [.arguments], and if given, removing them to
-                 * make sure invocation of file only has a single [.arguments]
-                 * node.
-                 */
-                var fileArgs = lambda.Children.Where(x => x.Name == ".arguments").ToList();
-                if (fileArgs.Any())
-                {
-                    if (fileArgs.Count() > 1)
-                        throw new ApplicationException($"URL '{url}' has an invalid [.arguments] declaration. Multiple [.arguments] nodes found in endpoint's file");
-
-                    fileArgs.First().UnTie();
-                }
-
-                /*
-                 * Adding arguments from invocation to evaluated lambda node.
-                 *
-                 * Notice, this will also verify that no arguments are passed in
-                 * to endpoint,that also doesn't exist in the declaration
-                 * [.arguments] node of the file.
-                 */
-                if (arguments.Count > 0)
-                {
-                    var argsNode = new Node(".arguments");
-                    argsNode.AddRange(arguments.Select(x =>
-                        ConvertArgument(x.Key, x.Value,
-                            fileArgs.First().Children.FirstOrDefault(x2 => x2.Name == x.Key))));
-                    lambda.Insert(0, argsNode);
-                }
-
-                // Evaluating file, now parametrized with arguments.
-                var evalResult = new Node();
-                _signaler.Scope("slots.result", evalResult, () =>
-                {
-                    _signaler.Signal("eval", lambda);
-                });
-
-                // Converting returned nodes, if any, to JSON.
-                var result = GetReturnValue(evalResult);
-                if (result != null)
-                    return new OkObjectResult(result);
-
-                return new OkResult();
-            }
-        }
-
-        /*
          * Executes a URL that was given a JSON payload of some sort.
          */
         ActionResult ExecuteUrl(
@@ -175,15 +100,8 @@ namespace magic.endpoint.services
             string verb,
             JContainer arguments)
         {
-            // Sanity checking URL.
-            if (!Utilities.IsLegalHttpName(url))
-                throw new ApplicationException("Illeal URL");
-
-            // Retrieving root folder.
-            var rootFolder = Utilities.GetRootFolder(_configuration);
-
-            // Checking that file matching URL and verb actually exists.
-            var path = rootFolder + url + $".{verb}.hl";
+            // Retrieving file, and verifying it exists.
+            var path = Utilities.GetEndpointFile(_configuration, url, verb);
             if (!File.Exists(path))
                 return new NotFoundResult();
 
@@ -193,6 +111,7 @@ namespace magic.endpoint.services
              */
             using (var stream = File.OpenRead(path))
             {
+                // Creating a lambda object out of file.
                 var lambda = new Parser(stream).Lambda();
 
                 /*
@@ -211,18 +130,18 @@ namespace magic.endpoint.services
 
                 // Adding arguments from invocation to evaluated lambda node.
                 var argsNode = new Node("", arguments);
-                _signaler.Signal(".from-json-raw", argsNode);
+                _signaler.Signal(".json2lambda-raw", argsNode);
                 var convertedArgs = new Node(".arguments");
                 foreach (var idxArg in argsNode.Children)
                 {
+                    // TODO: Recursively sanity check arguments.
                     if (idxArg.Value == null)
-                        convertedArgs.Add(idxArg.Clone()); // TODO: Recursively sanity check arguments.
+                        convertedArgs.Add(idxArg.Clone());
                     else
-                        convertedArgs.Add(
-                            ConvertArgument(
-                                idxArg.Name,
-                                idxArg.Get<string>(),
-                                fileArgs.First().Children.FirstOrDefault(x => x.Name == idxArg.Name)));
+                        convertedArgs.Add(ConvertArgument(
+                            idxArg.Name,
+                            idxArg.Get<string>(),
+                            fileArgs.First().Children.FirstOrDefault(x => x.Name == idxArg.Name)));
                 }
                 lambda.Insert(0, convertedArgs);
 
@@ -259,14 +178,14 @@ namespace magic.endpoint.services
         {
             // Checking if we have a value.
             if (lambda.Value != null)
-                return JToken.Parse(lambda.Get<string>());
+                return lambda.Get<string>();
 
             // Checking if we have children.
             if (lambda.Children.Any())
             {
                 var convert = new Node();
                 convert.AddRange(lambda.Children.ToList());
-                _signaler.Signal(".to-json-raw", convert);
+                _signaler.Signal(".lambda2json-raw", convert);
                 return convert.Value as JToken;
             }
 

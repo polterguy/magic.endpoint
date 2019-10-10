@@ -7,6 +7,7 @@ using System;
 using System.Net;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using magic.endpoint.contracts;
 
 namespace magic.endpoint.controller
@@ -40,7 +41,7 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public ActionResult Get(string url)
         {
-            return Execute(((args) => _executor.ExecuteGet(WebUtility.UrlDecode(url), args)));
+            return _executor.ExecuteGet(WebUtility.UrlDecode(url), GetPayload());
         }
 
         /// <summary>
@@ -51,7 +52,7 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public ActionResult Delete(string url)
         {
-            return Execute(((args) => _executor.ExecuteDelete(WebUtility.UrlDecode(url), args)));
+            return _executor.ExecuteGet(WebUtility.UrlDecode(url), GetPayload());
         }
 
         /// <summary>
@@ -85,17 +86,14 @@ namespace magic.endpoint.controller
          * QUERY parameters, and evaluate the endpoint with the dictionary as
          * its arguments.
          */
-        ActionResult Execute(Func<Dictionary<string, string>, ActionResult> functor)
+        JContainer GetPayload()
         {
-            var args = new Dictionary<string, string>();
+            var payload = new JObject();
             foreach (var idx in Request.Query)
             {
-                if (args.ContainsKey(idx.Key))
-                    throw new ApplicationException($"Found same argument '{idx.Key}' twice in URL of request.");
-
-                args[idx.Key] = idx.Value;
+                payload.Add(idx.Key, new JValue(idx.Value));
             }
-            return functor(args);
+            return payload;
         }
 
         #endregion

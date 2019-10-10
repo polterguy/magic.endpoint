@@ -3,14 +3,13 @@
  * Licensed as Affero GPL unless an explicitly proprietary license has been obtained.
  */
 
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 
 namespace magic.endpoint.contracts
 {
     /// <summary>
-    /// Service interface for executing a Magic endpoint when sore URL is
+    /// Service interface for executing a Magic endpoint when some URL is
     /// requested.
     /// </summary>
 	public interface IExecutor
@@ -21,9 +20,9 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
-        /// <param name="args">Arguments to your endpoint.</param>
+        /// <param name="args">QUERY arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        ActionResult ExecuteGet(string url, Dictionary<string, string> args);
+        ActionResult ExecuteGet(string url, JContainer args);
 
         /// <summary>
         /// Executes an HTTP DELETE endpoint with the specified URL and the
@@ -31,9 +30,9 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
-        /// <param name="args">Arguments to your endpoint.</param>
+        /// <param name="args">QUERY arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        ActionResult ExecuteDelete(string url, Dictionary<string, string> args);
+        ActionResult ExecuteDelete(string url, JContainer args);
 
         /// <summary>
         /// Executes an HTTP POST endpoint with the specified URL and the
