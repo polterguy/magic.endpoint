@@ -52,7 +52,7 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public ActionResult Delete(string url)
         {
-            return _executor.ExecuteGet(WebUtility.UrlDecode(url), GetPayload());
+            return _executor.ExecuteDelete(WebUtility.UrlDecode(url), GetPayload());
         }
 
         /// <summary>

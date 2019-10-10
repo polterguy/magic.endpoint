@@ -115,18 +115,12 @@ namespace magic.endpoint.services
                 var lambda = new Parser(stream).Lambda();
 
                 /*
-                 * Checking file [.arguments], and if given, removing them to make sure invocation of file
-                 * only has a single [.arguments] node.
-                 * Notice, future improvements implies validating arguments.
+                 * Checking if file has [.arguments] node, and removing it to
+                 * make sure invocation of file only has a single [.arguments]
+                 * node, being the arguments supplied by caller.
                  */
-                var fileArgs = lambda.Children.Where(x => x.Name == ".arguments").ToList();
-                if (fileArgs.Any())
-                {
-                    if (fileArgs.Count() > 1)
-                        throw new ApplicationException($"URL '{url}' has an invalid [.arguments] declaration. Multiple [.arguments] nodes found in endpoint's file");
-
-                    fileArgs.First().UnTie();
-                }
+                var fileArgs = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
+                fileArgs?.UnTie();
 
                 // Adding arguments from invocation to evaluated lambda node.
                 var argsNode = new Node("", arguments);
@@ -137,11 +131,13 @@ namespace magic.endpoint.services
                     // TODO: Recursively sanity check arguments.
                     if (idxArg.Value == null)
                         convertedArgs.Add(idxArg.Clone());
-                    else
+                    else if (fileArgs != null)
                         convertedArgs.Add(ConvertArgument(
                             idxArg.Name,
                             idxArg.Get<string>(),
-                            fileArgs.First().Children.FirstOrDefault(x => x.Name == idxArg.Name)));
+                            fileArgs?.Children.FirstOrDefault(x => x.Name == idxArg.Name)));
+                    else
+                        convertedArgs.Add(new Node(idxArg.Name, idxArg.Value));
                 }
                 lambda.Insert(0, convertedArgs);
 
@@ -155,6 +151,7 @@ namespace magic.endpoint.services
                 if (result != null)
                     return new OkObjectResult(result);
 
+                // If no return value exists, we return "OK" to caller.
                 return new OkResult();
             }
         }
