@@ -6,6 +6,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
@@ -22,7 +23,7 @@ namespace magic.endpoint.services
     /// Implementation of IExecutor contract, allowing you to
     /// execute a dynamically created Hyperlambda endpoint.
     /// </summary>
-    public class Executor : IExecutor
+    public class ExecutorAsync : IExecutorAsync
     {
         readonly ISignaler _signaler;
         readonly IConfiguration _configuration;
@@ -32,7 +33,7 @@ namespace magic.endpoint.services
         /// </summary>
         /// <param name="signaler">Signaler necessary evaluate endpoint.</param>
         /// <param name="configuration">Configuration for your application.</param>
-        public Executor(ISignaler signaler, IConfiguration configuration)
+        public ExecutorAsync(ISignaler signaler, IConfiguration configuration)
         {
             _signaler = signaler ?? throw new ArgumentNullException(nameof(signaler));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -46,9 +47,9 @@ namespace magic.endpoint.services
         /// file on your server.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public ActionResult ExecuteGet(string url, JContainer args)
+        public async Task<ActionResult> ExecuteGetAsync(string url, JContainer args)
         {
-            return ExecuteUrl(url, "get", args);
+            return await ExecuteUrl(url, "get", args);
         }
 
         /// <summary>
@@ -59,9 +60,9 @@ namespace magic.endpoint.services
         /// file on your server.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public ActionResult ExecuteDelete(string url, JContainer args)
+        public async Task<ActionResult> ExecuteDeleteAsync(string url, JContainer args)
         {
-            return ExecuteUrl(url, "delete", args);
+            return await ExecuteUrl(url, "delete", args);
         }
 
         /// <summary>
@@ -72,9 +73,9 @@ namespace magic.endpoint.services
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public ActionResult ExecutePost(string url, JContainer payload)
+        public async Task<ActionResult> ExecutePostAsync(string url, JContainer payload)
         {
-            return ExecuteUrl(url, "post", payload);
+            return await ExecuteUrl(url, "post", payload);
         }
 
         /// <summary>
@@ -85,9 +86,9 @@ namespace magic.endpoint.services
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public ActionResult ExecutePut(string url, JContainer payload)
+        public async Task<ActionResult> ExecutePutAsync(string url, JContainer payload)
         {
-            return ExecuteUrl(url, "put", payload);
+            return await ExecuteUrl(url, "put", payload);
         }
 
         #region [ -- Private helper methods -- ]
@@ -95,7 +96,7 @@ namespace magic.endpoint.services
         /*
          * Executes a URL that was given a JSON payload of some sort.
          */
-        ActionResult ExecuteUrl(
+        async Task<ActionResult> ExecuteUrl(
             string url,
             string verb,
             JContainer arguments)
@@ -142,9 +143,9 @@ namespace magic.endpoint.services
                 lambda.Insert(0, convertedArgs);
 
                 var evalResult = new Node();
-                _signaler.Scope("slots.result", evalResult, () =>
+                await _signaler.ScopeAsync("slots.result", evalResult, async () =>
                 {
-                    _signaler.Signal("eval", lambda);
+                    await _signaler.SignalAsync("eval", lambda);
                 });
 
                 var result = GetReturnValue(evalResult);

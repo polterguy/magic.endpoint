@@ -3,6 +3,7 @@
  * See the enclosed LICENSE file for details.
  */
 
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 
@@ -12,7 +13,7 @@ namespace magic.endpoint.contracts
     /// Service interface for executing a Magic endpoint when some URL is
     /// requested.
     /// </summary>
-	public interface IExecutor
+	public interface IExecutorAsync
 	{
         /// <summary>
         /// Executes an HTTP GET endpoint with the specified URL and the
@@ -22,7 +23,7 @@ namespace magic.endpoint.contracts
         /// file on your server.</param>
         /// <param name="args">QUERY arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        ActionResult ExecuteGet(string url, JContainer args);
+        Task<ActionResult> ExecuteGetAsync(string url, JContainer args);
 
         /// <summary>
         /// Executes an HTTP DELETE endpoint with the specified URL and the
@@ -32,7 +33,7 @@ namespace magic.endpoint.contracts
         /// file on your server.</param>
         /// <param name="args">QUERY arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        ActionResult ExecuteDelete(string url, JContainer args);
+        Task<ActionResult> ExecuteDeleteAsync(string url, JContainer args);
 
         /// <summary>
         /// Executes an HTTP POST endpoint with the specified URL and the
@@ -42,7 +43,7 @@ namespace magic.endpoint.contracts
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        ActionResult ExecutePost(string url, JContainer payload);
+        Task<ActionResult> ExecutePostAsync(string url, JContainer payload);
 
         /// <summary>
         /// Executes an HTTP PUT endpoint with the specified URL and the
@@ -52,6 +53,6 @@ namespace magic.endpoint.contracts
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        ActionResult ExecutePut(string url, JContainer payload);
+        Task<ActionResult> ExecutePutAsync(string url, JContainer payload);
     }
 }

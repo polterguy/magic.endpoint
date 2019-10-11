@@ -5,7 +5,7 @@
 
 using System;
 using System.Net;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using magic.endpoint.contracts;
@@ -22,13 +22,13 @@ namespace magic.endpoint.controller
     [Produces("application/json")]
     public class EndpointController : ControllerBase
     {
-        readonly IExecutor _executor;
+        readonly IExecutorAsync _executor;
 
         /// <summary>
         /// Creates a new instance of your type.
         /// </summary>
         /// <param name="executor">Service implementation.</param>
-        public EndpointController(IExecutor executor)
+        public EndpointController(IExecutorAsync executor)
         {
             _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         }
@@ -39,9 +39,9 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         [HttpGet]
         [Route("{*url}")]
-        public ActionResult Get(string url)
+        public async Task<ActionResult> Get(string url)
         {
-            return _executor.ExecuteGet(WebUtility.UrlDecode(url), GetPayload());
+            return await _executor.ExecuteGetAsync(WebUtility.UrlDecode(url), GetPayload());
         }
 
         /// <summary>
@@ -50,9 +50,9 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         [HttpDelete]
         [Route("{*url}")]
-        public ActionResult Delete(string url)
+        public async Task<ActionResult> Delete(string url)
         {
-            return _executor.ExecuteDelete(WebUtility.UrlDecode(url), GetPayload());
+            return await _executor.ExecuteDeleteAsync(WebUtility.UrlDecode(url), GetPayload());
         }
 
         /// <summary>
@@ -62,9 +62,9 @@ namespace magic.endpoint.controller
         /// <param name="payload">Payload from client.</param>
         [HttpPost]
         [Route("{*url}")]
-        public ActionResult Post(string url, [FromBody] dynamic payload)
+        public async Task<ActionResult> Post(string url, [FromBody] dynamic payload)
         {
-            return _executor.ExecutePost(WebUtility.UrlDecode(url), payload);
+            return await _executor.ExecutePostAsync(WebUtility.UrlDecode(url), payload);
         }
 
         /// <summary>
@@ -74,9 +74,9 @@ namespace magic.endpoint.controller
         /// <param name="payload">Payload from client.</param>
         [HttpPut]
         [Route("{*url}")]
-        public ActionResult Put(string url, [FromBody] dynamic payload)
+        public async Task<ActionResult> Put(string url, [FromBody] dynamic payload)
         {
-            return _executor.ExecutePut(WebUtility.UrlDecode(url), payload);
+            return await _executor.ExecutePutAsync(WebUtility.UrlDecode(url), payload);
         }
 
         #region [ -- Private helper methods -- ]
