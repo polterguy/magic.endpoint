@@ -7,12 +7,12 @@
     <Authors>Thomas Hansen</Authors>
     <Company>Thomas Hansen</Company>
     <Copyright>Thomas Hansen, thomas@gaiasoul.com</Copyright>
-    <Description>Service implementations for magic.endpoint.</Description>
+    <Description>Service implementations for magic.endpoint, that allows you to dynamically evaluate Hyperlambda files associated with a URL.</Description>
     <PackageProjectUrl>https://github.com/polterguy/magic.endpoint</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/polterguy/magic.endpoint/master/LICENSE</PackageLicenseUrl>
     <PackageIconUrl>https://polterguy.github.io/favicon.ico</PackageIconUrl>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>1.2.1</PackageVersion>
+    <PackageVersion>2.0.0</PackageVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/polterguy/magic.endpoint.git</RepositoryUrl>
@@ -25,13 +25,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
-    <PackageReference Include="magic.node.extensions" Version="1.1.3" />
-    <PackageReference Include="magic.signals.contracts" Version="1.1.9" />
+    <PackageReference Include="magic.node.extensions" Version="2.0.0" />
+    <PackageReference Include="magic.signals.contracts" Version="2.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="slots\" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\magic.endpoint.contracts\magic.endpoint.contracts.csproj" />
   </ItemGroup>
