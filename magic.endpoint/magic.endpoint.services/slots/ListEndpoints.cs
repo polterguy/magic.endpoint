@@ -55,7 +55,7 @@ namespace magic.endpoint.services.slots
          */
         IEnumerable<Node> AddCustomEndpoints(string rootFolder, string currentFolder)
         {
-            foreach (var idxFolder in Directory.GetDirectories(currentFolder))
+            foreach (var idxFolder in Directory.GetDirectories(currentFolder).Select(x => x.Replace("\\", "/")))
             {
                 var folder = idxFolder.Substring(rootFolder.Length);
                 if (Utilities.IsLegalHttpName(folder))
