@@ -62,7 +62,7 @@ namespace magic.endpoint.controller
         /// <param name="payload">Payload from client.</param>
         [HttpPost]
         [Route("{*url}")]
-        public async Task<ActionResult> Post(string url, [FromBody] dynamic payload)
+        public async Task<ActionResult> Post(string url, [FromBody] JContainer payload)
         {
             return await _executor.ExecutePostAsync(WebUtility.UrlDecode(url), payload);
         }
@@ -74,7 +74,7 @@ namespace magic.endpoint.controller
         /// <param name="payload">Payload from client.</param>
         [HttpPut]
         [Route("{*url}")]
-        public async Task<ActionResult> Put(string url, [FromBody] dynamic payload)
+        public async Task<ActionResult> Put(string url, [FromBody] JContainer payload)
         {
             return await _executor.ExecutePutAsync(WebUtility.UrlDecode(url), payload);
         }

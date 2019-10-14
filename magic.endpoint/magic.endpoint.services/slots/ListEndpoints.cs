@@ -79,13 +79,11 @@ namespace magic.endpoint.services.slots
          */
         IEnumerable<Node> GetVerbForFolder(string rootFolder, string folder)
         {
-            var folderFiles = Directory.GetFiles(folder, "*.hl")
-                .Select(x => x.Replace("\\", "/"));
+            var folderFiles = Directory.GetFiles(folder, "*.hl").Select(x => x.Replace("\\", "/"));
 
             foreach (var idxFile in folderFiles)
             {
-                var filename = idxFile
-                    .Substring(rootFolder.Length);
+                var filename = idxFile.Substring(rootFolder.Length);
 
                 var entities = filename.Split('.');
                 if (entities.Length == 3)
