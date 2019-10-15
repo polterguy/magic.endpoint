@@ -111,7 +111,7 @@ namespace magic.endpoint.services.slots
              * Creating our result node, and making sure we return path and verb.
              */
             var result = new Node("");
-            result.Add(new Node("path", "magic/" + path)); // Must add "Route" parts.
+            result.Add(new Node("path", "magic/" + path.Replace("\\", "/"))); // Must add "Route" parts.
             result.Add(new Node("verb", verb));
 
             /*
