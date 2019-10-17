@@ -129,7 +129,7 @@ namespace magic.endpoint.services.slots
                         foreach (var idxRole in idx.GetEx<string>()
                             .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                         {
-                            auth.Add(new Node("", idxRole));
+                            auth.Add(new Node("", idxRole.Trim()));
                         }
                     }
                 }
