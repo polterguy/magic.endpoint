@@ -75,7 +75,7 @@ namespace magic.endpoint.services
         /// <returns>The result of the evaluation.</returns>
         public async Task<ActionResult> ExecutePostAsync(string url, JContainer payload)
         {
-            return await ExecuteUrl(url, "post", payload);
+            return await ExecuteUrl(url, "post", payload, false);
         }
 
         /// <summary>
@@ -88,66 +88,58 @@ namespace magic.endpoint.services
         /// <returns>The result of the evaluation.</returns>
         public async Task<ActionResult> ExecutePutAsync(string url, JContainer payload)
         {
-            return await ExecuteUrl(url, "put", payload);
+            return await ExecuteUrl(url, "put", payload, false);
         }
 
         #region [ -- Private helper methods -- ]
 
         /*
          * Executes a URL that was given a JSON payload of some sort.
+         *
+         * Notice, the JSON payload might also have been created by the QUERY
+         * parameters, and not necessarily passed in as JSON to the endpoint.
+         * If the latter is true, we must convert the argument from its string
+         * representation, to the type declaration found in the [.arguments]
+         * declaration node of the endpoint's file.
          */
         async Task<ActionResult> ExecuteUrl(
             string url,
             string verb,
-            JContainer arguments)
+            JContainer arguments,
+            bool convertArguments = true)
         {
             // Retrieving file, and verifying it exists.
             var path = Utilities.GetEndpointFile(_configuration, url, verb);
             if (!File.Exists(path))
                 return new NotFoundResult();
 
-            /*
-             * Open file, parses it, and evaluates it with the specified
-             * arguments given by caller.
-             */
+            // Reading and parsing file as Hyperlambda.
             using (var stream = File.OpenRead(path))
             {
                 // Creating a lambda object out of file.
                 var lambda = new Parser(stream).Lambda();
 
                 /*
-                 * Checking if file has [.arguments] node, and removing it to
-                 * make sure invocation of file only has a single [.arguments]
-                 * node, being the arguments supplied by caller.
+                 * Attaching arguments to lambda, which will also to some
+                 * extent sanity check the arguments, and possibly convert
+                 * them according to the declaration node.
                  */
-                var fileArgs = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
-                fileArgs?.UnTie();
+                AttachArguments(lambda, arguments, convertArguments);
 
-                // Adding arguments from invocation to evaluated lambda node.
-                var argsNode = new Node("", arguments);
-                _signaler.Signal(".json2lambda-raw", argsNode);
-                var convertedArgs = new Node(".arguments");
-                foreach (var idxArg in argsNode.Children)
-                {
-                    // TODO: Recursively sanity check arguments.
-                    if (idxArg.Value == null)
-                        convertedArgs.Add(idxArg.Clone());
-                    else if (fileArgs != null)
-                        convertedArgs.Add(ConvertArgument(
-                            idxArg.Name,
-                            idxArg.Get<string>(),
-                            fileArgs?.Children.FirstOrDefault(x => x.Name == idxArg.Name)));
-                    else
-                        convertedArgs.Add(new Node(idxArg.Name, idxArg.Value));
-                }
-                lambda.Insert(0, convertedArgs);
-
+                /*
+                 * Evaluating our lambda async, making sure we allow for the
+                 * lambda object to return values.
+                 */
                 var evalResult = new Node();
                 await _signaler.ScopeAsync("slots.result", evalResult, async () =>
                 {
                     await _signaler.SignalAsync("eval", lambda);
                 });
 
+                /*
+                 * Retrieving return value, if any, and returns success
+                 * to caller.
+                 */
                 var result = GetReturnValue(evalResult);
                 if (result != null)
                     return new OkObjectResult(result);
@@ -158,15 +150,89 @@ namespace magic.endpoint.services
         }
 
         /*
-         * Converts the given input argument to the type specified in the
-         * declaration node.
+         * Attaches the specified JContainer values as arguments to the given
+         * lambda object, doing some basic sanity checking in the process,
+         * and also possibly converting the arguments to their correct type in
+         * the process.
          */
-        Node ConvertArgument(string name, string value, Node declaration)
+        void AttachArguments(Node lambda, JContainer arguments, bool convertArguments)
+        {
+            /*
+             * Checking if file has [.arguments] node, and removing it to
+             * make sure invocation of file only has a single [.arguments]
+             * node, being the arguments supplied by caller, and not the
+             * declaration [.arguments] node for the file.
+             */
+            var fileArgs = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
+            fileArgs?.UnTie();
+
+            /*
+             * Converting the given arguments from JSON to lambda.
+             */
+            var argsNode = new Node(".arguments", arguments);
+            _signaler.Signal(".json2lambda-raw", argsNode);
+
+            /*
+             * Checking if we need to convert the individual arguments, which
+             * is true if they were supplied as QUERY parameters, since
+             * everything is passed in as strings if it's a QUERY parameter.
+             */
+            if (convertArguments)
+            {
+                /*
+                 * Notice, if we need to convert the arguments, it implies
+                 * they were given as QUERY parameters - At which point there
+                 * will not be recursively given arguments, since that would
+                 * be impossible. Hence, we can ignore the children collection
+                 * of each argument.
+                 */
+                foreach (var idxArg in argsNode.Children)
+                {
+                    idxArg.Value = ConvertArgument(
+                        idxArg.Name,
+                        idxArg.Get<string>(),
+                        fileArgs.Children.FirstOrDefault(x => x.Name == idxArg.Name));
+                }
+            }
+            else if (fileArgs != null)
+            {
+                /*
+                 * Only doing some basic sanity checking.
+                 *
+                 * Notice, we do not recursively sanity check arguments, to
+                 * allow for passing in any type of objects - At which point
+                 * sanity checking is left as an exercize for the particular
+                 * endpoint implementation.
+                 * TODO: Consider sanity checking arguments recursively, which
+                 * would imply supporting "any argument type", implies additional
+                 * logic, possibly avoiding an [.arguments] declaration on
+                 * file entirely.
+                 */
+                foreach (var idx in argsNode.Children)
+                {
+                    if (!fileArgs.Children.Any(x => x.Name == idx.Name))
+                        throw new ApplicationException($"I don't know how to handle the '{idx.Name}' argument");
+                }
+            }
+
+            /*
+             * Inserting the arguments specified to the endpoint as arguments
+             * inside of our lambda object.
+             */
+            lambda.Insert(0, argsNode);
+        }
+
+        /*
+         * Converts the given input argument to the type specified in the
+         * declaration node. Making sure the argument is legally given to the
+         * endpoint.
+         */
+        object ConvertArgument(string name, string value, Node declaration)
         {
             if (declaration == null)
                 throw new ApplicationException($"I don't know how to handle the '{name}' argument");
 
-            return new Node(name, Parser.ConvertStringToken(value, declaration.Get<string>()));
+            return Parser.ConvertStringToken(value, declaration.Get<string>());
         }
 
         /*
