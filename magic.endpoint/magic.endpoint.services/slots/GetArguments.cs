@@ -46,7 +46,7 @@ namespace magic.endpoint.services.slots
             if (!Utilities.IsLegalHttpName(url))
                 throw new ApplicationException($"Oops, '{url}' is not a valid HTTP URL for Magic");
 
-            switch(verb)
+            switch (verb)
             {
                 case "get":
                 case "delete":

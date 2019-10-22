@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using msft = Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using magic.node;
@@ -43,52 +44,68 @@ namespace magic.endpoint.services
         /// Executes an HTTP GET endpoint with the specified URL and the
         /// specified arguments.
         /// </summary>
+        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<ActionResult> ExecuteGetAsync(string url, JContainer args)
+        public async Task<ActionResult> ExecuteGetAsync(
+            msft.HttpResponse response, 
+            string url, 
+            JContainer args)
         {
-            return await ExecuteUrl(url, "get", args);
+            return await ExecuteUrl(response, url, "get", args);
         }
 
         /// <summary>
         /// Executes an HTTP DELETE endpoint with the specified URL and the
         /// specified arguments.
         /// </summary>
+        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<ActionResult> ExecuteDeleteAsync(string url, JContainer args)
+        public async Task<ActionResult> ExecuteDeleteAsync(
+            msft.HttpResponse response, 
+            string url, 
+            JContainer args)
         {
-            return await ExecuteUrl(url, "delete", args);
+            return await ExecuteUrl(response, url, "delete", args);
         }
 
         /// <summary>
         /// Executes an HTTP POST endpoint with the specified URL and the
         /// specified payload.
         /// </summary>
+        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<ActionResult> ExecutePostAsync(string url, JContainer payload)
+        public async Task<ActionResult> ExecutePostAsync(
+            msft.HttpResponse response, 
+            string url, 
+            JContainer payload)
         {
-            return await ExecuteUrl(url, "post", payload, false);
+            return await ExecuteUrl(response, url, "post", payload, false);
         }
 
         /// <summary>
         /// Executes an HTTP PUT endpoint with the specified URL and the
         /// specified payload.
         /// </summary>
+        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<ActionResult> ExecutePutAsync(string url, JContainer payload)
+        public async Task<ActionResult> ExecutePutAsync(
+            msft.HttpResponse response, 
+            string url, 
+            JContainer payload)
         {
-            return await ExecuteUrl(url, "put", payload, false);
+            return await ExecuteUrl(response, url, "put", payload, false);
         }
 
         #region [ -- Private helper methods -- ]
@@ -103,6 +120,7 @@ namespace magic.endpoint.services
          * declaration node of the endpoint's file.
          */
         async Task<ActionResult> ExecuteUrl(
+            msft.HttpResponse response,
             string url,
             string verb,
             JContainer arguments,
@@ -131,10 +149,22 @@ namespace magic.endpoint.services
                  * lambda object to return values.
                  */
                 var evalResult = new Node();
-                await _signaler.ScopeAsync("slots.result", evalResult, async () =>
+                var httpResponse = new HttpResponse();
+                await _signaler.ScopeAsync("http.response", httpResponse, async () =>
                 {
-                    await _signaler.SignalAsync("eval", lambda);
+                    await _signaler.ScopeAsync("slots.result", evalResult, async () =>
+                    {
+                        await _signaler.SignalAsync("eval", lambda);
+                    });
                 });
+
+                /*
+                 * Making sure we attach any HTTP headers to the response.
+                 */
+                foreach (var idx in httpResponse.Headers)
+                {
+                    response.Headers.Add(idx.Key, idx.Value);
+                }
 
                 /*
                  * Retrieving return value, if any, and returns success

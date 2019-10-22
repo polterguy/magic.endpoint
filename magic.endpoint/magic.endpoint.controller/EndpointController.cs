@@ -41,7 +41,10 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Get(string url)
         {
-            return await _executor.ExecuteGetAsync(WebUtility.UrlDecode(url), GetPayload());
+            return await _executor.ExecuteGetAsync(
+                Response, 
+                WebUtility.UrlDecode(url), 
+                GetPayload());
         }
 
         /// <summary>
@@ -52,7 +55,10 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Delete(string url)
         {
-            return await _executor.ExecuteDeleteAsync(WebUtility.UrlDecode(url), GetPayload());
+            return await _executor.ExecuteDeleteAsync(
+                Response, 
+                WebUtility.UrlDecode(url), 
+                GetPayload());
         }
 
         /// <summary>
@@ -64,7 +70,10 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Post(string url, [FromBody] JContainer payload)
         {
-            return await _executor.ExecutePostAsync(WebUtility.UrlDecode(url), payload);
+            return await _executor.ExecutePostAsync(
+                Response, 
+                WebUtility.UrlDecode(url), 
+                payload);
         }
 
         /// <summary>
@@ -76,7 +85,10 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Put(string url, [FromBody] JContainer payload)
         {
-            return await _executor.ExecutePutAsync(WebUtility.UrlDecode(url), payload);
+            return await _executor.ExecutePutAsync(
+                Response, 
+                WebUtility.UrlDecode(url), 
+                payload);
         }
 
         #region [ -- Private helper methods -- ]
