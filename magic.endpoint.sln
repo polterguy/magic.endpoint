@@ -1,4 +1,3 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.572
@@ -11,11 +10,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "misc", "misc", "{0080EF1F-A
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "magic.endpoint.contracts", "magic.endpoint\magic.endpoint.contracts\magic.endpoint.contracts.csproj", "{4E0E5597-4C54-42A1-9BB7-9038CE2F8714}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "magic.endpoint.contracts", "magic.endpoint\magic.endpoint.contracts\magic.endpoint.contracts.csproj", "{4E0E5597-4C54-42A1-9BB7-9038CE2F8714}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "magic.endpoint.services", "magic.endpoint\magic.endpoint.services\magic.endpoint.services.csproj", "{B4F72EAB-DE27-4F58-AB81-8089E8D1B89A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "magic.endpoint.services", "magic.endpoint\magic.endpoint.services\magic.endpoint.services.csproj", "{B4F72EAB-DE27-4F58-AB81-8089E8D1B89A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "magic.endpoint.controller", "magic.endpoint\magic.endpoint.controller\magic.endpoint.controller.csproj", "{CAE887E7-A323-4A6E-ACE6-2CBC95C7E48F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "magic.endpoint.controller", "magic.endpoint\magic.endpoint.controller\magic.endpoint.controller.csproj", "{CAE887E7-A323-4A6E-ACE6-2CBC95C7E48F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "magic.endpoint.tests", "magic.endpoint.tests\magic.endpoint.tests.csproj", "{5D99DF8E-0E82-4499-94B2-96F3B7BAA636}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,5 +36,15 @@ Global
 		{CAE887E7-A323-4A6E-ACE6-2CBC95C7E48F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CAE887E7-A323-4A6E-ACE6-2CBC95C7E48F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CAE887E7-A323-4A6E-ACE6-2CBC95C7E48F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D99DF8E-0E82-4499-94B2-96F3B7BAA636}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D99DF8E-0E82-4499-94B2-96F3B7BAA636}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D99DF8E-0E82-4499-94B2-96F3B7BAA636}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D99DF8E-0E82-4499-94B2-96F3B7BAA636}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A3AE9D08-3612-4C60-9956-AE52CBBAA3A7}
 	EndGlobalSection
 EndGlobal
