@@ -7,9 +7,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using msft = Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using magic.node;
 using magic.node.extensions;
@@ -27,85 +24,66 @@ namespace magic.endpoint.services
     public class ExecutorAsync : IExecutorAsync
     {
         readonly ISignaler _signaler;
-        readonly IConfiguration _configuration;
 
         /// <summary>
         /// Creates an instance of your type.
         /// </summary>
         /// <param name="signaler">Signaler necessary evaluate endpoint.</param>
-        /// <param name="configuration">Configuration for your application.</param>
-        public ExecutorAsync(ISignaler signaler, IConfiguration configuration)
+        public ExecutorAsync(ISignaler signaler)
         {
             _signaler = signaler ?? throw new ArgumentNullException(nameof(signaler));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         /// <summary>
         /// Executes an HTTP GET endpoint with the specified URL and the
         /// specified arguments.
         /// </summary>
-        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<ActionResult> ExecuteGetAsync(
-            msft.HttpResponse response, 
-            string url, 
-            JContainer args)
+        public async Task<HttpResponse> ExecuteGetAsync(string url, JContainer args)
         {
-            return await ExecuteUrl(response, url, "get", args);
+            return await ExecuteUrl(url, "get", args);
         }
 
         /// <summary>
         /// Executes an HTTP DELETE endpoint with the specified URL and the
         /// specified arguments.
         /// </summary>
-        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<ActionResult> ExecuteDeleteAsync(
-            msft.HttpResponse response, 
-            string url, 
-            JContainer args)
+        public async Task<HttpResponse> ExecuteDeleteAsync(string url, JContainer args)
         {
-            return await ExecuteUrl(response, url, "delete", args);
+            return await ExecuteUrl(url, "delete", args);
         }
 
         /// <summary>
         /// Executes an HTTP POST endpoint with the specified URL and the
         /// specified payload.
         /// </summary>
-        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<ActionResult> ExecutePostAsync(
-            msft.HttpResponse response, 
-            string url, 
-            JContainer payload)
+        public async Task<HttpResponse> ExecutePostAsync(string url, JContainer payload)
         {
-            return await ExecuteUrl(response, url, "post", payload, false);
+            return await ExecuteUrl(url, "post", payload, false);
         }
 
         /// <summary>
         /// Executes an HTTP PUT endpoint with the specified URL and the
         /// specified payload.
         /// </summary>
-        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<ActionResult> ExecutePutAsync(
-            msft.HttpResponse response, 
-            string url, 
-            JContainer payload)
+        public async Task<HttpResponse> ExecutePutAsync(string url, JContainer payload)
         {
-            return await ExecuteUrl(response, url, "put", payload, false);
+            return await ExecuteUrl(url, "put", payload, false);
         }
 
         #region [ -- Private helper methods -- ]
@@ -119,17 +97,16 @@ namespace magic.endpoint.services
          * representation, to the type declaration found in the [.arguments]
          * declaration node of the endpoint's file.
          */
-        async Task<ActionResult> ExecuteUrl(
-            msft.HttpResponse response,
+        async Task<HttpResponse> ExecuteUrl(
             string url,
             string verb,
             JContainer arguments,
             bool convertArguments = true)
         {
             // Retrieving file, and verifying it exists.
-            var path = Utilities.GetEndpointFile(_configuration, url, verb);
+            var path = Utilities.GetEndpointFile(url, verb);
             if (!File.Exists(path))
-                return new NotFoundResult();
+                return new HttpResponse { Result = 404 };
 
             // Reading and parsing file as Hyperlambda.
             using (var stream = File.OpenRead(path))
@@ -146,7 +123,8 @@ namespace magic.endpoint.services
 
                 /*
                  * Evaluating our lambda async, making sure we allow for the
-                 * lambda object to return values.
+                 * lambda object to return values, and to modify the response HTTP headers,
+                 * and its status code, etc.
                  */
                 var evalResult = new Node();
                 var httpResponse = new HttpResponse();
@@ -158,24 +136,9 @@ namespace magic.endpoint.services
                     });
                 });
 
-                /*
-                 * Making sure we attach any HTTP headers to the response.
-                 */
-                foreach (var idx in httpResponse.Headers)
-                {
-                    response.Headers.Add(idx.Key, idx.Value);
-                }
-
-                /*
-                 * Retrieving return value, if any, and returns success
-                 * to caller.
-                 */
-                var result = GetReturnValue(evalResult);
-                if (result != null)
-                    return new OkObjectResult(result);
-
-                // If no return value exists, we return "OK" to caller.
-                return new OkResult();
+                // Retrieving content for request.
+                httpResponse.Content = GetReturnValue(evalResult);
+                return httpResponse;
             }
         }
 

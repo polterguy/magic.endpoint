@@ -41,10 +41,8 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Get(string url)
         {
-            return await _executor.ExecuteGetAsync(
-                Response, 
-                WebUtility.UrlDecode(url), 
-                GetPayload());
+            var result = await _executor.ExecuteGetAsync(WebUtility.UrlDecode(url), GetPayload());
+            return TransformToActionResult(result);
         }
 
         /// <summary>
@@ -55,10 +53,8 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Delete(string url)
         {
-            return await _executor.ExecuteDeleteAsync(
-                Response, 
-                WebUtility.UrlDecode(url), 
-                GetPayload());
+            var result = await _executor.ExecuteDeleteAsync(WebUtility.UrlDecode(url), GetPayload());
+            return TransformToActionResult(result);
         }
 
         /// <summary>
@@ -70,10 +66,8 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Post(string url, [FromBody] JContainer payload)
         {
-            return await _executor.ExecutePostAsync(
-                Response, 
-                WebUtility.UrlDecode(url), 
-                payload);
+            var result = await _executor.ExecutePostAsync(WebUtility.UrlDecode(url), payload);
+            return TransformToActionResult(result);
         }
 
         /// <summary>
@@ -85,13 +79,30 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Put(string url, [FromBody] JContainer payload)
         {
-            return await _executor.ExecutePutAsync(
-                Response, 
-                WebUtility.UrlDecode(url), 
-                payload);
+            var result = await _executor.ExecutePutAsync(WebUtility.UrlDecode(url), payload);
+            return TransformToActionResult(result);
         }
 
         #region [ -- Private helper methods -- ]
+
+        /*
+         * Transforms from our internal HttpResponse wrapper to an ActionResult
+         */
+        ActionResult TransformToActionResult(HttpResponse response)
+        {
+            // Making sure we attach any HTTP headers to the response.
+            foreach (var idx in response.Headers)
+            {
+                response.Headers.Add(idx.Key, idx.Value);
+            }
+
+            // Retrieving result, if any, and returns it to caller.
+            if (response.Content != null)
+                return new ObjectResult(response.Content) { StatusCode = response.Result };
+
+            // If no return value exists, we return the status code only to caller.
+            return new StatusCodeResult(response.Result);
+        }
 
         /*
          * Common helper method to construct a dictionary from the request's

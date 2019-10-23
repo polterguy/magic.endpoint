@@ -7,7 +7,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
@@ -23,17 +22,6 @@ namespace magic.endpoint.services.slots
     [Slot(Name = "endpoints.list")]
     public class ListEndpoints : ISlot
     {
-        readonly IConfiguration _configuration;
-
-        /// <summary>
-        /// Creates an instance of your type.
-        /// </summary>
-        /// <param name="configuration">Configuration of your application.</param>
-        public ListEndpoints(IConfiguration configuration)
-        {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        }
-
         /// <summary>
         /// Implementation of your slot.
         /// </summary>
@@ -41,10 +29,7 @@ namespace magic.endpoint.services.slots
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            var rootFolder = Utilities.GetRootFolder(_configuration);
-            input.AddRange(AddCustomEndpoints(
-                rootFolder,
-                rootFolder).ToList());
+            input.AddRange(AddCustomEndpoints(Utilities.RootFolder, Utilities.RootFolder).ToList());
         }
 
         #region [ -- Private helper methods -- ]
@@ -55,17 +40,20 @@ namespace magic.endpoint.services.slots
          */
         IEnumerable<Node> AddCustomEndpoints(string rootFolder, string currentFolder)
         {
+            // Looping through each folder inside of "currentFolder".
             foreach (var idxFolder in Directory.GetDirectories(currentFolder).Select(x => x.Replace("\\", "/")))
             {
+                // Making sure files within this folder is legally resolved.
                 var folder = idxFolder.Substring(rootFolder.Length);
                 if (Utilities.IsLegalHttpName(folder))
                 {
-                    foreach (var idxVerb in GetVerbForFolder(rootFolder, idxFolder))
+                    // Retrieves all files inside of currently iterated folder.
+                    foreach (var idxFile in GetDynamicFiles(rootFolder, idxFolder))
                     {
-                        yield return idxVerb;
+                        yield return idxFile;
                     }
 
-                    // Recursively retrieving inner folder.
+                    // Recursively retrieving inner folders of currently iterated folder.
                     foreach (var idx in AddCustomEndpoints(rootFolder, idxFolder))
                     {
                         yield return idx;
@@ -77,17 +65,31 @@ namespace magic.endpoint.services.slots
         /*
          * Returns all fildes from current folder that matches some HTTP verb.
          */
-        IEnumerable<Node> GetVerbForFolder(string rootFolder, string folder)
+        IEnumerable<Node> GetDynamicFiles(string rootFolder, string folder)
         {
+            /*
+             * Retrieving all Hyperlambda files inside of folder, making sure we
+             * substitute all "windows slashes" with forward slash.
+             */
             var folderFiles = Directory.GetFiles(folder, "*.hl").Select(x => x.Replace("\\", "/"));
 
+            // Looping through each file in currently iterated folder.
             foreach (var idxFile in folderFiles)
             {
+                /*
+                 * This will remove the root folder parts of the path to the file,
+                 * which we're not interested in.
+                 */
                 var filename = idxFile.Substring(rootFolder.Length);
 
+                /*
+                 * Verifying this is an HTTP file, which implies it must
+                 * have the structure of "path.HTTP-VERB.hl", for instance "foo.get.hl".
+                 */
                 var entities = filename.Split('.');
                 if (entities.Length == 3)
                 {
+                    // Returning a Node representing the currently iterated file.
                     if (entities[1] == "delete")
                         yield return GetPath(entities[0], "delete", idxFile);
                     else if (entities[1] == "get")

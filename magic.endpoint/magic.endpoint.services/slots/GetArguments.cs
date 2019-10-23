@@ -6,7 +6,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using Microsoft.Extensions.Configuration;
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
@@ -22,17 +21,6 @@ namespace magic.endpoint.services.slots
     [Slot(Name = "endpoints.get-arguments")]
     public class GetArguments : ISlot
     {
-        readonly IConfiguration _configuration;
-
-        /// <summary>
-        /// Creates an instance of your type.
-        /// </summary>
-        /// <param name="configuration">Configuration of your application.</param>
-        public GetArguments(IConfiguration configuration)
-        {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        }
-
         /// <summary>
         /// Implementation of your slot.
         /// </summary>
@@ -60,14 +48,17 @@ namespace magic.endpoint.services.slots
             // Cleaning out results.
             input.Clear();
 
-            // Figuring out what our root folder is.
-            var rootFolder = Utilities.GetRootFolder(_configuration);
-
-            // Opening file, and trying to find its [.arguments] node.
-            var filename = rootFolder + url.TrimStart('/').Substring(6) + "." + verb + ".hl";
+            /*
+             * Opening file, and trying to find its [.arguments] node.
+             * 
+             * Notice the Substring(6) invocation simply removes the "magic/"
+             * parts of the URL.
+             */
+            var filename = Utilities.RootFolder + url.TrimStart('/').Substring(6) + "." + verb + ".hl";
             if (!File.Exists(filename))
                 throw new ApplicationException($"No endpoint found at '{url}' for verb '{verb}'");
 
+            // Parsing file as Hyperlambda.
             using (var stream = File.OpenRead(filename))
             {
                 var lambda = new Parser(stream).Lambda();

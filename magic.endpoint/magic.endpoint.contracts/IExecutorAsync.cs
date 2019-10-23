@@ -4,8 +4,6 @@
  */
 
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using msft = Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 
 namespace magic.endpoint.contracts
@@ -25,7 +23,7 @@ namespace magic.endpoint.contracts
         /// file on your server.</param>
         /// <param name="args">QUERY arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        Task<ActionResult> ExecuteGetAsync(msft.HttpResponse response, string url, JContainer args);
+        Task<HttpResponse> ExecuteGetAsync(string url, JContainer args);
 
         /// <summary>
         /// Executes an HTTP DELETE endpoint with the specified URL and the
@@ -36,7 +34,7 @@ namespace magic.endpoint.contracts
         /// file on your server.</param>
         /// <param name="args">QUERY arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        Task<ActionResult> ExecuteDeleteAsync(msft.HttpResponse response, string url, JContainer args);
+        Task<HttpResponse> ExecuteDeleteAsync(string url, JContainer args);
 
         /// <summary>
         /// Executes an HTTP POST endpoint with the specified URL and the
@@ -47,7 +45,7 @@ namespace magic.endpoint.contracts
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        Task<ActionResult> ExecutePostAsync(msft.HttpResponse response, string url, JContainer payload);
+        Task<HttpResponse> ExecutePostAsync(string url, JContainer payload);
 
         /// <summary>
         /// Executes an HTTP PUT endpoint with the specified URL and the
@@ -58,6 +56,6 @@ namespace magic.endpoint.contracts
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        Task<ActionResult> ExecutePutAsync(msft.HttpResponse response, string url, JContainer payload);
+        Task<HttpResponse> ExecutePutAsync(string url, JContainer payload);
     }
 }

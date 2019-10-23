@@ -17,5 +17,15 @@ namespace magic.endpoint.contracts
         /// Response HTTP headers that will be returned with HTTP response back to the client.
         /// </summary>
         public Dictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
+
+        /// <summary>
+        /// The resulting HTTP response code.
+        /// </summary>
+        public int Result { get; set; } = 200;
+
+        /// <summary>
+        /// The actual content of your response.
+        /// </summary>
+        public object Content { get; set; }
     }
 }
