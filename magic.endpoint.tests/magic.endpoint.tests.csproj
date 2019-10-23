@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="magic.lambda.json" Version="2.0.1" />
-    <PackageReference Include="magic.lambda.slots" Version="2.0.3" />
+    <PackageReference Include="magic.lambda.json" Version="3.0.0" />
+    <PackageReference Include="magic.lambda.slots" Version="3.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
@@ -16,8 +16,26 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="magic.lambda" Version="2.0.1" />
-    <PackageReference Include="magic.signals" Version="2.0.1" />
+    <PackageReference Include="magic.lambda" Version="3.0.0" />
+    <PackageReference Include="magic.signals" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="header.get.hl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="status.get.hl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="echo.post.hl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="echo.get.hl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="foo-1.get.hl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
