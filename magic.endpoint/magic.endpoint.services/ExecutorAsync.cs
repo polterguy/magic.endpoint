@@ -181,6 +181,15 @@ namespace magic.endpoint.services
                  */
                 foreach (var idxArg in argsNode.Children)
                 {
+                    /*
+                     * Notice, if we are to convert the arguments, this implies no arguments
+                     * can legally have children nodes, since arguments are passed in as HTTP GET QUERY
+                     * parameters, and children nodes in arguments would be a severe error.
+                     */
+                    if (idxArg.Children.Any())
+                        throw new ArgumentException($"The argument '{idxArg.Name}' had children, which is not allowed for GET or DELETE requests.");
+
+                    // Converting argument according to [.arguments] declaration node.
                     idxArg.Value = ConvertArgument(
                         idxArg.Name,
                         idxArg.Get<string>(),
@@ -196,6 +205,7 @@ namespace magic.endpoint.services
                  * allow for passing in any type of objects - At which point
                  * sanity checking is left as an exercize for the particular
                  * endpoint implementation.
+                 * 
                  * TODO: Consider sanity checking arguments recursively, which
                  * would imply supporting "any argument type", implies additional
                  * logic, possibly avoiding an [.arguments] declaration on
