@@ -93,7 +93,7 @@ namespace magic.endpoint.controller
             // Making sure we attach any HTTP headers to the response.
             foreach (var idx in response.Headers)
             {
-                response.Headers.Add(idx.Key, idx.Value);
+                Response.Headers.Add(idx.Key, idx.Value);
             }
 
             // Retrieving result, if any, and returns it to caller.
