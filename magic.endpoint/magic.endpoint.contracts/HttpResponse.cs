@@ -11,7 +11,7 @@ namespace magic.endpoint.contracts
     /// Class to help manipulate the HTTP response, by for instance allowing you to 
     /// add/modify its HTTP headers, etc.
     /// </summary>
-	public class HttpResponse
+    public class HttpResponse
     {
         /// <summary>
         /// Response HTTP headers that will be returned with HTTP response back to the client.
