@@ -1,6 +1,6 @@
 ﻿
 /*
- * Magic, Copyright(c) Thomas Hansen 2019, thomas@gaiasoul.com, all rights reserved.
+ * Magic, Copyright(c) Thomas Hansen 2019, thomas@servergardens.com, all rights reserved.
  * See the enclosed LICENSE file for details.
  */
 
