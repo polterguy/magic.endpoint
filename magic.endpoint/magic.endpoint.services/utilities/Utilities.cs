@@ -8,9 +8,10 @@ using System;
 
 namespace magic.endpoint.services.utilities
 {
-    /*
-     * Utility class for Magic endpoint.
-     */
+    /// <summary>
+    /// Utility class, mostly here to retrieve and set the RootFolder of where
+    /// to resolve Hyperlambda files.
+    /// </summary>
     public static class Utilities
     {
         /// <summary>

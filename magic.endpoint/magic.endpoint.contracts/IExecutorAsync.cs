@@ -18,7 +18,6 @@ namespace magic.endpoint.contracts
         /// Executes an HTTP GET endpoint with the specified URL and the
         /// specified arguments.
         /// </summary>
-        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="args">QUERY arguments to your endpoint.</param>
@@ -40,7 +39,6 @@ namespace magic.endpoint.contracts
         /// Executes an HTTP POST endpoint with the specified URL and the
         /// specified payload.
         /// </summary>
-        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
@@ -51,7 +49,6 @@ namespace magic.endpoint.contracts
         /// Executes an HTTP PUT endpoint with the specified URL and the
         /// specified payload.
         /// </summary>
-        /// <param name="response">HTTP response of your request.</param>
         /// <param name="url">URL that was requested, mapping to some Hyperlambda
         /// file on your server.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
