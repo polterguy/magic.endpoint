@@ -46,6 +46,7 @@ namespace magic.endpoint.tests
         {
             var type = typeof(T);
             var result = AppDomain.CurrentDomain.GetAssemblies()
+                .Where(x => !x.IsDynamic && !x.FullName.StartsWith("Microsoft"))
                 .SelectMany(s => s.GetTypes())
                 .Where(p => type.IsAssignableFrom(p) && !p.IsInterface && !p.IsAbstract);
 
