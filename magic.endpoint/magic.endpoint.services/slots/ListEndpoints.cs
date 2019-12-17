@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
+using magic.endpoint.contracts;
 using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
 
@@ -37,6 +38,10 @@ namespace magic.endpoint.services.slots
             signaler.Signal("auth.ticket.get", node);
             var roles = node.Children.Select(x => x.GetEx<string>()).ToArray();
             input.AddRange(AddCustomEndpoints(roles, Utilities.RootFolder, Utilities.RootFolder).ToList());
+
+            // Informing client that response can be cached for 5 minutes
+            var response = signaler.Peek<HttpResponse>("http.response");
+            response.Headers.Add("Cache-Control", "private, max-age=300");
         }
 
         #region [ -- Private helper methods -- ]
