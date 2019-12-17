@@ -29,7 +29,14 @@ namespace magic.endpoint.services.slots
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            input.AddRange(AddCustomEndpoints(Utilities.RootFolder, Utilities.RootFolder).ToList());
+            /*
+             * Retrieving user credentials before we start process, such that we can avoid
+             * returning endpoints the user doesn't have access to.
+             */
+            var node = new Node("");
+            signaler.Signal("auth.ticket.get", node);
+            var roles = node.Children.Select(x => x.GetEx<string>()).ToArray();
+            input.AddRange(AddCustomEndpoints(roles, Utilities.RootFolder, Utilities.RootFolder).ToList());
         }
 
         #region [ -- Private helper methods -- ]
@@ -38,7 +45,7 @@ namespace magic.endpoint.services.slots
          * Recursively traverses your folder for any dynamic Hyperlambda
          * endpoints, and returns the result to caller.
          */
-        IEnumerable<Node> AddCustomEndpoints(string rootFolder, string currentFolder)
+        IEnumerable<Node> AddCustomEndpoints(string[] roles, string rootFolder, string currentFolder)
         {
             // Looping through each folder inside of "currentFolder".
             foreach (var idxFolder in Directory.GetDirectories(currentFolder).Select(x => x.Replace("\\", "/")))
@@ -48,13 +55,13 @@ namespace magic.endpoint.services.slots
                 if (Utilities.IsLegalHttpName(folder))
                 {
                     // Retrieves all files inside of currently iterated folder.
-                    foreach (var idxFile in GetDynamicFiles(rootFolder, idxFolder))
+                    foreach (var idxFile in GetDynamicFiles(roles, rootFolder, idxFolder))
                     {
                         yield return idxFile;
                     }
 
                     // Recursively retrieving inner folders of currently iterated folder.
-                    foreach (var idx in AddCustomEndpoints(rootFolder, idxFolder))
+                    foreach (var idx in AddCustomEndpoints(roles, rootFolder, idxFolder))
                     {
                         yield return idx;
                     }
@@ -65,7 +72,7 @@ namespace magic.endpoint.services.slots
         /*
          * Returns all fildes from current folder that matches some HTTP verb.
          */
-        IEnumerable<Node> GetDynamicFiles(string rootFolder, string folder)
+        IEnumerable<Node> GetDynamicFiles(string[] roles, string rootFolder, string folder)
         {
             /*
              * Retrieving all Hyperlambda files inside of folder, making sure we
@@ -90,14 +97,17 @@ namespace magic.endpoint.services.slots
                 if (entities.Length == 3)
                 {
                     // Returning a Node representing the currently iterated file.
-                    if (entities[1] == "delete")
-                        yield return GetPath(entities[0], "delete", idxFile);
-                    else if (entities[1] == "get")
-                        yield return GetPath(entities[0], "get", idxFile);
-                    else if (entities[1] == "post")
-                        yield return GetPath(entities[0], "post", idxFile);
-                    else if (entities[1] == "put")
-                        yield return GetPath(entities[0], "put", idxFile);
+                    switch (entities[1])
+                    {
+                        case "delete":
+                        case "put":
+                        case "post":
+                        case "get":
+                            var tmp = GetPath(roles, entities[0], entities[1], idxFile);
+                            if (tmp != null)
+                                yield return tmp;
+                            break;
+                    }
                 }
             }
             yield break;
@@ -107,7 +117,7 @@ namespace magic.endpoint.services.slots
          * Returns a single node, representing the endpoint given
          * as verb/filename/path, and its associated meta information.
          */
-        Node GetPath(string path, string verb, string filename)
+        Node GetPath(string[] roles, string path, string verb, string filename)
         {
             /*
              * Creating our result node, and making sure we return path and verb.
@@ -128,10 +138,16 @@ namespace magic.endpoint.services.slots
                     if (idx.Name == "auth.ticket.verify")
                     {
                         var auth = new Node("auth");
+                        var hasRole = false;
                         foreach (var idxRole in idx.GetEx<string>()?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>())
                         {
-                            auth.Add(new Node("", idxRole.Trim()));
+                            var role = idxRole.Trim();
+                            auth.Add(new Node("", role));
+                            if (!hasRole && roles.Contains(role))
+                                hasRole = true;
                         }
+                        if (!hasRole && auth.Children.Any())
+                            return null; // Current user is not authenticated to see this endpoint!
                         result.Add(auth);
                     }
                 }
