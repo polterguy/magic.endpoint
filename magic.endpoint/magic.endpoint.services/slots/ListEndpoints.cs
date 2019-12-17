@@ -146,31 +146,46 @@ namespace magic.endpoint.services.slots
                     result.Add(argsNode);
                 }
 
-                /*
-                 * Then checking to see if this is a dynamically created CRUD wrapper endpoint.
-                 * Notice, we only do this for "GET".
-                 */
-                if (verb == "get")
+                // Then checking to see if this is a dynamically created CRUD wrapper endpoint.
+                var slotNode = lambda.Children.LastOrDefault(x => x.Name == "wait.slots.signal");
+                if (slotNode != null &&
+                    slotNode.Children.Any(x => x.Name == "database") &&
+                    slotNode.Children.Any(x => x.Name == "table"))
                 {
-                    var slotNode = lambda.Children.LastOrDefault(x => x.Name == "wait.slots.signal");
-                    if (slotNode != null &&
-                        slotNode.Children.Any(x => x.Name == "database") &&
-                        slotNode.Children.Any(x => x.Name == "table") &&
-                        slotNode.Children.Any(x => x.Name == "columns"))
+                    /*
+                     * This is a database CRUD HTTP endpoint, now figuring out what type of endpoint it is.
+                     */
+                    switch (verb)
                     {
-                        // This is a database "read" HTTP endpoint, hence we return its [columns] as [output].
-                        var resultNode = new Node("returns");
-                        resultNode.AddRange(slotNode.Children.First(x => x.Name == "columns").Children.Select(x => x.Clone()));
-                        if (args != null)
-                        {
-                            foreach (var idx in resultNode.Children)
+                        case "get":
+                            if (slotNode.Children.Any(x => x.Name == "columns"))
                             {
-                                // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
-                                idx.Value = args.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
-                            }
-                        }
-                        result.Add(resultNode);
-                        result.Add(new Node("array-result", true));
+                                var resultNode = new Node("returns");
+                                resultNode.AddRange(slotNode.Children.First(x => x.Name == "columns").Children.Select(x => x.Clone()));
+                                if (args != null)
+                                {
+                                    foreach (var idx in resultNode.Children)
+                                    {
+                                        // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
+                                        idx.Value = args.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
+                                    }
+                                }
+                                result.Add(resultNode);
+                                result.Add(new Node("array", true));
+                                result.Add(new Node("type", "crud-read"));
+                            } break;
+
+                        case "post":
+                            result.Add(new Node("type", "crud-create"));
+                            break;
+
+                        case "put":
+                            result.Add(new Node("type", "crud-update"));
+                            break;
+
+                        case "delete":
+                            result.Add(new Node("type", "crud-delete"));
+                            break;
                     }
                 }
             }
