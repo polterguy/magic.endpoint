@@ -138,7 +138,7 @@ namespace magic.endpoint.services.slots
                     if (idx.Name == "auth.ticket.verify")
                     {
                         if (roles.Length == 0)
-                            return null; // User is not authenticated at all
+                            return null; // User is not authenticated at all, and endpoint requires authentication.
 
                         var auth = new Node("auth");
                         var hasRole = false;
@@ -168,9 +168,7 @@ namespace magic.endpoint.services.slots
 
                 // Then checking to see if this is a dynamically created CRUD wrapper endpoint.
                 var slotNode = lambda.Children.LastOrDefault(x => x.Name == "wait.slots.signal");
-                if (slotNode != null &&
-                    slotNode.Children.Any(x => x.Name == "database") &&
-                    slotNode.Children.Any(x => x.Name == "table"))
+                if (slotNode != null && slotNode.Children.Any(x => x.Name == "database") && slotNode.Children.Any(x => x.Name == "table"))
                 {
                     /*
                      * This is a database CRUD HTTP endpoint, now figuring out what type of endpoint it is.
