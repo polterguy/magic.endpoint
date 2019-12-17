@@ -105,7 +105,7 @@ namespace magic.endpoint.services.slots
 
         /*
          * Returns a single node, representing the endpoint given
-         * as verb/filename/path.
+         * as verb/filename/path, and its associated meta information.
          */
         Node GetPath(string path, string verb, string filename)
         {
@@ -120,7 +120,6 @@ namespace magic.endpoint.services.slots
              * Reading the file, to figure out what type of authorization the
              * currently traversed endpoint has.
              */
-            var auth = new Node("auth");
             using (var stream = File.OpenRead(filename))
             {
                 var lambda = new Parser(stream).Lambda();
@@ -128,15 +127,53 @@ namespace magic.endpoint.services.slots
                 {
                     if (idx.Name == "auth.ticket.verify")
                     {
-                        foreach (var idxRole in idx.GetEx<string>()
-                            .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                        var auth = new Node("auth");
+                        foreach (var idxRole in idx.GetEx<string>()?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>())
                         {
                             auth.Add(new Node("", idxRole.Trim()));
                         }
+                        result.Add(auth);
+                    }
+                }
+
+                // Then figuring out the endpoints input arguments, if any.
+                var args = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
+                if (args != null)
+                {
+                    // Endpoint have declared its input arguments.
+                    var argsNode = new Node("input");
+                    argsNode.AddRange(args.Children.Select(x => x.Clone()));
+                    result.Add(argsNode);
+                }
+
+                /*
+                 * Then checking to see if this is a dynamically created CRUD wrapper endpoint.
+                 * Notice, we only do this for "GET".
+                 */
+                if (verb == "get")
+                {
+                    var slotNode = lambda.Children.LastOrDefault(x => x.Name == "wait.slots.signal");
+                    if (slotNode != null &&
+                        slotNode.Children.Any(x => x.Name == "database") &&
+                        slotNode.Children.Any(x => x.Name == "table") &&
+                        slotNode.Children.Any(x => x.Name == "columns"))
+                    {
+                        // This is a database "read" HTTP endpoint, hence we return its [columns] as [output].
+                        var resultNode = new Node("returns");
+                        resultNode.AddRange(slotNode.Children.First(x => x.Name == "columns").Children.Select(x => x.Clone()));
+                        if (args != null)
+                        {
+                            foreach (var idx in resultNode.Children)
+                            {
+                                // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
+                                idx.Value = args.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
+                            }
+                        }
+                        result.Add(resultNode);
+                        result.Add(new Node("array-result", true));
                     }
                 }
             }
-            result.Add(auth);
 
             // Returning results to caller.
             return result;
