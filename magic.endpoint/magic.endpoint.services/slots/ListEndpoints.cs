@@ -137,6 +137,9 @@ namespace magic.endpoint.services.slots
                 {
                     if (idx.Name == "auth.ticket.verify")
                     {
+                        if (roles.Length == 0)
+                            return null; // User is not authenticated at all
+
                         var auth = new Node("auth");
                         var hasRole = false;
                         foreach (var idxRole in idx.GetEx<string>()?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>())
@@ -148,6 +151,7 @@ namespace magic.endpoint.services.slots
                         }
                         if (!hasRole && auth.Children.Any())
                             return null; // Current user is not authenticated to see this endpoint!
+
                         result.Add(auth);
                     }
                 }
