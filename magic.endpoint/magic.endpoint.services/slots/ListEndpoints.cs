@@ -171,6 +171,14 @@ namespace magic.endpoint.services.slots
                     result.Add(argsNode);
                 }
 
+                // Then figuring out the endpoints input arguments, if any.
+                var descriptionNode = lambda.Children.FirstOrDefault(x => x.Name == ".description");
+                if (descriptionNode != null)
+                {
+                    // Endpoint have a descriptive node.
+                    result.Add(new Node("description", descriptionNode.GetEx<string>()));
+                }
+
                 // Then checking to see if this is a dynamically created CRUD wrapper endpoint.
                 var slotNode = lambda.Children.LastOrDefault(x => x.Name == "wait.slots.signal");
                 if (slotNode != null && slotNode.Children.Any(x => x.Name == "database") && slotNode.Children.Any(x => x.Name == "table"))
