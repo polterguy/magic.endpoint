@@ -49,7 +49,9 @@ namespace magic.endpoint.services.slots
         IEnumerable<Node> AddCustomEndpoints(string[] roles, string rootFolder, string currentFolder)
         {
             // Looping through each folder inside of "currentFolder".
-            foreach (var idxFolder in Directory.GetDirectories(currentFolder).Select(x => x.Replace("\\", "/")))
+            var folders = Directory.GetDirectories(currentFolder).Select(x => x.Replace("\\", "/")).ToList();
+            folders.Sort();
+            foreach (var idxFolder in folders)
             {
                 // Making sure files within this folder is legally resolved.
                 var folder = idxFolder.Substring(rootFolder.Length);
@@ -79,7 +81,8 @@ namespace magic.endpoint.services.slots
              * Retrieving all Hyperlambda files inside of folder, making sure we
              * substitute all "windows slashes" with forward slash.
              */
-            var folderFiles = Directory.GetFiles(folder, "*.hl").Select(x => x.Replace("\\", "/"));
+            var folderFiles = Directory.GetFiles(folder, "*.hl").Select(x => x.Replace("\\", "/")).ToList();
+            folderFiles.Sort();
 
             // Looping through each file in currently iterated folder.
             foreach (var idxFile in folderFiles)
