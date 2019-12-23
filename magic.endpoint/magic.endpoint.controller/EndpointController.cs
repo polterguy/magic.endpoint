@@ -4,8 +4,10 @@
  */
 
 using System;
+using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using magic.endpoint.contracts;
@@ -98,7 +100,11 @@ namespace magic.endpoint.controller
 
             // Retrieving result, if any, and returns it to caller.
             if (response.Content != null)
+            {
+                if (response.Content is Stream stream)
+                    return new FileStreamResult(stream, response.Headers["Content-Type"]);
                 return new ObjectResult(response.Content) { StatusCode = response.Result };
+            }
 
             // If no return value exists, we return the status code only to caller.
             return new StatusCodeResult(response.Result);

@@ -245,7 +245,11 @@ namespace magic.endpoint.services
         {
             // Checking if we have a value.
             if (lambda.Value != null)
+            {
+                if (lambda.Value is Stream)
+                    return lambda.Value;
                 return lambda.Get<string>();
+            }
 
             // Checking if we have children.
             if (lambda.Children.Any())
