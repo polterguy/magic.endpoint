@@ -191,18 +191,28 @@ namespace magic.endpoint.services.slots
                             if (slotNode.Children.Any(x => x.Name == "columns"))
                             {
                                 var resultNode = new Node("returns");
-                                resultNode.AddRange(slotNode.Children.First(x => x.Name == "columns").Children.Select(x => x.Clone()));
-                                if (args != null)
+                                if (slotNode.Children.First(x => x.Name == "columns").Children.Any(x => x.Name == "count(*) as count"))
                                 {
-                                    foreach (var idx in resultNode.Children)
-                                    {
-                                        // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
-                                        idx.Value = args.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
-                                    }
+                                    resultNode.Add(new Node("count", "long"));
+                                    result.Add(resultNode);
+                                    result.Add(new Node("array", false));
+                                    result.Add(new Node("type", "crud-count"));
                                 }
-                                result.Add(resultNode);
-                                result.Add(new Node("array", true));
-                                result.Add(new Node("type", "crud-read"));
+                                else
+                                {
+                                    resultNode.AddRange(slotNode.Children.First(x => x.Name == "columns").Children.Select(x => x.Clone()));
+                                    if (args != null)
+                                    {
+                                        foreach (var idx in resultNode.Children)
+                                        {
+                                            // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
+                                            idx.Value = args.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
+                                        }
+                                    }
+                                    result.Add(resultNode);
+                                    result.Add(new Node("array", true));
+                                    result.Add(new Node("type", "crud-read"));
+                                }
                             } break;
 
                         case "post":
