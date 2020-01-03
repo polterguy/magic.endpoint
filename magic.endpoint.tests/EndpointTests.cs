@@ -77,6 +77,19 @@ namespace magic.endpoint.tests
                 ["input1"] = "foo",
                 ["input2"] = 5,
                 ["input3"] = true,
+                ["input4"] = new JArray
+                {
+                    new JObject
+                    {
+                        ["arr1"] = true,
+                        ["arr2"] = "57", // Conversion should occur!
+                    }
+                },
+                ["input5"] = new JObject
+                {
+                    ["obj1"] = "foo",
+                    ["obj2"] = "true", // Conversion should occur!
+                },
             };
             var result = await executor.ExecutePostAsync("/echo", input);
             Assert.Equal(200, result.Result);
@@ -86,6 +99,13 @@ namespace magic.endpoint.tests
             Assert.Equal("foo", j["input1"].Value<string>());
             Assert.Equal(5, j["input2"].Value<int>());
             Assert.True(j["input3"].Value<bool>());
+            Assert.NotNull(j["input4"].Value<JArray>());
+            Assert.Single(j["input4"].Value<JArray>());
+            Assert.True(j["input4"].Value<JArray>()[0]["arr1"].Value<bool>());
+            Assert.Equal(57, j["input4"].Value<JArray>()[0]["arr2"].Value<int>());
+            Assert.NotNull(j["input5"].Value<JObject>());
+            Assert.Equal("foo", j["input5"].Value<JObject>()["obj1"].Value<string>());
+            Assert.True(j["input5"].Value<JObject>()["obj2"].Value<bool>());
         }
     }
 }

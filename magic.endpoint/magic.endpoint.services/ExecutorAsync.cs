@@ -166,17 +166,21 @@ namespace magic.endpoint.services
             _signaler.Signal(".json2lambda-raw", argsNode);
 
             /*
-             * Checking if we need to convert the individual arguments, which
-             * is true if they were supplied as QUERY parameters, since
-             * everything is passed in as strings if it's a QUERY parameter.
+             * Checking if we need to convert the individual arguments.
+             * 
+             * Notice, we only attempt to convert arguments if Hyperlambda endpoint
+             * file contains an [.arguments] node.
              */
-            if (convertArguments)
+            if (convertArguments && fileArgs != null)
             {
                 /*
                  * Notice, we might have to convert the arguments passed into this endpoint,
                  * unless they were passed in as something else but a string.
+                 * 
+                 * If arguments are given to this method, that are *not* strings, we assume they're
+                 * already of the correct type somehow.
                  */
-                foreach (var idxArg in argsNode.Children.Where(x => x.Value is string))
+                foreach (var idxArg in argsNode.Children)
                 {
                     /*
                      * Notice, GET and DELETE invocations cannot legally have children nodes in their arguments.
@@ -185,10 +189,7 @@ namespace magic.endpoint.services
                         throw new ArgumentException($"The argument '{idxArg.Name}' had children, which is not allowed for GET or DELETE requests.");
 
                     // Converting argument according to [.arguments] declaration node.
-                    idxArg.Value = ConvertArgument(
-                        idxArg.Name,
-                        idxArg.Get<string>(),
-                        fileArgs.Children.FirstOrDefault(x => x.Name == idxArg.Name));
+                    idxArg.Value = ConvertArgument(idxArg, fileArgs.Children.FirstOrDefault(x => x.Name == idxArg.Name));
                 }
             }
             else if (fileArgs != null)
@@ -225,15 +226,40 @@ namespace magic.endpoint.services
          * declaration node. Making sure the argument is legally given to the
          * endpoint.
          */
-        object ConvertArgument(string name, string value, Node declaration)
+        object ConvertArgument(Node node, Node declaration)
         {
             if (declaration == null)
-                throw new ApplicationException($"I don't know how to handle the '{name}' argument");
+                throw new ApplicationException($"I don't know how to handle the '{node.Name}' argument");
 
             var type = declaration.Get<string>();
             if (string.IsNullOrEmpty(type))
-                return value; // No conversion can be done!
-            return Parser.ConvertStringToken(value, type);
+            {
+                // No conversion can be done on main node, but declaration node might have children.
+                if (declaration.Children.Any())
+                {
+                    if (node.Children.Count() == 1 && node.Children.First().Name == "." && node.Children.First().Value == null)
+                    {
+                        // Array!
+                        if (declaration.Children.Count() != 1 || declaration.Children.First().Name != "." || declaration.Children.First().Value != null)
+                            throw new ArgumentException($"We were given an array argument ('{node.Children.First().Value}') where an object argument was expected.");
+
+                        foreach (var idxArg in node.Children.First().Children)
+                        {
+                            idxArg.Value = ConvertArgument(idxArg, declaration.Children.First().Children.FirstOrDefault(x => x.Name == idxArg.Name));
+                        }
+                    }
+                    else
+                    {
+                        // Object!
+                        foreach (var idxArg in node.Children)
+                        {
+                            idxArg.Value = ConvertArgument(idxArg, declaration.Children.FirstOrDefault(x => x.Name == idxArg.Name));
+                        }
+                    }
+                }
+                return node.Value; 
+            }
+            return Parser.ConvertValue(node.Value, type);
         }
 
         /*

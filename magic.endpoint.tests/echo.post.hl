@@ -3,4 +3,11 @@
    input1:string
    input2:int
    input3:bool
+   input4
+      .
+         arr1:bool
+         arr2:int
+   input5
+      obj1:string
+      obj2:bool
 slots.return-nodes:x:@.arguments/*
