@@ -173,18 +173,13 @@ namespace magic.endpoint.services
             if (convertArguments)
             {
                 /*
-                 * Notice, if we need to convert the arguments, it implies
-                 * they were given as QUERY parameters - At which point there
-                 * will not be recursively given arguments, since that would
-                 * be impossible. Hence, we can ignore the children collection
-                 * of each argument.
+                 * Notice, we might have to convert the arguments passed into this endpoint,
+                 * unless they were passed in as something else but a string.
                  */
-                foreach (var idxArg in argsNode.Children.Where(x => x.Value != null))
+                foreach (var idxArg in argsNode.Children.Where(x => x.Value is string))
                 {
                     /*
-                     * Notice, if we are to convert the arguments, this implies no arguments
-                     * can legally have children nodes, since arguments are passed in as HTTP GET QUERY
-                     * parameters, and children nodes in arguments would be a severe error.
+                     * Notice, GET and DELETE invocations cannot legally have children nodes in their arguments.
                      */
                     if ((verb == "get" || verb == "delete") && idxArg.Children.Any())
                         throw new ArgumentException($"The argument '{idxArg.Name}' had children, which is not allowed for GET or DELETE requests.");
