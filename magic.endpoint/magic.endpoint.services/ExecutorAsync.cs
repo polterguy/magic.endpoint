@@ -70,7 +70,7 @@ namespace magic.endpoint.services
         /// <returns>The result of the evaluation.</returns>
         public async Task<HttpResponse> ExecutePostAsync(string url, JContainer payload)
         {
-            return await ExecuteUrl(url, "post", payload, false);
+            return await ExecuteUrl(url, "post", payload);
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace magic.endpoint.services
         /// <returns>The result of the evaluation.</returns>
         public async Task<HttpResponse> ExecutePutAsync(string url, JContainer payload)
         {
-            return await ExecuteUrl(url, "put", payload, false);
+            return await ExecuteUrl(url, "put", payload);
         }
 
         #region [ -- Private helper methods -- ]
@@ -119,7 +119,7 @@ namespace magic.endpoint.services
                  * extent sanity check the arguments, and possibly convert
                  * them according to the declaration node.
                  */
-                AttachArguments(lambda, arguments, convertArguments);
+                AttachArguments(lambda, arguments, verb, convertArguments);
 
                 /*
                  * Evaluating our lambda async, making sure we allow for the
@@ -148,7 +148,7 @@ namespace magic.endpoint.services
          * and also possibly converting the arguments to their correct type in
          * the process.
          */
-        void AttachArguments(Node lambda, JContainer arguments, bool convertArguments)
+        void AttachArguments(Node lambda, JContainer arguments, string verb, bool convertArguments)
         {
             /*
              * Checking if file has [.arguments] node, and removing it to
@@ -179,14 +179,14 @@ namespace magic.endpoint.services
                  * be impossible. Hence, we can ignore the children collection
                  * of each argument.
                  */
-                foreach (var idxArg in argsNode.Children)
+                foreach (var idxArg in argsNode.Children.Where(x => x.Value != null))
                 {
                     /*
                      * Notice, if we are to convert the arguments, this implies no arguments
                      * can legally have children nodes, since arguments are passed in as HTTP GET QUERY
                      * parameters, and children nodes in arguments would be a severe error.
                      */
-                    if (idxArg.Children.Any())
+                    if ((verb == "get" || verb == "delete") && idxArg.Children.Any())
                         throw new ArgumentException($"The argument '{idxArg.Name}' had children, which is not allowed for GET or DELETE requests.");
 
                     // Converting argument according to [.arguments] declaration node.
