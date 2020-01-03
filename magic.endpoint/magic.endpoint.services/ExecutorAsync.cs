@@ -257,7 +257,12 @@ namespace magic.endpoint.services
                         }
                     }
                 }
-                return node.Value; 
+                return node.Value;
+
+            } else if (type == "*")
+            {
+                // Any object tolerated!
+                return node.Value;
             }
             return Parser.ConvertValue(node.Value, type);
         }

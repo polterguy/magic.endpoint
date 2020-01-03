@@ -3,6 +3,7 @@
  * See the enclosed LICENSE file for details.
  */
 
+using System;
 using System.Threading.Tasks;
 using Xunit;
 using Newtonsoft.Json.Linq;
@@ -10,7 +11,7 @@ using magic.endpoint.contracts;
 
 namespace magic.endpoint.tests
 {
-    public class AuthTests
+    public class EndpointTests
     {
         [Fact]
         public async Task ExecuteSimpleGet()
@@ -83,7 +84,14 @@ namespace magic.endpoint.tests
                     {
                         ["arr1"] = true,
                         ["arr2"] = "57", // Conversion should occur!
-                    }
+                        ["arr3"] = "any-object", // Any object tolerated
+                    },
+                    new JObject
+                    {
+                        ["arr1"] = false,
+                        ["arr2"] = 67,
+                        ["arr3"] = Guid.NewGuid(), // Any object tolerated
+                    },
                 },
                 ["input5"] = new JObject
                 {
@@ -100,9 +108,13 @@ namespace magic.endpoint.tests
             Assert.Equal(5, j["input2"].Value<int>());
             Assert.True(j["input3"].Value<bool>());
             Assert.NotNull(j["input4"].Value<JArray>());
-            Assert.Single(j["input4"].Value<JArray>());
+            Assert.Equal(2, j["input4"].Value<JArray>().Count);
             Assert.True(j["input4"].Value<JArray>()[0]["arr1"].Value<bool>());
             Assert.Equal(57, j["input4"].Value<JArray>()[0]["arr2"].Value<int>());
+            Assert.Equal("any-object", j["input4"].Value<JArray>()[0]["arr3"].Value<string>());
+            Assert.False(j["input4"].Value<JArray>()[1]["arr1"].Value<bool>());
+            Assert.Equal(67, j["input4"].Value<JArray>()[1]["arr2"].Value<int>());
+            Assert.True(j["input4"].Value<JArray>()[1]["arr3"].Value<Guid>().ToString() != Guid.Empty.ToString());
             Assert.NotNull(j["input5"].Value<JObject>());
             Assert.Equal("foo", j["input5"].Value<JObject>()["obj1"].Value<string>());
             Assert.True(j["input5"].Value<JObject>()["obj2"].Value<bool>());
