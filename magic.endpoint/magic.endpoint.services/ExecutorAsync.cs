@@ -230,7 +230,10 @@ namespace magic.endpoint.services
             if (declaration == null)
                 throw new ApplicationException($"I don't know how to handle the '{name}' argument");
 
-            return Parser.ConvertStringToken(value, declaration.Get<string>());
+            var type = declaration.Get<string>();
+            if (string.IsNullOrEmpty(type))
+                return value; // No conversion can be done!
+            return Parser.ConvertStringToken(value, type);
         }
 
         /*
