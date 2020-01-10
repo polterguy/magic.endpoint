@@ -231,6 +231,9 @@ namespace magic.endpoint.services
             if (declaration == null)
                 throw new ApplicationException($"I don't know how to handle the '{node.Name}' argument");
 
+            if (node.Value == null)
+                return null; // Allowing for null values
+
             var type = declaration.Get<string>();
             if (string.IsNullOrEmpty(type))
             {
