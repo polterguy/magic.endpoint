@@ -101,8 +101,19 @@ namespace magic.endpoint.controller
             // Retrieving result, if any, and returns it to caller.
             if (response.Content != null)
             {
+                // Checking if this is a stream content result.
                 if (response.Content is Stream stream)
                     return new FileStreamResult(stream, response.Headers["Content-Type"]);
+
+                // Figuring out type of result, and acting accordingly.
+                var contentType = response.Headers.ContainsKey("Content-Type") ? response.Headers["Content-Type"] : "application/json";
+                if (contentType == "application/json")
+                {
+                    if (response.Content is string strContent)
+                        return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
+
+                    // Notice, the default object result below will do its default magic for us here.
+                }
                 return new ObjectResult(response.Content) { StatusCode = response.Result };
             }
 
