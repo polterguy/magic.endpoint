@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
-using magic.endpoint.contracts;
 using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
 
@@ -170,7 +169,7 @@ namespace magic.endpoint.services.slots
                     result.Add(argsNode);
                 }
 
-                // Then figuring out the endpoints input arguments, if any.
+                // Then figuring out the endpoints input description, if any.
                 var descriptionNode = lambda.Children.FirstOrDefault(x => x.Name == ".description");
                 if (descriptionNode != null)
                 {
@@ -226,6 +225,20 @@ namespace magic.endpoint.services.slots
                         case "delete":
                             result.Add(new Node("type", "crud-delete"));
                             break;
+                    }
+                }
+                else
+                {
+                    // Checking if this is a Custom SQL type of endpoint.
+                    var sqlConnectNode = lambda.Children.LastOrDefault(x => x.Name == "wait.mysql.connect");
+                    if (sqlConnectNode != null)
+                    {
+                        // Checking if this has a x.select type of node of some sort.
+                        var sqlSelectNode = sqlConnectNode.Children.LastOrDefault(x => x.Name.EndsWith(".select"));
+                        {
+                            // This is a Custom SQL type of endpoint of some sort.
+                            result.Add(new Node("type", "crud-sql"));
+                        }
                     }
                 }
             }
