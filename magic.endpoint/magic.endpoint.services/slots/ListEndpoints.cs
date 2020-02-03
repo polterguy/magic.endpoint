@@ -236,8 +236,17 @@ namespace magic.endpoint.services.slots
                         // Checking if this has a x.select type of node of some sort.
                         var sqlSelectNode = sqlConnectNode.Children.LastOrDefault(x => x.Name.EndsWith(".select"));
                         {
-                            // This is a Custom SQL type of endpoint of some sort.
-                            result.Add(new Node("type", "crud-sql"));
+                            // Checking if this is a statistics type of endpoint.
+                            if (lambda.Children.FirstOrDefault(x => x.Name == ".is-statistics")?.Get<bool>() ?? false)
+                            {
+                                // This is a Custom SQL type of endpoint of some sort.
+                                result.Add(new Node("type", "crud-statistics"));
+                            }
+                            else
+                            {
+                                // This is a Custom SQL type of endpoint of some sort.
+                                result.Add(new Node("type", "crud-sql"));
+                            }
                         }
                     }
                 }
