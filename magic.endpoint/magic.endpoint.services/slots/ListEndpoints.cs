@@ -230,7 +230,7 @@ namespace magic.endpoint.services.slots
                 else
                 {
                     // Checking if this is a Custom SQL type of endpoint.
-                    var sqlConnectNode = lambda.Children.LastOrDefault(x => x.Name == "wait.mysql.connect");
+                    var sqlConnectNode = lambda.Children.LastOrDefault(x => x.Name == "wait.mysql.connect" || x.Name == "wait.mssql.connect");
                     if (sqlConnectNode != null)
                     {
                         // Checking if this has a x.select type of node of some sort.
