@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using magic.node;
 using magic.node.extensions;
@@ -84,6 +85,18 @@ namespace magic.endpoint.services
         public async Task<HttpResponse> ExecutePutAsync(string url, JContainer payload)
         {
             return await ExecuteUrl(url, "put", payload);
+        }
+
+        /// <summary>
+        /// Retrieves a dynamic document, as in one not starting with "magic/" as its URL.
+        /// Useful for CMS systems, and similar things
+        /// </summary>
+        /// <param name="url">Entire URL that was requested, including QUERY parameters.</param>
+        /// <returns>The document requested.</returns>
+        public async Task<ActionResult> RetrieveDocument(string url)
+        {
+            // TODO: Implement
+            return new OkResult();
         }
 
         #region [ -- Private helper methods -- ]

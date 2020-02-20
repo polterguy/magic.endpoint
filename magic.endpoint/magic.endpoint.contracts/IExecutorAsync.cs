@@ -4,6 +4,7 @@
  */
 
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 
 namespace magic.endpoint.contracts
@@ -54,5 +55,13 @@ namespace magic.endpoint.contracts
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePutAsync(string url, JContainer payload);
+
+        /// <summary>
+        /// Retrieves a dynamic document, as in one not starting with "magic/" as its URL.
+        /// Useful for CMS systems, and similar things
+        /// </summary>
+        /// <param name="url">Entire URL that was requested, including QUERY parameters.</param>
+        /// <returns>The document requested.</returns>
+        Task<ActionResult> RetrieveDocument(string url);
     }
 }

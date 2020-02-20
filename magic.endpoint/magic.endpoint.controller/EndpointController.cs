@@ -7,7 +7,6 @@ using System;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using magic.endpoint.contracts;
@@ -19,9 +18,6 @@ namespace magic.endpoint.controller
     /// and a verb, allowing the caller tooptionally pass in arguments, if the
     /// endpoint can accept arguments.
     /// </summary>
-    [Route("magic")]
-    [Consumes("application/json")]
-    [Produces("application/json")]
     public class EndpointController : ControllerBase
     {
         readonly IExecutorAsync _executor;
@@ -43,8 +39,15 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Get(string url)
         {
-            var result = await _executor.ExecuteGetAsync(WebUtility.UrlDecode(url), GetPayload());
-            return TransformToActionResult(result);
+            if (url.StartsWith("magic/"))
+            {
+                var result = await _executor.ExecuteGetAsync(WebUtility.UrlDecode(url.Substring(6)), GetPayload());
+                return TransformToActionResult(result);
+            }
+            else
+            {
+                return await _executor.RetrieveDocument(WebUtility.UrlDecode(url));
+            }
         }
 
         /// <summary>
@@ -52,10 +55,10 @@ namespace magic.endpoint.controller
         /// </summary>
         /// <param name="url">The requested URL.</param>
         [HttpDelete]
-        [Route("{*url}")]
+        [Route("magic/{*url}")]
         public async Task<ActionResult> Delete(string url)
         {
-            var result = await _executor.ExecuteDeleteAsync(WebUtility.UrlDecode(url), GetPayload());
+            var result = await _executor.ExecuteDeleteAsync(WebUtility.UrlDecode(url.Substring(6)), GetPayload());
             return TransformToActionResult(result);
         }
 
@@ -65,10 +68,10 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         /// <param name="payload">Payload from client.</param>
         [HttpPost]
-        [Route("{*url}")]
+        [Route("magic/{*url}")]
         public async Task<ActionResult> Post(string url, [FromBody] JContainer payload)
         {
-            var result = await _executor.ExecutePostAsync(WebUtility.UrlDecode(url), payload);
+            var result = await _executor.ExecutePostAsync(WebUtility.UrlDecode(url.Substring(6)), payload);
             return TransformToActionResult(result);
         }
 
@@ -78,10 +81,10 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         /// <param name="payload">Payload from client.</param>
         [HttpPut]
-        [Route("{*url}")]
+        [Route("magic/{*url}")]
         public async Task<ActionResult> Put(string url, [FromBody] JContainer payload)
         {
-            var result = await _executor.ExecutePutAsync(WebUtility.UrlDecode(url), payload);
+            var result = await _executor.ExecutePutAsync(WebUtility.UrlDecode(url.Substring(6)), payload);
             return TransformToActionResult(result);
         }
 
@@ -139,3 +142,4 @@ namespace magic.endpoint.controller
         #endregion
     }
 }
+
