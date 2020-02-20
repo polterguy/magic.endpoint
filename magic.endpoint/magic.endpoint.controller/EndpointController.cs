@@ -46,7 +46,8 @@ namespace magic.endpoint.controller
             }
             else
             {
-                return await _executor.RetrieveDocument(WebUtility.UrlDecode(url));
+                var result = await _executor.RetrieveDocument(WebUtility.UrlDecode(url));
+                return TransformToActionResult(result);
             }
         }
 

@@ -4,7 +4,6 @@
  */
 
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 
 namespace magic.endpoint.contracts
@@ -62,6 +61,6 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">Entire URL that was requested, including QUERY parameters.</param>
         /// <returns>The document requested.</returns>
-        Task<ActionResult> RetrieveDocument(string url);
+        Task<HttpResponse> RetrieveDocument(string url);
     }
 }

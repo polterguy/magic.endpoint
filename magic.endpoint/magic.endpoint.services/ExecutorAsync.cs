@@ -7,7 +7,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using magic.node;
 using magic.node.extensions;
@@ -94,25 +93,51 @@ namespace magic.endpoint.services
         /// </summary>
         /// <param name="url">Entire URL that was requested, including QUERY parameters.</param>
         /// <returns>The document requested.</returns>
-        public async Task<ActionResult> RetrieveDocument(string url)
+        public async Task<HttpResponse> RetrieveDocument(string url)
         {
             if (url.StartsWith("static/"))
             {
-                // URL starts with "content/", hence it's a request for a static document.
+                /*
+                 * URL starts with "content/", hence it's a request for a static document.
+                 * Notice, you normally want to configure your web server to handle this directly,
+                 * however for simplicity reasons I've still added this into the core of Magic.
+                 * 
+                 * For instance, there is no caching or similar constructs, you'd normally want to configure
+                 * a real web server with here - Yet still, to be able to easily test things, I've still added it.
+                 */
                 var filename = Utilities.RootFolder + url;
                 if (!File.Exists(filename))
-                    return new NotFoundResult();
+                    throw new ArgumentException("Not Found");
+
                 var provider = new FileExtensionContentTypeProvider();
                 if (!provider.TryGetContentType(filename, out string contentType))
                     contentType = "application/octet-stream";
-                var stream = File.OpenRead(filename);
-                return new FileStreamResult(stream, contentType);
+                var httpResponse = new HttpResponse
+                {
+                    Content = File.OpenRead(filename)
+                };
+                httpResponse.Headers["Content-Type"] = contentType;
+                return httpResponse;
             }
             else
             {
-                // Invoking dynamic content Hyperlambda file.
+                // Invoking dynamic content Hyperlambda slot here.
+                var evalResult = new Node();
+                var httpResponse = new HttpResponse();
+                await _signaler.ScopeAsync("http.response", httpResponse, async () =>
+                {
+                    await _signaler.ScopeAsync("slots.result", evalResult, async () =>
+                    {
+                        var lambda = new Node("", "magic.content.get");
+                        lambda.Add(new Node("url", url));
+                        await _signaler.SignalAsync("magic.content.get", lambda);
+
+                        // Retrieving content for request.
+                        httpResponse.Content = GetReturnValue(evalResult);
+                    });
+                });
+                return httpResponse;
             }
-            return new OkResult();
         }
 
         #region [ -- Private helper methods -- ]
