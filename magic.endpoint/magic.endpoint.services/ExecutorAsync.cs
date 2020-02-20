@@ -15,6 +15,7 @@ using magic.signals.contracts;
 using magic.endpoint.contracts;
 using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace magic.endpoint.services
 {
@@ -95,7 +96,22 @@ namespace magic.endpoint.services
         /// <returns>The document requested.</returns>
         public async Task<ActionResult> RetrieveDocument(string url)
         {
-            // TODO: Implement
+            if (url.StartsWith("static/"))
+            {
+                // URL starts with "content/", hence it's a request for a static document.
+                var filename = Utilities.RootFolder + url;
+                if (!File.Exists(filename))
+                    return new NotFoundResult();
+                var provider = new FileExtensionContentTypeProvider();
+                if (!provider.TryGetContentType(filename, out string contentType))
+                    contentType = "application/octet-stream";
+                var stream = File.OpenRead(filename);
+                return new FileStreamResult(stream, contentType);
+            }
+            else
+            {
+                // Invoking dynamic content Hyperlambda file.
+            }
             return new OkResult();
         }
 
