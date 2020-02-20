@@ -15,6 +15,7 @@ using magic.endpoint.contracts;
 using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
 using Microsoft.AspNetCore.StaticFiles;
+using magic.node.expressions;
 
 namespace magic.endpoint.services
 {
@@ -128,9 +129,11 @@ namespace magic.endpoint.services
                 {
                     await _signaler.ScopeAsync("slots.result", evalResult, async () =>
                     {
-                        var lambda = new Node("", "magic.content.get");
-                        lambda.Add(new Node("url", url));
-                        await _signaler.SignalAsync("magic.content.get", lambda);
+                        var lambda = new Node("");
+                        lambda.Add(new Node("slots.signal", "magic.content.get"));
+                        lambda.Children.Last().Add(new Node("url", url));
+                        lambda.Add(new Node("slots.return-value", new Expression("-")));
+                        await _signaler.SignalAsync("eval", lambda);
 
                         // Retrieving content for request.
                         httpResponse.Content = GetReturnValue(evalResult);

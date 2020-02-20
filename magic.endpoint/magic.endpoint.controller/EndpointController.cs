@@ -46,8 +46,23 @@ namespace magic.endpoint.controller
             }
             else
             {
-                var result = await _executor.RetrieveDocument(WebUtility.UrlDecode(url));
-                return TransformToActionResult(result);
+                var massagedUrl = url;
+                bool first = true;
+                foreach (var idx in Request.Query)
+                {
+                    if (first)
+                    {
+                        first = false;
+                        massagedUrl += "?";
+                    }
+                    else
+                    {
+                        massagedUrl += "&";
+                    }
+                    massagedUrl += idx.Key + "=" + idx.Value;
+                }
+                var result = await _executor.RetrieveDocument(WebUtility.UrlDecode(massagedUrl));
+                return TransformToActionResult(result, "text/html");
             }
         }
 
@@ -94,7 +109,7 @@ namespace magic.endpoint.controller
         /*
          * Transforms from our internal HttpResponse wrapper to an ActionResult
          */
-        ActionResult TransformToActionResult(HttpResponse response)
+        ActionResult TransformToActionResult(HttpResponse response, string defaultContentType = "application/json")
         {
             // Making sure we attach any HTTP headers to the response.
             foreach (var idx in response.Headers)
@@ -110,7 +125,7 @@ namespace magic.endpoint.controller
                     return new FileStreamResult(stream, response.Headers["Content-Type"]);
 
                 // Figuring out type of result, and acting accordingly.
-                var contentType = response.Headers.ContainsKey("Content-Type") ? response.Headers["Content-Type"] : "application/json";
+                var contentType = response.Headers.ContainsKey("Content-Type") ? response.Headers["Content-Type"] : defaultContentType;
                 if (contentType == "application/json")
                 {
                     if (response.Content is string strContent)
