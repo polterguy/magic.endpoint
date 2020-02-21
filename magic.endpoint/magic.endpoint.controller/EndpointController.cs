@@ -139,12 +139,14 @@ namespace magic.endpoint.controller
                 default:
 
                     // Default, returning as "whatever content".
-                    return new ContentResult
-                    {
-                        StatusCode = response.Result,
-                        Content = Convert.ToString(response.Content ?? "", CultureInfo.InvariantCulture),
-                        ContentType = contentType,
-                    };
+                    if (contentType.StartsWith("text/"))
+                        return new ContentResult
+                        {
+                            StatusCode = response.Result,
+                            Content = Convert.ToString(response.Content ?? "", CultureInfo.InvariantCulture),
+                            ContentType = contentType,
+                        };
+                    return new ObjectResult(response.Content) { StatusCode = response.Result };
             }
         }
 
