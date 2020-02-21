@@ -131,13 +131,24 @@ namespace magic.endpoint.services
                  */
                 var evalResult = new Node();
                 var httpResponse = new HttpResponse();
-                await _signaler.ScopeAsync("http.response", httpResponse, async () =>
+                try
                 {
-                    await _signaler.ScopeAsync("slots.result", evalResult, async () =>
+                    await _signaler.ScopeAsync("http.response", httpResponse, async () =>
                     {
-                        await _signaler.SignalAsync("eval", lambda);
+                        await _signaler.ScopeAsync("slots.result", evalResult, async () =>
+                        {
+                            await _signaler.SignalAsync("eval", lambda);
+                        });
                     });
-                });
+                }
+                catch
+                {
+                    if (evalResult.Value is IDisposable disposable)
+                        disposable.Dispose();
+                    if (httpResponse.Content is IDisposable disposable2)
+                        disposable2.Dispose();
+                    throw;
+                }
 
                 // Retrieving content for request.
                 httpResponse.Content = GetReturnValue(evalResult);
