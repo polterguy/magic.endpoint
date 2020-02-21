@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Newtonsoft.Json.Linq;
 using magic.endpoint.contracts;
+using System.Collections.Generic;
 
 namespace magic.endpoint.tests
 {
@@ -18,7 +19,7 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("/foo-1", null);
+            var result = await executor.ExecuteGetAsync("magic/foo-1", null);
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;
@@ -33,13 +34,11 @@ namespace magic.endpoint.tests
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
             // Notice, GET will convert its arguments.
-            var input = new JObject
-            {
-                ["input1"] = "foo",
-                ["input2"] = "5",
-                ["input3"] = "true",
-            };
-            var result = await executor.ExecuteGetAsync("/echo", input);
+            var input = new List<Tuple<string, string>>();
+            input.Add(new Tuple<string, string>("input1", "foo"));
+            input.Add(new Tuple<string, string>("input2", "5"));
+            input.Add(new Tuple<string, string>("input3", "true"));
+            var result = await executor.ExecuteGetAsync("magic/echo", input);
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;
@@ -54,7 +53,7 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("/status", null);
+            var result = await executor.ExecuteGetAsync("magic/status", null);
             Assert.Equal(201, result.Result);
         }
 
@@ -63,7 +62,7 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("/header", null);
+            var result = await executor.ExecuteGetAsync("magic/header", null);
             Assert.Single(result.Headers);
             Assert.Equal("bar", result.Headers["foo"]);
         }
@@ -99,7 +98,7 @@ namespace magic.endpoint.tests
                     ["obj2"] = "true", // Conversion should occur!
                 },
             };
-            var result = await executor.ExecutePostAsync("/echo", input);
+            var result = await executor.ExecutePostAsync("magic/echo", null, input);
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;

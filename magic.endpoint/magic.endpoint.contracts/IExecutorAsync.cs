@@ -3,7 +3,9 @@
  * See the enclosed LICENSE file for details.
  */
 
+using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 
 namespace magic.endpoint.contracts
@@ -16,51 +18,48 @@ namespace magic.endpoint.contracts
     {
         /// <summary>
         /// Executes an HTTP GET endpoint with the specified URL and the
-        /// specified arguments.
+        /// specified QUERY arguments.
         /// </summary>
-        /// <param name="url">URL that was requested, mapping to some Hyperlambda
-        /// file on your server.</param>
+        /// <param name="url">URL that was requested.</param>
         /// <param name="args">QUERY arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        Task<HttpResponse> ExecuteGetAsync(string url, JContainer args);
+        Task<HttpResponse> ExecuteGetAsync(
+            string url, 
+            IEnumerable<Tuple<string, string>> args);
 
         /// <summary>
         /// Executes an HTTP DELETE endpoint with the specified URL and the
-        /// specified arguments.
+        /// specified QUERY arguments.
         /// </summary>
-        /// <param name="response">HTTP response of your request.</param>
-        /// <param name="url">URL that was requested, mapping to some Hyperlambda
-        /// file on your server.</param>
+        /// <param name="url">URL that was requested.</param>
         /// <param name="args">QUERY arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        Task<HttpResponse> ExecuteDeleteAsync(string url, JContainer args);
+        Task<HttpResponse> ExecuteDeleteAsync(
+            string url, 
+            IEnumerable<Tuple<string, string>> args);
 
         /// <summary>
         /// Executes an HTTP POST endpoint with the specified URL and the
         /// specified payload.
         /// </summary>
-        /// <param name="url">URL that was requested, mapping to some Hyperlambda
-        /// file on your server.</param>
+        /// <param name="url">URL that was requested.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        Task<HttpResponse> ExecutePostAsync(string url, JContainer payload);
+        Task<HttpResponse> ExecutePostAsync(
+            string url, 
+            IEnumerable<Tuple<string, string>> args,
+            JContainer payload);
 
         /// <summary>
         /// Executes an HTTP PUT endpoint with the specified URL and the
         /// specified payload.
         /// </summary>
-        /// <param name="url">URL that was requested, mapping to some Hyperlambda
-        /// file on your server.</param>
+        /// <param name="url">URL that was requested.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        Task<HttpResponse> ExecutePutAsync(string url, JContainer payload);
-
-        /// <summary>
-        /// Retrieves a dynamic document, as in one not starting with "magic/" as its URL.
-        /// Useful for CMS systems, and similar things
-        /// </summary>
-        /// <param name="url">Entire URL that was requested, including QUERY parameters.</param>
-        /// <returns>The document requested.</returns>
-        Task<HttpResponse> RetrieveDocument(string url);
+        Task<HttpResponse> ExecutePutAsync(
+            string url, 
+            IEnumerable<Tuple<string, string>> args, 
+            JContainer payload);
     }
 }

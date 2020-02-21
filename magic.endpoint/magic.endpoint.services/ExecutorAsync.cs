@@ -7,6 +7,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using magic.node;
 using magic.node.extensions;
@@ -14,8 +15,6 @@ using magic.signals.contracts;
 using magic.endpoint.contracts;
 using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
-using Microsoft.AspNetCore.StaticFiles;
-using magic.node.expressions;
 
 namespace magic.endpoint.services
 {
@@ -40,11 +39,12 @@ namespace magic.endpoint.services
         /// Executes an HTTP GET endpoint with the specified URL and the
         /// specified arguments.
         /// </summary>
-        /// <param name="url">URL that was requested, mapping to some Hyperlambda
-        /// file on your server.</param>
+        /// <param name="url">URL that was requested.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<HttpResponse> ExecuteGetAsync(string url, JContainer args)
+        public async Task<HttpResponse> ExecuteGetAsync(
+            string url, 
+            IEnumerable<Tuple<string, string>> args)
         {
             return await ExecuteUrl(url, "get", args);
         }
@@ -53,11 +53,12 @@ namespace magic.endpoint.services
         /// Executes an HTTP DELETE endpoint with the specified URL and the
         /// specified arguments.
         /// </summary>
-        /// <param name="url">URL that was requested, mapping to some Hyperlambda
-        /// file on your server.</param>
+        /// <param name="url">URL that was requested.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<HttpResponse> ExecuteDeleteAsync(string url, JContainer args)
+        public async Task<HttpResponse> ExecuteDeleteAsync(
+            string url, 
+            IEnumerable<Tuple<string, string>> args)
         {
             return await ExecuteUrl(url, "delete", args);
         }
@@ -66,99 +67,44 @@ namespace magic.endpoint.services
         /// Executes an HTTP POST endpoint with the specified URL and the
         /// specified payload.
         /// </summary>
-        /// <param name="url">URL that was requested, mapping to some Hyperlambda
-        /// file on your server.</param>
+        /// <param name="url">URL that was requested.</param>
+        /// <param name="args">Arguments to your endpoint.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<HttpResponse> ExecutePostAsync(string url, JContainer payload)
+        public async Task<HttpResponse> ExecutePostAsync(
+            string url,
+            IEnumerable<Tuple<string, string>> args,
+            JContainer payload)
         {
-            return await ExecuteUrl(url, "post", payload);
+            return await ExecuteUrl(url, "post", args, payload);
         }
 
         /// <summary>
         /// Executes an HTTP PUT endpoint with the specified URL and the
         /// specified payload.
         /// </summary>
-        /// <param name="url">URL that was requested, mapping to some Hyperlambda
-        /// file on your server.</param>
+        /// <param name="url">URL that was requested.</param>
+        /// <param name="args">Arguments to your endpoint.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
-        public async Task<HttpResponse> ExecutePutAsync(string url, JContainer payload)
+        public async Task<HttpResponse> ExecutePutAsync(
+            string url,
+            IEnumerable<Tuple<string, string>> args,
+            JContainer payload)
         {
-            return await ExecuteUrl(url, "put", payload);
-        }
-
-        /// <summary>
-        /// Retrieves a dynamic document, as in one not starting with "magic/" as its URL.
-        /// Useful for CMS systems, and similar things
-        /// </summary>
-        /// <param name="url">Entire URL that was requested, including QUERY parameters.</param>
-        /// <returns>The document requested.</returns>
-        public async Task<HttpResponse> RetrieveDocument(string url)
-        {
-            if (url.StartsWith("static/"))
-            {
-                /*
-                 * URL starts with "content/", hence it's a request for a static document.
-                 * Notice, you normally want to configure your web server to handle this directly,
-                 * however for simplicity reasons I've still added this into the core of Magic.
-                 * 
-                 * For instance, there is no caching or similar constructs, you'd normally want to configure
-                 * a real web server with here - Yet still, to be able to easily test things, I've still added it.
-                 */
-                var filename = Utilities.RootFolder + url;
-                if (!File.Exists(filename))
-                    throw new ArgumentException("Not Found");
-
-                var provider = new FileExtensionContentTypeProvider();
-                if (!provider.TryGetContentType(filename, out string contentType))
-                    contentType = "application/octet-stream";
-                var httpResponse = new HttpResponse
-                {
-                    Content = File.OpenRead(filename)
-                };
-                httpResponse.Headers["Content-Type"] = contentType;
-                return httpResponse;
-            }
-            else
-            {
-                // Invoking dynamic content Hyperlambda slot here.
-                var evalResult = new Node();
-                var httpResponse = new HttpResponse();
-                await _signaler.ScopeAsync("http.response", httpResponse, async () =>
-                {
-                    await _signaler.ScopeAsync("slots.result", evalResult, async () =>
-                    {
-                        var lambda = new Node("");
-                        lambda.Add(new Node("slots.signal", "magic.content.get"));
-                        lambda.Children.Last().Add(new Node("url", url));
-                        lambda.Add(new Node("slots.return-value", new Expression("-")));
-                        await _signaler.SignalAsync("eval", lambda);
-
-                        // Retrieving content for request.
-                        httpResponse.Content = GetReturnValue(evalResult);
-                    });
-                });
-                return httpResponse;
-            }
+            return await ExecuteUrl(url, "put", args, payload);
         }
 
         #region [ -- Private helper methods -- ]
 
         /*
-         * Executes a URL that was given a JSON payload of some sort.
-         *
-         * Notice, the JSON payload might also have been created by the QUERY
-         * parameters, and not necessarily passed in as JSON to the endpoint.
-         * If the latter is true, we must convert the argument from its string
-         * representation, to the type declaration found in the [.arguments]
-         * declaration node of the endpoint's file.
+         * Executes a URL that was given QUERY arguments.
          */
         async Task<HttpResponse> ExecuteUrl(
             string url,
             string verb,
-            JContainer arguments,
-            bool convertArguments = true)
+            IEnumerable<Tuple<string, string>> args,
+            JContainer payload = null)
         {
             // Retrieving file, and verifying it exists.
             var path = Utilities.GetEndpointFile(url, verb);
@@ -176,7 +122,7 @@ namespace magic.endpoint.services
                  * extent sanity check the arguments, and possibly convert
                  * them according to the declaration node.
                  */
-                AttachArguments(lambda, arguments, verb, convertArguments);
+                AttachArguments(lambda, url, args, payload);
 
                 /*
                  * Evaluating our lambda async, making sure we allow for the
@@ -200,82 +146,60 @@ namespace magic.endpoint.services
         }
 
         /*
-         * Attaches the specified JContainer values as arguments to the given
-         * lambda object, doing some basic sanity checking in the process,
-         * and also possibly converting the arguments to their correct type in
-         * the process.
+         * Attaches arguments (payload + query params) to lambda node.
          */
-        void AttachArguments(Node lambda, JContainer arguments, string verb, bool convertArguments)
+        void AttachArguments(
+            Node lambda, 
+            string url,
+            IEnumerable<Tuple<string, string>> args, 
+            JContainer payload)
         {
-            /*
-             * Checking if file has [.arguments] node, and removing it to
-             * make sure invocation of file only has a single [.arguments]
-             * node, being the arguments supplied by caller, and not the
-             * declaration [.arguments] node for the file.
-             */
+            // Checking if file has [.arguments] node, and removing it if it exists.
             var fileArgs = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
             fileArgs?.UnTie();
 
-            /*
-             * Converting the given arguments from JSON to lambda.
-             */
-            var argsNode = new Node(".arguments", arguments);
-            _signaler.Signal(".json2lambda-raw", argsNode);
+            // Our arguments node.
+            var argsNode = new Node(".arguments");
+            if (!url.StartsWith("magic/"))
+                argsNode.Add(new Node("url", url)); // We only pass in URL if this is not a Magically resolved URL.
 
-            /*
-             * Checking if we need to convert the individual arguments.
-             * 
-             * Notice, we only attempt to convert arguments if Hyperlambda endpoint
-             * file contains an [.arguments] node.
-             */
-            if (convertArguments && fileArgs != null)
+            // First payload arguments.
+            if (payload != null)
             {
-                /*
-                 * Notice, we might have to convert the arguments passed into this endpoint,
-                 * unless they were passed in as something else but a string.
-                 * 
-                 * If arguments are given to this method, that are *not* strings, we assume they're
-                 * already of the correct type somehow.
-                 */
-                foreach (var idxArg in argsNode.Children)
-                {
-                    /*
-                     * Notice, GET and DELETE invocations cannot legally have children nodes in their arguments.
-                     */
-                    if ((verb == "get" || verb == "delete") && idxArg.Children.Any())
-                        throw new ArgumentException($"The argument '{idxArg.Name}' had children, which is not allowed for GET or DELETE requests.");
+                // Converting the given arguments from JSON to lambda.
+                argsNode.Value = payload;
+                _signaler.Signal(".json2lambda-raw", argsNode);
+                argsNode.Value = null; // To remove actual JContainer from node.
 
-                    // Converting argument according to [.arguments] declaration node.
-                    idxArg.Value = ConvertArgument(idxArg, fileArgs.Children.FirstOrDefault(x => x.Name == idxArg.Name));
-                }
-            }
-            else if (fileArgs != null)
-            {
-                /*
-                 * Only doing some basic sanity checking.
-                 *
-                 * Notice, we do not recursively sanity check arguments, to
-                 * allow for passing in any type of objects - At which point
-                 * sanity checking is left as an exercize for the particular
-                 * endpoint implementation.
-                 * 
-                 * TODO: Consider sanity checking arguments recursively, which
-                 * would imply supporting "any argument type", implies additional
-                 * logic, possibly avoiding an [.arguments] declaration on
-                 * file entirely.
-                 */
-                foreach (var idx in argsNode.Children)
+                // Checking if we need to convert the individual arguments, which is true if lambda file contains [.arguments] declaration.
+                if (fileArgs != null)
                 {
-                    if (!fileArgs.Children.Any(x => x.Name == idx.Name))
-                        throw new ApplicationException($"I don't know how to handle the '{idx.Name}' argument");
+                    foreach (var idxArg in argsNode.Children)
+                    {
+                        idxArg.Value = ConvertArgument(idxArg, fileArgs.Children.FirstOrDefault(x => x.Name == idxArg.Name));
+                    }
                 }
             }
 
-            /*
-             * Inserting the arguments specified to the endpoint as arguments
-             * inside of our lambda object.
-             */
-            lambda.Insert(0, argsNode);
+            // Then doing QUERY parameters.
+            if (args != null)
+            {
+                foreach (var idxArg in args)
+                {
+                    object value = idxArg.Item2;
+                    var declaration = fileArgs?.Children.FirstOrDefault(x => x.Name == idxArg.Item1);
+                    if (declaration != null)
+                        value = Parser.ConvertValue(idxArg.Item2, declaration.Get<string>());
+                    argsNode.Add(
+                        new Node(
+                            idxArg.Item1,
+                            value));
+                }
+            }
+
+            // Inserting the arguments specified to the endpoint as arguments, but only if there are any arguments.
+            if (lambda.Children.Any())
+                lambda.Insert(0, argsNode);
         }
 
         /*

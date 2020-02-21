@@ -6,10 +6,12 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using magic.endpoint.contracts;
+using System.Globalization;
 
 namespace magic.endpoint.controller
 {
@@ -18,6 +20,7 @@ namespace magic.endpoint.controller
     /// and a verb, allowing the caller tooptionally pass in arguments, if the
     /// endpoint can accept arguments.
     /// </summary>
+    [Route("{*url}", Order = int.MaxValue)]
     public class EndpointController : ControllerBase
     {
         readonly IExecutorAsync _executor;
@@ -36,34 +39,12 @@ namespace magic.endpoint.controller
         /// </summary>
         /// <param name="url">The requested URL.</param>
         [HttpGet]
-        [Route("{*url}")]
         public async Task<ActionResult> Get(string url)
         {
-            if (url.StartsWith("magic/"))
-            {
-                var result = await _executor.ExecuteGetAsync(WebUtility.UrlDecode(url.Substring(6)), GetPayload());
-                return TransformToActionResult(result);
-            }
-            else
-            {
-                var massagedUrl = url;
-                bool first = true;
-                foreach (var idx in Request.Query)
-                {
-                    if (first)
-                    {
-                        first = false;
-                        massagedUrl += "?";
-                    }
-                    else
-                    {
-                        massagedUrl += "&";
-                    }
-                    massagedUrl += idx.Key + "=" + idx.Value;
-                }
-                var result = await _executor.RetrieveDocument(WebUtility.UrlDecode(massagedUrl));
-                return TransformToActionResult(result, "text/html");
-            }
+            return TransformToActionResult(
+                await _executor.ExecuteGetAsync(
+                    WebUtility.UrlDecode(url), 
+                    Request.Query.Select(x => new Tuple<string, string>(x.Key, x.Value))));
         }
 
         /// <summary>
@@ -71,11 +52,12 @@ namespace magic.endpoint.controller
         /// </summary>
         /// <param name="url">The requested URL.</param>
         [HttpDelete]
-        [Route("magic/{*url}")]
         public async Task<ActionResult> Delete(string url)
         {
-            var result = await _executor.ExecuteDeleteAsync(WebUtility.UrlDecode(url.Substring(6)), GetPayload());
-            return TransformToActionResult(result);
+            return TransformToActionResult(
+                await _executor.ExecuteDeleteAsync(
+                    WebUtility.UrlDecode(url), 
+                    Request.Query.Select(x => new Tuple<string, string>(x.Key, x.Value))));
         }
 
         /// <summary>
@@ -84,11 +66,13 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         /// <param name="payload">Payload from client.</param>
         [HttpPost]
-        [Route("magic/{*url}")]
         public async Task<ActionResult> Post(string url, [FromBody] JContainer payload)
         {
-            var result = await _executor.ExecutePostAsync(WebUtility.UrlDecode(url.Substring(6)), payload);
-            return TransformToActionResult(result);
+            return TransformToActionResult(
+                await _executor.ExecutePostAsync(
+                    WebUtility.UrlDecode(url),
+                    Request.Query.Select(x => new Tuple<string, string>(x.Key, x.Value)),
+                    payload));
         }
 
         /// <summary>
@@ -97,11 +81,13 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         /// <param name="payload">Payload from client.</param>
         [HttpPut]
-        [Route("magic/{*url}")]
         public async Task<ActionResult> Put(string url, [FromBody] JContainer payload)
         {
-            var result = await _executor.ExecutePutAsync(WebUtility.UrlDecode(url.Substring(6)), payload);
-            return TransformToActionResult(result);
+            return TransformToActionResult(
+                await _executor.ExecutePutAsync(
+                    WebUtility.UrlDecode(url),
+                    Request.Query.Select(x => new Tuple<string, string>(x.Key, x.Value)),
+                    payload));
         }
 
         #region [ -- Private helper methods -- ]
@@ -109,7 +95,7 @@ namespace magic.endpoint.controller
         /*
          * Transforms from our internal HttpResponse wrapper to an ActionResult
          */
-        ActionResult TransformToActionResult(HttpResponse response, string defaultContentType = "application/json")
+        ActionResult TransformToActionResult(HttpResponse response)
         {
             // Making sure we attach any HTTP headers to the response.
             foreach (var idx in response.Headers)
@@ -117,42 +103,49 @@ namespace magic.endpoint.controller
                 Response.Headers.Add(idx.Key, idx.Value);
             }
 
-            // Retrieving result, if any, and returns it to caller.
-            if (response.Content != null)
-            {
-                // Checking if this is a stream content result.
-                if (response.Content is Stream stream)
-                    return new FileStreamResult(stream, response.Headers["Content-Type"]);
+            // If empty result, we return nothing.
+            if (response.Content == null)
+                return new StatusCodeResult(response.Result);
 
-                // Figuring out type of result, and acting accordingly.
-                var contentType = response.Headers.ContainsKey("Content-Type") ? response.Headers["Content-Type"] : defaultContentType;
-                if (contentType == "application/json")
-                {
+            // Sanity checking to verify status code is success.
+            if (response.Result < 200 || response.Result >= 300)
+            {
+                // Making sure we dispose any already added streams/disposables, if already added.
+                if (response.Content is IDisposable strResponse)
+                    strResponse.Dispose();
+
+                return new StatusCodeResult(response.Result);
+            }
+
+            // Defaulting Content-Type return header to "application/octet-stream" if no header has been explicitly set.
+            var contentType = response.Headers.ContainsKey("Content-Type") ?
+                response.Headers["Content-Type"] :
+                "application/json";
+
+            // Checking if this is a stream content result.
+            if (response.Content is Stream stream)
+                return new FileStreamResult(stream, contentType);
+
+            // Figuring out type of result, and acting accordingly.
+            switch (contentType)
+            {
+                case "application/json":
+
+                    // JSON result, converting if necessary.
                     if (response.Content is string strContent)
                         return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
+                    return new ObjectResult(response.Content) { StatusCode = response.Result };
 
-                    // Notice, the default object result below will do its default magic for us here.
-                }
-                return new ObjectResult(response.Content) { StatusCode = response.Result };
+                default:
+
+                    // Default, returning as "whatever content".
+                    return new ContentResult
+                    {
+                        StatusCode = response.Result,
+                        Content = Convert.ToString(response.Content ?? "", CultureInfo.InvariantCulture),
+                        ContentType = contentType,
+                    };
             }
-
-            // If no return value exists, we return the status code only to caller.
-            return new StatusCodeResult(response.Result);
-        }
-
-        /*
-         * Common helper method to construct a dictionary from the request's
-         * QUERY parameters, and evaluate the endpoint with the dictionary as
-         * its arguments.
-         */
-        JContainer GetPayload()
-        {
-            var payload = new JObject();
-            foreach (var idx in Request.Query)
-            {
-                payload.Add(idx.Key, new JValue(idx.Value));
-            }
-            return payload;
         }
 
         #endregion
