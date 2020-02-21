@@ -140,6 +140,10 @@ namespace magic.endpoint.services
                             await _signaler.SignalAsync("eval", lambda);
                         });
                     });
+
+                    // Retrieving content for request.
+                    httpResponse.Content = GetReturnValue(evalResult);
+                    return httpResponse;
                 }
                 catch
                 {
@@ -149,10 +153,6 @@ namespace magic.endpoint.services
                         disposable2.Dispose();
                     throw;
                 }
-
-                // Retrieving content for request.
-                httpResponse.Content = GetReturnValue(evalResult);
-                return httpResponse;
             }
         }
 
