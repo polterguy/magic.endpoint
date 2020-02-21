@@ -7,11 +7,11 @@ using System;
 using System.IO;
 using System.Net;
 using System.Linq;
+using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using magic.endpoint.contracts;
-using System.Globalization;
 
 namespace magic.endpoint.controller
 {
@@ -20,7 +20,7 @@ namespace magic.endpoint.controller
     /// and a verb, allowing the caller tooptionally pass in arguments, if the
     /// endpoint can accept arguments.
     /// </summary>
-    [Route("{*url}", Order = int.MaxValue)]
+    [Route("/{*url}", Order = int.MaxValue)]
     public class EndpointController : ControllerBase
     {
         readonly IExecutorAsync _executor;
