@@ -21,7 +21,7 @@ namespace magic.endpoint.tests
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
             var result = await executor.ExecuteGetAsync("magic/foo-1", null);
             Assert.Equal(200, result.Result);
-            Assert.Empty(result.Headers);
+            Assert.Single(result.Headers);
             var j = result.Content as JObject;
             Assert.NotNull(j);
             Assert.Equal("hello world", j["result"].Value<string>());
@@ -40,7 +40,7 @@ namespace magic.endpoint.tests
             input.Add(new Tuple<string, string>("input3", "true"));
             var result = await executor.ExecuteGetAsync("magic/echo", input);
             Assert.Equal(200, result.Result);
-            Assert.Empty(result.Headers);
+            Assert.Single(result.Headers);
             var j = result.Content as JObject;
             Assert.NotNull(j);
             Assert.Equal("foo", j["input1"].Value<string>());
@@ -63,7 +63,7 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
             var result = await executor.ExecuteGetAsync("magic/header", null);
-            Assert.Single(result.Headers);
+            Assert.Equal(2, result.Headers.Count);
             Assert.Equal("bar", result.Headers["foo"]);
         }
 
@@ -100,7 +100,7 @@ namespace magic.endpoint.tests
             };
             var result = await executor.ExecutePostAsync("magic/echo", null, input);
             Assert.Equal(200, result.Result);
-            Assert.Empty(result.Headers);
+            Assert.Single(result.Headers);
             var j = result.Content as JObject;
             Assert.NotNull(j);
             Assert.Equal("foo", j["input1"].Value<string>());
