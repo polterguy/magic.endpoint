@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.StaticFiles;
 using Newtonsoft.Json.Linq;
 using magic.node;
 using magic.node.extensions;
@@ -46,6 +47,21 @@ namespace magic.endpoint.services
             string url, 
             IEnumerable<Tuple<string, string>> args)
         {
+            // Notice, supporting static document, and default document.
+            if (url == null)
+            {
+                // Checking if default static document exists.
+                if (File.Exists(Utilities.RootFolder + "static/index.html"))
+                    return GetStaticDocument("index.html");
+            }
+            else
+            {
+                // Checking if this is a request for a static document.
+                if (url.Contains("."))
+                    return GetStaticDocument(url);
+            }
+
+            // Executing dynamically resolved URL.
             return await ExecuteUrl(url, "get", args);
         }
 
@@ -98,6 +114,35 @@ namespace magic.endpoint.services
         #region [ -- Private helper methods -- ]
 
         /*
+         * Returns a static document to caller.
+         */
+        HttpResponse GetStaticDocument(string url)
+        {
+            // Checking that file exists.
+            var fullpath = Utilities.RootFolder + "static/" + url.TrimStart('/');
+            if (!File.Exists(fullpath))
+            {
+                return new HttpResponse
+                {
+                    Result = 404
+                };
+            }
+
+            // Returning file to caller, making sure we get the MIME type correct.
+            var provider = new FileExtensionContentTypeProvider();
+            string contentType;
+            if(!provider.TryGetContentType(fullpath, out contentType))
+                contentType = "application/octet-stream";
+            var result = new HttpResponse
+            {
+                Content = File.OpenRead(fullpath),
+                Result = 200,
+            };
+            result.Headers["Content-Type"] = contentType;
+            return result;
+        }
+
+        /*
          * Executes a URL that was given QUERY arguments.
          */
         async Task<HttpResponse> ExecuteUrl(
@@ -136,7 +181,7 @@ namespace magic.endpoint.services
                  * Making sure we default content type to "application/json" if this is a
                  * "magically resolved URL". If it's not, we default content to HTML.
                  */
-                if (url.StartsWith("magic/"))
+                if (url != null && url.StartsWith("magic/"))
                     httpResponse.Headers["Content-Type"] = "application/json";
                 else
                     httpResponse.Headers["Content-Type"] = "text/html";
@@ -189,7 +234,7 @@ namespace magic.endpoint.services
 
             // Our arguments node.
             var argsNode = new Node(".arguments");
-            if (!url.StartsWith("magic/"))
+            if (url != null && !url.StartsWith("magic/"))
                 argsNode.Add(new Node("url", url)); // We only pass in URL if this is not a Magically resolved URL.
 
             // First payload arguments.

@@ -52,13 +52,16 @@ namespace magic.endpoint.services.utilities
          */
         internal static string GetEndpointFile(string url, string verb)
         {
-            // Sanity checking invocation.
-            if (!IsLegalHttpName(url))
-                throw new ApplicationException($"The URL '{url}' is not a legal URL for Magic");
+            if (url != null)
+            {
+                // Sanity checking invocation.
+                if (!IsLegalHttpName(url))
+                    throw new ApplicationException($"The URL '{url}' is not a legal URL for Magic");
 
-            // Making sure we resolve "magic/" folder files correctly.
-            if (url.StartsWith("magic/"))
-                return RootFolder + url.Substring(6) + $".{verb}.hl";
+                // Making sure we resolve "magic/" folder files correctly.
+                if (url.StartsWith("magic/"))
+                    return RootFolder + url.Substring(6) + $".{verb}.hl";
+            }
 
             // Default URL resolver for anything but "module/" files.
             return RootFolder + "url-resolver.hl";
