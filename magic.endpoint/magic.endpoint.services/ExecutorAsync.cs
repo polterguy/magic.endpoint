@@ -131,6 +131,24 @@ namespace magic.endpoint.services
                  */
                 var evalResult = new Node();
                 var httpResponse = new HttpResponse();
+
+                /*
+                 * Making sure we default content type to "application/json" if this is a
+                 * "magically resolved URL". If it's not, we default content to HTML.
+                 */
+                if (url.StartsWith("magic/"))
+                    httpResponse.Headers["Content-Type"] = "application/json";
+                else
+                    httpResponse.Headers["Content-Type"] = "text/html";
+
+                /*
+                 * Evaluating our lambda async, making sure we allow for the
+                 * lambda object to return values, and to modify the response HTTP headers,
+                 * and its status code, etc.
+                 *
+                 * Wrapping execution in try/catch block, to make sure we dispose disposables
+                 * in case of exceptions.
+                 */
                 try
                 {
                     await _signaler.ScopeAsync("http.response", httpResponse, async () =>

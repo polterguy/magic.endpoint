@@ -118,9 +118,7 @@ namespace magic.endpoint.controller
             }
 
             // Defaulting Content-Type return header to "application/octet-stream" if no header has been explicitly set.
-            var contentType = response.Headers.ContainsKey("Content-Type") ?
-                response.Headers["Content-Type"] :
-                "application/json";
+            var contentType = response.Headers["Content-Type"];
 
             // Checking if this is a stream content result.
             if (response.Content is Stream stream)
