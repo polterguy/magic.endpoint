@@ -151,6 +151,9 @@ namespace magic.endpoint.services
             IEnumerable<Tuple<string, string>> args,
             JContainer payload = null)
         {
+            // Defaulting url to "" if not given.
+            url = url ?? "";
+
             // Retrieving file, and verifying it exists.
             var path = Utilities.GetEndpointFile(url, verb);
             if (!File.Exists(path))
@@ -181,7 +184,7 @@ namespace magic.endpoint.services
                  * Making sure we default content type to "application/json" if this is a
                  * "magically resolved URL". If it's not, we default content to HTML.
                  */
-                if (url != null && url.StartsWith("magic/"))
+                if (url.StartsWith("magic/"))
                     httpResponse.Headers["Content-Type"] = "application/json";
                 else
                     httpResponse.Headers["Content-Type"] = "text/html";
@@ -234,8 +237,10 @@ namespace magic.endpoint.services
 
             // Our arguments node.
             var argsNode = new Node(".arguments");
-            if (url != null && !url.StartsWith("magic/"))
-                argsNode.Add(new Node("url", url)); // We only pass in URL if this is not a Magically resolved URL.
+
+            // We only pass in URL if this is not a Magically resolved URL.
+            if (!url.StartsWith("magic/"))
+                argsNode.Add(new Node("url", url));
 
             // First payload arguments.
             if (payload != null)
@@ -245,12 +250,17 @@ namespace magic.endpoint.services
                 _signaler.Signal(".json2lambda-raw", argsNode);
                 argsNode.Value = null; // To remove actual JContainer from node.
 
-                // Checking if we need to convert the individual arguments, which is true if lambda file contains [.arguments] declaration.
+                /*
+                 * Checking if we need to convert the individual arguments,
+                 * which is true if lambda file contains [.arguments] declaration.
+                 */
                 if (fileArgs != null)
                 {
                     foreach (var idxArg in argsNode.Children)
                     {
-                        idxArg.Value = ConvertArgument(idxArg, fileArgs.Children.FirstOrDefault(x => x.Name == idxArg.Name));
+                        idxArg.Value = ConvertArgument(
+                            idxArg,
+                            fileArgs.Children.FirstOrDefault(x => x.Name == idxArg.Name));
                     }
                 }
             }
