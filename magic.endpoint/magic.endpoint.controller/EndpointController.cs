@@ -10,6 +10,7 @@ using System.Linq;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using magic.endpoint.contracts;
 
@@ -41,9 +42,21 @@ namespace magic.endpoint.controller
         [HttpGet]
         public async Task<ActionResult> Get(string url)
         {
+            DateTime ifModifiedSince = DateTime.MinValue;
+            if (Request.Headers.ContainsKey("If-Modified-Since"))
+            {
+                Request.Headers.TryGetValue("If-Modified-Since", out StringValues ifModifiedSinceHeader);
+                ifModifiedSince = DateTime.ParseExact(
+                    ifModifiedSinceHeader.ToString(),
+                    "ddd, dd MMM yyyy HH:mm:ss 'GMT'",
+                    CultureInfo.InvariantCulture.DateTimeFormat,
+                    DateTimeStyles.AssumeUniversal);
+                ifModifiedSince = ifModifiedSince.ToUniversalTime();
+            }
             return TransformToActionResult(
                 await _executor.ExecuteGetAsync(
-                    WebUtility.UrlDecode(url), 
+                    WebUtility.UrlDecode(url),
+                    ifModifiedSince,
                     Request.Query.Select(x => new Tuple<string, string>(x.Key, x.Value))));
         }
 

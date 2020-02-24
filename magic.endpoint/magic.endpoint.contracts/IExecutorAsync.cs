@@ -21,10 +21,12 @@ namespace magic.endpoint.contracts
         /// specified QUERY arguments.
         /// </summary>
         /// <param name="url">URL that was requested.</param>
+        /// <param name="ifModifiedSince">Only return document if it has been modified since this date.</param>
         /// <param name="args">QUERY arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecuteGetAsync(
             string url, 
+            DateTime ifModifiedSince,
             IEnumerable<Tuple<string, string>> args);
 
         /// <summary>

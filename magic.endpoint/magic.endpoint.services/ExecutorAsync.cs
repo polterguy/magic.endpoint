@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using magic.node;
 using magic.node.extensions;
@@ -26,14 +27,16 @@ namespace magic.endpoint.services
     public class ExecutorAsync : IExecutorAsync
     {
         readonly ISignaler _signaler;
+        readonly IConfiguration _configuration;
 
         /// <summary>
         /// Creates an instance of your type.
         /// </summary>
         /// <param name="signaler">Signaler necessary evaluate endpoint.</param>
-        public ExecutorAsync(ISignaler signaler)
+        public ExecutorAsync(ISignaler signaler, IConfiguration configuration)
         {
             _signaler = signaler ?? throw new ArgumentNullException(nameof(signaler));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         /// <summary>
@@ -41,10 +44,12 @@ namespace magic.endpoint.services
         /// specified arguments.
         /// </summary>
         /// <param name="url">URL that was requested.</param>
+        /// <param name="ifModifiedSince">Only return document if it has been modified since this date.</param>
         /// <param name="args">Arguments to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
         public async Task<HttpResponse> ExecuteGetAsync(
-            string url, 
+            string url,
+            DateTime ifModifiedSince,
             IEnumerable<Tuple<string, string>> args)
         {
             // Notice, supporting static document, and default document.
@@ -52,13 +57,13 @@ namespace magic.endpoint.services
             {
                 // Checking if default static document exists.
                 if (File.Exists(Utilities.RootFolder + "static/index.html"))
-                    return GetStaticDocument("index.html");
+                    return GetStaticDocument("index.html", ifModifiedSince);
             }
             else
             {
                 // Checking if this is a request for a static document.
                 if (url.Contains("."))
-                    return GetStaticDocument(url);
+                    return GetStaticDocument(url, ifModifiedSince);
             }
 
             // Executing dynamically resolved URL.
@@ -116,7 +121,7 @@ namespace magic.endpoint.services
         /*
          * Returns a static document to caller.
          */
-        HttpResponse GetStaticDocument(string url)
+        HttpResponse GetStaticDocument(string url, DateTime ifModifiedSince)
         {
             // Checking that file exists.
             var fullpath = Utilities.RootFolder + "static/" + url.TrimStart('/');
@@ -128,17 +133,31 @@ namespace magic.endpoint.services
                 };
             }
 
+            // Checking if we should return a 304.
+            var fileTime = File.GetLastWriteTimeUtc(fullpath);
+            if (ifModifiedSince > fileTime)
+            {
+                // That sweet 304 response!
+                return new HttpResponse
+                {
+                    Result = 304,
+                };
+            }
+
             // Returning file to caller, making sure we get the MIME type correct.
             var provider = new FileExtensionContentTypeProvider();
-            string contentType;
-            if(!provider.TryGetContentType(fullpath, out contentType))
+            if (!provider.TryGetContentType(fullpath, out string contentType))
                 contentType = "application/octet-stream";
             var result = new HttpResponse
             {
                 Content = File.OpenRead(fullpath),
                 Result = 200,
             };
+
+            // Applying HTTP headers according to settings.
             result.Headers["Content-Type"] = contentType;
+            result.Headers["Last-Modified"] = fileTime.ToString("r");
+            result.Headers["Cache-Control"] = "public, max-age=" + _configuration["magic:staticFiles:maxAge"];
             return result;
         }
 
