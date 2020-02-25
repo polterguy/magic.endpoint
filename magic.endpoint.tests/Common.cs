@@ -14,6 +14,8 @@ using magic.endpoint.services;
 using magic.endpoint.contracts;
 using magic.node.extensions.hyperlambda;
 using magic.endpoint.services.utilities;
+using Microsoft.Extensions.Configuration;
+using Moq;
 
 namespace magic.endpoint.tests
 {
@@ -33,6 +35,9 @@ namespace magic.endpoint.tests
         public static IServiceProvider Initialize()
         {
             var services = new ServiceCollection();
+            var mockConfiguration = new Mock<IConfiguration>();
+            mockConfiguration.SetupGet(x => x[It.IsAny<string>()]).Returns("60");
+            services.AddTransient((svc) => mockConfiguration.Object);
             services.AddTransient<ISignaler, Signaler>();
             var types = new SignalsProvider(InstantiateAllTypes<ISlot>(services));
             services.AddTransient<ISignalsProvider>((svc) => types);
