@@ -67,7 +67,7 @@ namespace magic.endpoint.services
             }
 
             // Executing dynamically resolved URL.
-            return await ExecuteUrl(url, "get", args);
+            return await ExecuteUrl(url, "get", ifModifiedSince, args, null);
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace magic.endpoint.services
             string url, 
             IEnumerable<Tuple<string, string>> args)
         {
-            return await ExecuteUrl(url, "delete", args);
+            return await ExecuteUrl(url, "delete", DateTime.MinValue, args);
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace magic.endpoint.services
             IEnumerable<Tuple<string, string>> args,
             JContainer payload)
         {
-            return await ExecuteUrl(url, "post", args, payload);
+            return await ExecuteUrl(url, "post", DateTime.MinValue, args, payload);
         }
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace magic.endpoint.services
             IEnumerable<Tuple<string, string>> args,
             JContainer payload)
         {
-            return await ExecuteUrl(url, "put", args, payload);
+            return await ExecuteUrl(url, "put", DateTime.MinValue, args, payload);
         }
 
         #region [ -- Private helper methods -- ]
@@ -167,6 +167,7 @@ namespace magic.endpoint.services
         async Task<HttpResponse> ExecuteUrl(
             string url,
             string verb,
+            DateTime ifModifiedSince,
             IEnumerable<Tuple<string, string>> args,
             JContainer payload = null)
         {
@@ -190,6 +191,8 @@ namespace magic.endpoint.services
                  * them according to the declaration node.
                  */
                 AttachArguments(lambda, url, args, payload);
+                if (verb == "get")
+                    lambda.Children.First(x => x.Name == ".arguments").Add(new Node("If-Modified-Since", ifModifiedSince));
 
                 /*
                  * Evaluating our lambda async, making sure we allow for the
@@ -301,8 +304,7 @@ namespace magic.endpoint.services
             }
 
             // Inserting the arguments specified to the endpoint as arguments, but only if there are any arguments.
-            if (lambda.Children.Any())
-                lambda.Insert(0, argsNode);
+            lambda.Insert(0, argsNode);
         }
 
         /*
