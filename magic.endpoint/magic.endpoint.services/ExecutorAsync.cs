@@ -222,7 +222,7 @@ namespace magic.endpoint.services
                     {
                         await _signaler.ScopeAsync("slots.result", evalResult, async () =>
                         {
-                            await _signaler.SignalAsync("eval", lambda);
+                            await _signaler.SignalAsync("wait.eval", lambda);
                         });
                     });
 
