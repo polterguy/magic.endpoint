@@ -189,9 +189,12 @@ namespace magic.endpoint.services
                  * Attaching arguments to lambda, which will also to some
                  * extent sanity check the arguments, and possibly convert
                  * them according to the declaration node.
+                 *
+                 * Notice, if we are requesting a non-magic URL, we also attach the "If-Modified-Since" HTTP
+                 * header, to allow for our dynamic URL resolver to return 304 responses.
                  */
                 AttachArguments(lambda, url, args, payload);
-                if (verb == "get")
+                if (verb == "get" && !url.StartsWith("/magic"))
                     lambda.Children.First(x => x.Name == ".arguments").Add(new Node("If-Modified-Since", ifModifiedSince));
 
                 /*
