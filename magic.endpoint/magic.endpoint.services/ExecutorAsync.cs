@@ -194,7 +194,7 @@ namespace magic.endpoint.services
                  * header, to allow for our dynamic URL resolver to return 304 responses.
                  */
                 AttachArguments(lambda, url, args, payload);
-                if (verb == "get" && !url.StartsWith("/magic"))
+                if (verb == "get" && !url.StartsWith("magic/"))
                     lambda.Children.First(x => x.Name == ".arguments").Add(new Node("If-Modified-Since", ifModifiedSince));
 
                 /*
