@@ -45,6 +45,7 @@ namespace magic.endpoint.contracts
         /// specified payload.
         /// </summary>
         /// <param name="url">URL that was requested.</param>
+        /// <param name="args">HTTP arguments to endpoints.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePostAsync(
@@ -57,6 +58,7 @@ namespace magic.endpoint.contracts
         /// specified payload.
         /// </summary>
         /// <param name="url">URL that was requested.</param>
+        /// <param name="args">HTTP arguments to endpoints.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePutAsync(

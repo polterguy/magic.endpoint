@@ -33,6 +33,7 @@ namespace magic.endpoint.services
         /// Creates an instance of your type.
         /// </summary>
         /// <param name="signaler">Signaler necessary evaluate endpoint.</param>
+        /// <param name="configuration">Configuration object for application.</param>
         public ExecutorAsync(ISignaler signaler, IConfiguration configuration)
         {
             _signaler = signaler ?? throw new ArgumentNullException(nameof(signaler));
