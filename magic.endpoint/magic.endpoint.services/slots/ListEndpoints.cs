@@ -178,7 +178,7 @@ namespace magic.endpoint.services.slots
                 }
 
                 // Then checking to see if this is a dynamically created CRUD wrapper endpoint.
-                var slotNode = lambda.Children.LastOrDefault(x => x.Name == "wait.slots.signal");
+                var slotNode = lambda.Children.LastOrDefault(x => x.Name == "wait.signal");
                 if (slotNode != null && slotNode.Children.Any(x => x.Name == "database") && slotNode.Children.Any(x => x.Name == "table"))
                 {
                     /*
