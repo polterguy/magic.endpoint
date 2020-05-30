@@ -3,4 +3,4 @@
    input1:string
    input2:int
    input3:bool
-slots.return-nodes:x:@.arguments/*
+return-nodes:x:@.arguments/*

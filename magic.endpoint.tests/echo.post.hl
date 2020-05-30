@@ -11,4 +11,4 @@
    input5
       obj1:string
       obj2:bool
-slots.return-nodes:x:@.arguments/*
+return-nodes:x:@.arguments/*

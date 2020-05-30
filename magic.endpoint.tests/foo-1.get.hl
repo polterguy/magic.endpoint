@@ -1,4 +1,4 @@
 ﻿
 
-slots.return-nodes
+return-nodes
    result:hello world

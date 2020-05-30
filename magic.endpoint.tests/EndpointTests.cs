@@ -28,6 +28,19 @@ namespace magic.endpoint.tests
         }
 
         [Fact]
+        public async Task ExecuteSimpleGetStringValue()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var result = await executor.ExecuteGetAsync("magic/foo-2", DateTime.MinValue, null);
+            Assert.Equal(200, result.Result);
+            Assert.Single(result.Headers);
+            var j = result.Content as string;
+            Assert.NotNull(j);
+            Assert.Equal("hello world", j);
+        }
+
+        [Fact]
         public async Task GetEcho()
         {
             var svc = Common.Initialize();

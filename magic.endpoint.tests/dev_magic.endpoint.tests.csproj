@@ -14,6 +14,7 @@
     <None Remove="foo-1.get.hl" />
     <None Remove="header.get.hl" />
     <None Remove="status.get.hl" />
+    <None Remove="foo-1 %28copy%29.get.hl" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +31,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="foo-1.get.hl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="foo-2.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
