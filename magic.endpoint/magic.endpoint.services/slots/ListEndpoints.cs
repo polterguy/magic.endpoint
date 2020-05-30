@@ -36,7 +36,10 @@ namespace magic.endpoint.services.slots
             var node = new Node("");
             signaler.Signal("auth.ticket.get", node);
             var roles = node.Children.Select(x => x.GetEx<string>()).ToArray();
-            input.AddRange(AddCustomEndpoints(roles, Utilities.RootFolder, Utilities.RootFolder).ToList());
+            input.AddRange(AddCustomEndpoints(
+                roles,
+                Utilities.RootFolder,
+                Utilities.RootFolder + "modules/").ToList());
         }
 
         #region [ -- Private helper methods -- ]
@@ -48,7 +51,9 @@ namespace magic.endpoint.services.slots
         IEnumerable<Node> AddCustomEndpoints(string[] roles, string rootFolder, string currentFolder)
         {
             // Looping through each folder inside of "currentFolder".
-            var folders = Directory.GetDirectories(currentFolder).Select(x => x.Replace("\\", "/")).ToList();
+            var folders = Directory
+                .GetDirectories(currentFolder)
+                .Select(x => x.Replace("\\", "/")).ToList();
             folders.Sort();
             foreach (var idxFolder in folders)
             {
