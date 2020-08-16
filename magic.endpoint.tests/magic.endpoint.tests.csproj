@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="magic.lambda.json" Version="8.1.1" />
-    <PackageReference Include="magic.lambda.slots" Version="8.1.1" />
+    <PackageReference Include="magic.lambda.json" Version="8.1.2" />
+    <PackageReference Include="magic.lambda.slots" Version="8.1.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
     <PackageReference Include="Moq" Version="4.13.1" />
@@ -17,8 +17,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="magic.lambda" Version="8.1.1" />
-    <PackageReference Include="magic.signals" Version="8.1.1" />
+    <PackageReference Include="magic.lambda" Version="8.1.2" />
+    <PackageReference Include="magic.signals" Version="8.1.2" />
   </ItemGroup>
 
   <ItemGroup>
