@@ -328,36 +328,45 @@ namespace magic.endpoint.services
             if (string.IsNullOrEmpty(type))
             {
                 // No conversion can be done on main node, but declaration node might have children.
-                if (declaration.Children.Any())
-                {
-                    if (node.Children.Count() == 1 && node.Children.First().Name == "." && node.Children.First().Value == null)
-                    {
-                        // Array!
-                        if (declaration.Children.Count() != 1 || declaration.Children.First().Name != "." || declaration.Children.First().Value != null)
-                            throw new ArgumentException($"We were given an array argument ('{node.Children.First().Value}') where an object argument was expected.");
+                return ConvertRecursively(node, declaration);
 
-                        foreach (var idxArg in node.Children.First().Children)
-                        {
-                            idxArg.Value = ConvertArgument(idxArg, declaration.Children.First().Children.FirstOrDefault(x => x.Name == idxArg.Name));
-                        }
-                    }
-                    else
-                    {
-                        // Object!
-                        foreach (var idxArg in node.Children)
-                        {
-                            idxArg.Value = ConvertArgument(idxArg, declaration.Children.FirstOrDefault(x => x.Name == idxArg.Name));
-                        }
-                    }
-                }
-                return node.Value;
-
-            } else if (type == "*")
+            }
+            else if (type == "*")
             {
                 // Any object tolerated!
                 return node.Value;
             }
             return Parser.ConvertValue(node.Value, type);
+        }
+
+        /*
+         * Recursively tries to convert arguments.
+         */
+        private object ConvertRecursively(Node node, Node declaration)
+        {
+            if (declaration.Children.Any())
+            {
+                if (node.Children.Count() == 1 && node.Children.First().Name == "." && node.Children.First().Value == null)
+                {
+                    // Array!
+                    if (declaration.Children.Count() != 1 || declaration.Children.First().Name != "." || declaration.Children.First().Value != null)
+                        throw new ArgumentException($"We were given an array argument ('{node.Children.First().Value}') where an object argument was expected.");
+
+                    foreach (var idxArg in node.Children.First().Children)
+                    {
+                        idxArg.Value = ConvertArgument(idxArg, declaration.Children.First().Children.FirstOrDefault(x => x.Name == idxArg.Name));
+                    }
+                }
+                else
+                {
+                    // Object!
+                    foreach (var idxArg in node.Children)
+                    {
+                        idxArg.Value = ConvertArgument(idxArg, declaration.Children.FirstOrDefault(x => x.Name == idxArg.Name));
+                    }
+                }
+            }
+            return node.Value;
         }
 
         /*
