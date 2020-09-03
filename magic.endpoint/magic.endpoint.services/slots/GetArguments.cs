@@ -32,7 +32,7 @@ namespace magic.endpoint.services.slots
             var url = input.Children.First(x => x.Name == "url").GetEx<string>();
             var verb = input.Children.First(x => x.Name == "verb").GetEx<string>();
             if (!Utilities.IsLegalHttpName(url))
-                throw new ApplicationException($"Oops, '{url}' is not a valid HTTP URL for Magic");
+                throw new ArgumentException($"Oops, '{url}' is not a valid HTTP URL for Magic");
 
             switch (verb)
             {
@@ -42,7 +42,7 @@ namespace magic.endpoint.services.slots
                 case "put":
                     break;
                 default:
-                    throw new ApplicationException($"I don't know how to '{verb}', only 'post', 'put', 'delete' and 'get'");
+                    throw new ArgumentException($"I don't know how to '{verb}', only 'post', 'put', 'delete' and 'get'");
             }
 
             // Cleaning out results.
@@ -56,7 +56,7 @@ namespace magic.endpoint.services.slots
              */
             var filename = Utilities.RootFolder + url.TrimStart('/').Substring(6) + "." + verb + ".hl";
             if (!File.Exists(filename))
-                throw new ApplicationException($"No endpoint found at '{url}' for verb '{verb}'");
+                throw new ArgumentException($"No endpoint found at '{url}' for verb '{verb}'");
 
             // Parsing file as Hyperlambda.
             using (var stream = File.OpenRead(filename))

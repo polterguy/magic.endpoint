@@ -319,7 +319,7 @@ namespace magic.endpoint.services
         object ConvertArgument(Node node, Node declaration)
         {
             if (declaration == null)
-                throw new ApplicationException($"I don't know how to handle the '{node.Name}' argument");
+                throw new ArgumentException($"I don't know how to handle the '{node.Name}' argument");
 
             if (node.Value == null)
                 return null; // Allowing for null values

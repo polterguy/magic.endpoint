@@ -54,7 +54,7 @@ namespace magic.endpoint.services.utilities
         {
             // Sanity checking invocation.
             if (!IsLegalHttpName(url))
-                throw new ApplicationException($"The URL '{url}' is not a legal URL for Magic");
+                throw new ArgumentException($"The URL '{url}' is not a legal URL for Magic");
 
             // Making sure we resolve "magic/" folder files correctly.
             if (url.StartsWith("magic/"))
