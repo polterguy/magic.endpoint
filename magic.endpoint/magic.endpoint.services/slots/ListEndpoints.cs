@@ -118,7 +118,6 @@ namespace magic.endpoint.services.slots
                     }
                 }
             }
-            yield break;
         }
 
         /*

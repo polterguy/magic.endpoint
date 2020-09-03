@@ -4,7 +4,6 @@
  */
 
 using System.IO;
-using System.Linq;
 using Microsoft.AspNetCore.StaticFiles;
 using magic.node;
 using magic.node.extensions;
