@@ -36,8 +36,8 @@ namespace magic.endpoint.services
         /// <param name="configuration">Configuration object for application.</param>
         public ExecutorAsync(ISignaler signaler, IConfiguration configuration)
         {
-            _signaler = signaler ?? throw new ArgumentNullException(nameof(signaler));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _signaler = signaler;
+            _configuration = configuration;
         }
 
         /// <summary>

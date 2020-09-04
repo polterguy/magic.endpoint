@@ -32,7 +32,7 @@ namespace magic.endpoint.controller
         /// <param name="executor">Service implementation.</param>
         public EndpointController(IExecutorAsync executor)
         {
-            _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+            _executor = executor;
         }
 
         /// <summary>
