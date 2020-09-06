@@ -9,10 +9,8 @@
     <Copyright>Thomas Hansen, thomas@gaiasoul.com</Copyright>
     <Description>Service implementations for magic.endpoint, that allows you to dynamically evaluate Hyperlambda files associated with a URL.</Description>
     <PackageProjectUrl>https://github.com/polterguy/magic.endpoint</PackageProjectUrl>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/polterguy/magic.endpoint/master/LICENSE</PackageLicenseUrl>
-    <PackageIconUrl>https://polterguy.github.io/favicon.ico</PackageIconUrl>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>8.1.9</PackageVersion>
+    <PackageVersion>8.1.10</PackageVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/polterguy/magic.endpoint.git</RepositoryUrl>
@@ -20,7 +18,17 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageIcon>ico.png</PackageIcon>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../ico.png" Pack="true" PackagePath="$(PackageIcon)"/>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
@@ -33,8 +41,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.0.0" />
-    <PackageReference Include="magic.node.extensions" Version="8.1.9" />
-    <PackageReference Include="magic.signals.contracts" Version="8.1.9" />
+    <PackageReference Include="magic.node.extensions" Version="8.1.*" />
+    <PackageReference Include="magic.signals.contracts" Version="8.1.*" />
   </ItemGroup>
 
   <ItemGroup>
