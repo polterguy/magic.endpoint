@@ -299,7 +299,7 @@ namespace magic.endpoint.services
                     object value = idxArg.Item2;
                     var declaration = fileArgs?.Children.FirstOrDefault(x => x.Name == idxArg.Item1);
                     if (declaration != null)
-                        value = Parser.ConvertValue(idxArg.Item2, declaration.Get<string>());
+                        value = Converter.ToObject(idxArg.Item2, declaration.Get<string>());
                     argsNode.Add(
                         new Node(
                             idxArg.Item1,
@@ -336,7 +336,7 @@ namespace magic.endpoint.services
                 // Any object tolerated!
                 return node.Value;
             }
-            return Parser.ConvertValue(node.Value, type);
+            return Converter.ToObject(node.Value, type);
         }
 
         /*
