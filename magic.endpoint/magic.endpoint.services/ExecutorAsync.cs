@@ -90,6 +90,7 @@ namespace magic.endpoint.services
 
             // Retrieving file, and verifying it exists.
             var path = Utilities.GetEndpointFile(url, verb);
+            System.Console.WriteLine(path);
             if (!File.Exists(path))
                 return new HttpResponse { Result = 404 };
 
@@ -113,15 +114,6 @@ namespace magic.endpoint.services
                  */
                 var evalResult = new Node();
                 var httpResponse = new HttpResponse();
-
-                /*
-                 * Making sure we default content type to "application/json" if this is a
-                 * "magically resolved URL". If it's not, we default content to HTML.
-                 */
-                if (url.StartsWith("magic/"))
-                    httpResponse.Headers["Content-Type"] = "application/json";
-                else
-                    httpResponse.Headers["Content-Type"] = "text/html";
 
                 /*
                  * Evaluating our lambda async, making sure we allow for the

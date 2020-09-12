@@ -20,7 +20,9 @@ namespace magic.endpoint.controller
     /// and a verb, allowing the caller tooptionally pass in arguments, if the
     /// endpoint can accept arguments.
     /// </summary>
-    [Route("/{*url}", Order = int.MaxValue)]
+    [Route("magic")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
     public class EndpointController : ControllerBase
     {
         readonly IExecutorAsync _executor;
@@ -39,6 +41,7 @@ namespace magic.endpoint.controller
         /// </summary>
         /// <param name="url">The requested URL.</param>
         [HttpGet]
+        [Route("{*url}")]
         public async Task<ActionResult> Get(string url)
         {
             return TransformToActionResult(
@@ -52,6 +55,7 @@ namespace magic.endpoint.controller
         /// </summary>
         /// <param name="url">The requested URL.</param>
         [HttpDelete]
+        [Route("{*url}")]
         public async Task<ActionResult> Delete(string url)
         {
             return TransformToActionResult(
@@ -66,6 +70,7 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         /// <param name="payload">Payload from client.</param>
         [HttpPost]
+        [Route("{*url}")]
         public async Task<ActionResult> Post(string url, [FromBody] JContainer payload)
         {
             return TransformToActionResult(
@@ -81,6 +86,7 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         /// <param name="payload">Payload from client.</param>
         [HttpPut]
+        [Route("{*url}")]
         public async Task<ActionResult> Put(string url, [FromBody] JContainer payload)
         {
             return TransformToActionResult(
@@ -117,35 +123,9 @@ namespace magic.endpoint.controller
                 return new StatusCodeResult(response.Result);
             }
 
-            // Defaulting Content-Type return header to "application/octet-stream" if no header has been explicitly set.
-            var contentType = response.Headers["Content-Type"];
-
-            // Checking if this is a stream content result.
-            if (response.Content is Stream stream)
-                return new FileStreamResult(stream, contentType);
-
-            // Figuring out type of result, and acting accordingly.
-            switch (contentType)
-            {
-                case "application/json":
-
-                    // JSON result, converting if necessary.
-                    if (response.Content is string strContent)
-                        return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
-                    return new ObjectResult(response.Content) { StatusCode = response.Result };
-
-                default:
-
-                    // Default, returning as "whatever content".
-                    if (contentType.StartsWith("text/"))
-                        return new ContentResult
-                        {
-                            StatusCode = response.Result,
-                            Content = Convert.ToString(response.Content ?? "", CultureInfo.InvariantCulture),
-                            ContentType = contentType,
-                        };
-                    return new ObjectResult(response.Content) { StatusCode = response.Result };
-            }
+            if (response.Content is string strContent)
+                return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
+            return new ObjectResult(response.Content) { StatusCode = response.Result };
         }
 
         #endregion
