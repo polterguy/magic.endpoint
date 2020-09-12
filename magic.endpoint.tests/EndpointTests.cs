@@ -19,7 +19,7 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("magic/foo-1", DateTime.MinValue, null);
+            var result = await executor.ExecuteGetAsync("magic/foo-1", null);
             Assert.Equal(200, result.Result);
             Assert.Single(result.Headers);
             var j = result.Content as JObject;
@@ -32,7 +32,7 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("magic/foo-2", DateTime.MinValue, null);
+            var result = await executor.ExecuteGetAsync("magic/foo-2", null);
             Assert.Equal(200, result.Result);
             Assert.Single(result.Headers);
             var j = result.Content as string;
@@ -47,11 +47,11 @@ namespace magic.endpoint.tests
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
             // Notice, GET will convert its arguments.
-            var input = new List<Tuple<string, string>>();
-            input.Add(new Tuple<string, string>("input1", "foo"));
-            input.Add(new Tuple<string, string>("input2", "5"));
-            input.Add(new Tuple<string, string>("input3", "true"));
-            var result = await executor.ExecuteGetAsync("magic/echo", DateTime.MinValue, input);
+            var input = new List<(string, string)>();
+            input.Add(("input1", "foo"));
+            input.Add(("input2", "5"));
+            input.Add(("input3", "true"));
+            var result = await executor.ExecuteGetAsync("magic/echo", input);
             Assert.Equal(200, result.Result);
             Assert.Single(result.Headers);
             var j = result.Content as JObject;
@@ -66,7 +66,7 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("magic/status", DateTime.MinValue, null);
+            var result = await executor.ExecuteGetAsync("magic/status", null);
             Assert.Equal(201, result.Result);
         }
 
@@ -75,7 +75,7 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("magic/header", DateTime.MinValue, null);
+            var result = await executor.ExecuteGetAsync("magic/header", null);
             Assert.Equal(2, result.Headers.Count);
             Assert.Equal("bar", result.Headers["foo"]);
         }

@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using magic.node;
@@ -40,127 +39,42 @@ namespace magic.endpoint.services
             _configuration = configuration;
         }
 
-        /// <summary>
-        /// Executes an HTTP GET endpoint with the specified URL and the
-        /// specified arguments.
-        /// </summary>
-        /// <param name="url">URL that was requested.</param>
-        /// <param name="ifModifiedSince">Only return document if it has been modified since this date.</param>
-        /// <param name="args">Arguments to your endpoint.</param>
-        /// <returns>The result of the evaluation.</returns>
+        /// <inheritdoc/>
         public async Task<HttpResponse> ExecuteGetAsync(
             string url,
-            DateTime ifModifiedSince,
-            IEnumerable<Tuple<string, string>> args)
+            IEnumerable<(string Name, string Value)> args)
         {
-            // Notice, supporting static document, and default document.
-            if (url == null)
-            {
-                // Checking if default static document exists.
-                if (File.Exists(Utilities.RootFolder + "static/index.html"))
-                    return GetStaticDocument("index.html", ifModifiedSince);
-            }
-            else
-            {
-                // Checking if this is a request for a static document.
-                if (url.Contains("."))
-                    return GetStaticDocument(url, ifModifiedSince);
-            }
-
             // Executing dynamically resolved URL.
-            return await ExecuteUrl(url, "get", ifModifiedSince, args, null);
+            return await ExecuteUrl(url, "get", args, null);
         }
 
-        /// <summary>
-        /// Executes an HTTP DELETE endpoint with the specified URL and the
-        /// specified arguments.
-        /// </summary>
-        /// <param name="url">URL that was requested.</param>
-        /// <param name="args">Arguments to your endpoint.</param>
-        /// <returns>The result of the evaluation.</returns>
+        /// <inheritdoc/>
         public async Task<HttpResponse> ExecuteDeleteAsync(
             string url, 
-            IEnumerable<Tuple<string, string>> args)
+            IEnumerable<(string Name, string Value)> args)
         {
-            return await ExecuteUrl(url, "delete", DateTime.MinValue, args);
+            return await ExecuteUrl(url, "delete", args);
         }
 
-        /// <summary>
-        /// Executes an HTTP POST endpoint with the specified URL and the
-        /// specified payload.
-        /// </summary>
-        /// <param name="url">URL that was requested.</param>
-        /// <param name="args">Arguments to your endpoint.</param>
-        /// <param name="payload">JSON payload to your endpoint.</param>
-        /// <returns>The result of the evaluation.</returns>
+        /// <inheritdoc/>
         public async Task<HttpResponse> ExecutePostAsync(
             string url,
-            IEnumerable<Tuple<string, string>> args,
+            IEnumerable<(string Name, string Value)> args,
             JContainer payload)
         {
-            return await ExecuteUrl(url, "post", DateTime.MinValue, args, payload);
+            return await ExecuteUrl(url, "post", args, payload);
         }
 
-        /// <summary>
-        /// Executes an HTTP PUT endpoint with the specified URL and the
-        /// specified payload.
-        /// </summary>
-        /// <param name="url">URL that was requested.</param>
-        /// <param name="args">Arguments to your endpoint.</param>
-        /// <param name="payload">JSON payload to your endpoint.</param>
-        /// <returns>The result of the evaluation.</returns>
+        /// <inheritdoc/>
         public async Task<HttpResponse> ExecutePutAsync(
             string url,
-            IEnumerable<Tuple<string, string>> args,
+            IEnumerable<(string Name, string Value)> args,
             JContainer payload)
         {
-            return await ExecuteUrl(url, "put", DateTime.MinValue, args, payload);
+            return await ExecuteUrl(url, "put", args, payload);
         }
 
         #region [ -- Private helper methods -- ]
-
-        /*
-         * Returns a static document to caller.
-         */
-        HttpResponse GetStaticDocument(string url, DateTime ifModifiedSince)
-        {
-            // Checking that file exists.
-            var fullpath = Utilities.RootFolder + "static/" + url.TrimStart('/');
-            if (!File.Exists(fullpath))
-            {
-                return new HttpResponse
-                {
-                    Result = 404
-                };
-            }
-
-            // Checking if we should return a 304.
-            var fileTime = File.GetLastWriteTimeUtc(fullpath);
-            if (ifModifiedSince > fileTime)
-            {
-                // That sweet 304 response!
-                return new HttpResponse
-                {
-                    Result = 304,
-                };
-            }
-
-            // Returning file to caller, making sure we get the MIME type correct.
-            var provider = new FileExtensionContentTypeProvider();
-            if (!provider.TryGetContentType(fullpath, out string contentType))
-                contentType = "application/octet-stream";
-            var result = new HttpResponse
-            {
-                Content = File.OpenRead(fullpath),
-                Result = 200,
-            };
-
-            // Applying HTTP headers according to settings.
-            result.Headers["Content-Type"] = contentType;
-            result.Headers["Last-Modified"] = fileTime.ToString("r");
-            result.Headers["Cache-Control"] = "public, max-age=" + _configuration["magic:staticFiles:maxAge"];
-            return result;
-        }
 
         /*
          * Executes a URL that was given QUERY arguments.
@@ -168,8 +82,7 @@ namespace magic.endpoint.services
         async Task<HttpResponse> ExecuteUrl(
             string url,
             string verb,
-            DateTime ifModifiedSince,
-            IEnumerable<Tuple<string, string>> args,
+            IEnumerable<(string Name, string Value)> args,
             JContainer payload = null)
         {
             // Defaulting url to "" if not given.
@@ -190,13 +103,8 @@ namespace magic.endpoint.services
                  * Attaching arguments to lambda, which will also to some
                  * extent sanity check the arguments, and possibly convert
                  * them according to the declaration node.
-                 *
-                 * Notice, if we are requesting a non-magic URL, we also attach the "If-Modified-Since" HTTP
-                 * header, to allow for our dynamic URL resolver to return 304 responses.
                  */
                 AttachArguments(lambda, url, args, payload);
-                if (verb == "get" && !url.StartsWith("magic/"))
-                    lambda.Children.First(x => x.Name == ".arguments").Add(new Node("If-Modified-Since", ifModifiedSince));
 
                 /*
                  * Evaluating our lambda async, making sure we allow for the
@@ -254,7 +162,7 @@ namespace magic.endpoint.services
         void AttachArguments(
             Node lambda, 
             string url,
-            IEnumerable<Tuple<string, string>> args, 
+            IEnumerable<(string Name, string Value)> args, 
             JContainer payload)
         {
             // Checking if file has [.arguments] node, and removing it if it exists.
@@ -296,13 +204,13 @@ namespace magic.endpoint.services
             {
                 foreach (var idxArg in args)
                 {
-                    object value = idxArg.Item2;
-                    var declaration = fileArgs?.Children.FirstOrDefault(x => x.Name == idxArg.Item1);
+                    object value = idxArg.Value;
+                    var declaration = fileArgs?.Children.FirstOrDefault(x => x.Name == idxArg.Name);
                     if (declaration != null)
-                        value = Converter.ToObject(idxArg.Item2, declaration.Get<string>());
+                        value = Converter.ToObject(idxArg.Value, declaration.Get<string>());
                     argsNode.Add(
                         new Node(
-                            idxArg.Item1,
+                            idxArg.Name,
                             value));
                 }
             }
