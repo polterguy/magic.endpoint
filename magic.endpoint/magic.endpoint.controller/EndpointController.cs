@@ -130,6 +130,9 @@ namespace magic.endpoint.controller
                 return new StatusCodeResult(response.Result);
             }
 
+            // Converting string values to JSON if necessary.
+            if (response.Content is string strContent && Response.ContentType.StartsWith("application/json"))
+                return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
             return new ObjectResult(response.Content) { StatusCode = response.Result };
         }
 
