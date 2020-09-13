@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using magic.node;
 using magic.node.extensions;
@@ -26,17 +25,14 @@ namespace magic.endpoint.services
     public class ExecutorAsync : IExecutorAsync
     {
         readonly ISignaler _signaler;
-        readonly IConfiguration _configuration;
 
         /// <summary>
         /// Creates an instance of your type.
         /// </summary>
         /// <param name="signaler">Signaler necessary evaluate endpoint.</param>
-        /// <param name="configuration">Configuration object for application.</param>
-        public ExecutorAsync(ISignaler signaler, IConfiguration configuration)
+        public ExecutorAsync(ISignaler signaler)
         {
             _signaler = signaler;
-            _configuration = configuration;
         }
 
         /// <inheritdoc/>

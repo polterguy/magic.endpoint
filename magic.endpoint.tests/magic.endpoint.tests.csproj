@@ -50,8 +50,4 @@
     <ProjectReference Include="..\magic.endpoint\magic.endpoint.services\magic.endpoint.services.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="Microsoft.Extensions.Configuration">
-    </Reference>
-  </ItemGroup>
 </Project>
