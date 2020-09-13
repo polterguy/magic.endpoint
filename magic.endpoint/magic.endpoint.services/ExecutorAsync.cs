@@ -199,12 +199,11 @@ namespace magic.endpoint.services
              * This is done since by default all endpoints accepts all arguments,
              * unless an explicit [.arguments] declaration node is found.
              */
-            System.Console.WriteLine(converterNode.ToHyperlambda());
             if (declaration != null)
             {
                 foreach (var idxArg in converterNode.Children)
                 {
-                    ConvertArgument(
+                    ConvertArgumentRecursively(
                         idxArg,
                         declaration.Children.FirstOrDefault(x => x.Name == idxArg.Name));
                 }
@@ -217,34 +216,33 @@ namespace magic.endpoint.services
          * declaration node. Making sure the argument is allowed for the
          * endpoint.
          */
-        void ConvertArgument(Node arg, Node declaration)
+        void ConvertArgumentRecursively(Node arg, Node declaration)
         {
             if (declaration == null)
                 throw new ArgumentException($"I don't know how to handle the '{arg.Name}' argument");
 
             var type = declaration.Get<string>();
             if (type == "*")
-                return; // Turning OFF all argument sanity checking explicitly for currently traversed node.
+                return; // Turning OFF all argument sanity checking and conversion explicitly for currently traversed node.
             foreach (var idxChild in arg.Children)
             {
-                ConvertArgument(idxChild, declaration.Children.FirstOrDefault(x => x.Name == idxChild.Name));
+                ConvertArgumentRecursively(idxChild, declaration.Children.FirstOrDefault(x => x.Name == idxChild.Name));
             }
         }
 
         /*
-         * Creates a JContainer of some sort from the given lambda node.
+         * Creates a returned payload of some sort and returning to caller.
          */
         object GetReturnValue(Node lambda)
         {
-            // Checking if we have a value.
             if (lambda.Value != null)
             {
-                if (lambda.Value is Stream)
+                // IDisposables are automatically disposed by ASP.NET Core.
+                if (lambda.Value is IDisposable)
                     return lambda.Value;
                 return lambda.Get<string>();
             }
 
-            // Checking if we have children.
             if (lambda.Children.Any())
             {
                 var convert = new Node();
