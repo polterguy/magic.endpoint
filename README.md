@@ -70,6 +70,22 @@ http://localhost:55247/magic/modules/magic/foo?arg1=howdy&arg2=5
 
 Assuming you're backend is running on localhost, at port 55247 of course.
 
+**Notice** - To allow for _any_ arguments to your files, simply _ommit_ the **[.arguments]** node
+in your Hyperlambda althogether. Alternatively, you can also partially ignore arguments sanity checking
+of individual nodes, by setting their values to `*`, such as the following illustrates.
+
+```
+.arguments
+   arg1:string
+   arg2:date
+   arg3:*
+```
+
+In the above arguments declaration, **[arg1]** and **[arg2]** will be sanity checked, and input converted
+to `string` or `date` (DateTime) - But the **[arg3]** parts will be completely ignored, allowing the caller
+to invoke it with _anything_ as `arg3` during invocation - Including complete graph JSON objects, assuming
+the above declaration is for a `PUT` or `POST` Hyperlambda file.
+
 ## Meta information
 
 Due to the semantic structure of Hyperlambda, retrieving meta information from your HTTP endpoints
