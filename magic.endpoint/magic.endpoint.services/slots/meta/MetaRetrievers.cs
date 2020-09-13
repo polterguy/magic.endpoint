@@ -19,20 +19,13 @@ namespace magic.endpoint.services.slots.meta
          * Returns meta data for a CRUD type of endpoint, if the
          * endpoint is a CRUD endpoint, and not of type GET.
          */
-        internal static IEnumerable<Node> CrudEndpointNotGet(
+        internal static IEnumerable<Node> CrudEndpoint(
             Node lambda,
             string verb,
             Node arguments)
         {
-            var slotNode = lambda
-                .Children
-                .LastOrDefault(x => x.Name == "wait.signal");
-
-            if (slotNode != null &&
-                slotNode.Children
-                    .Any(x => x.Name == "database") &&
-                slotNode.Children
-                    .Any(x => x.Name == "table"))
+            var slotNode = GetReturnNodeForCrud(lambda, false);
+            if (slotNode != null && verb != "get")
             {
                 switch (verb)
                 {
@@ -60,48 +53,39 @@ namespace magic.endpoint.services.slots.meta
             string verb,
             Node arguments)
         {
-            var slotNode = lambda
-                .Children
-                .LastOrDefault(x => x.Name == "wait.signal");
-
-            if (slotNode != null &&
-                slotNode.Children
-                    .Any(x => x.Name == "database") &&
-                slotNode.Children
-                    .Any(x => x.Name == "table"))
+            var returnNode = GetReturnNodeForCrud(lambda, true);
+            if (returnNode != null && verb == "get")
             {
-                if (verb == "get" && slotNode.Children.Any(x => x.Name == "columns"))
+                if (returnNode.Children
+                    .First(x => x.Name == "columns")
+                    .Children.Any(x => x.Name == "count(*) as count"))
                 {
+                    // count(*) endpoint.
+                    yield return new Node("returns", null, new Node[] { new Node("count", "long") });
+                    yield return new Node("array", false);
+                    yield return new Node("type", "crud-count");
+                }
+                else
+                {
+                    // Read endpoint.
                     var resultNode = new Node("returns");
-                    if (slotNode.Children
-                        .First(x => x.Name == "columns")
-                        .Children.Any(x => x.Name == "count(*) as count"))
+                    resultNode.AddRange(
+                        returnNode
+                            .Children
+                            .First(x => x.Name == "columns")
+                            .Children
+                            .Select(x => x.Clone()));
+                    if (arguments != null)
                     {
-                        resultNode.Add(new Node("count", "long"));
-                        yield return resultNode;
-                        yield return new Node("array", false);
-                        yield return new Node("type", "crud-count");
-                    }
-                    else
-                    {
-                        resultNode.AddRange(
-                            slotNode
-                                .Children
-                                .First(x => x.Name == "columns")
-                                .Children
-                                .Select(x => x.Clone()));
-                        if (arguments != null)
+                        foreach (var idx in resultNode.Children)
                         {
-                            foreach (var idx in resultNode.Children)
-                            {
-                                // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
-                                idx.Value = arguments.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
-                            }
+                            // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
+                            idx.Value = arguments.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
                         }
-                        yield return resultNode;
-                        yield return new Node("array", true);
-                        yield return new Node("type", "crud-read");
                     }
+                    yield return resultNode;
+                    yield return new Node("array", true);
+                    yield return new Node("type", "crud-read");
                 }
             }
         }
@@ -133,5 +117,25 @@ namespace magic.endpoint.services.slots.meta
                     yield return new Node("type", "crud-sql");
             }
         }
+
+        #region [ -- Private helper methods -- ]
+
+        /*
+         * Helper method to retrieve return node for CRUD endpoints.
+         */
+        static Node GetReturnNodeForCrud(Node lambda, bool mustHaveColumns)
+        {
+            var result = lambda
+                .Children
+                .LastOrDefault(x => x.Name == "wait.signal");
+            if (result != null &&
+                result.Children.Any(x => x.Name == "database") &&
+                result.Children.Any(x => x.Name == "table") &&
+                (!mustHaveColumns || result.Children.Any(x => x.Name == "columns")))
+                return result;
+            return null;
+        }
+
+        #endregion
     }
 }

@@ -23,6 +23,17 @@ namespace magic.endpoint.services.slots
     [Slot(Name = "endpoints.list")]
     public class ListEndpoints : ISlot
     {
+        /*
+         * Resolvers for meta data.
+         */
+        static readonly List<Func<Node, string, Node, IEnumerable<Node>>> _endpointMetaRetrievers =
+            new List<Func<Node, string, Node, IEnumerable<Node>>>
+        {
+            (lambda, verb, args) => MetaRetrievers.CrudEndpoint(lambda, verb, args),
+            (lambda, verb, args) => MetaRetrievers.CrudEndpointGet(lambda, verb, args),
+            (lambda, verb, args) => MetaRetrievers.StatisticsEndpoint(lambda, verb, args),
+        };
+
         /// <summary>
         /// Implementation of your slot.
         /// </summary>
@@ -33,6 +44,20 @@ namespace magic.endpoint.services.slots
             input.AddRange(HandleFolder(
                 Utilities.RootFolder,
                 Utilities.RootFolder + "modules/").ToList());
+        }
+
+        /// <summary>
+        /// Adds a meta data resolver, allowing you to inject your own meta data,
+        /// depending upon the lambda structure of the content of the file reolved
+        /// in your endpoint.
+        /// 
+        /// Your function will be invoked with the entire lambda for your file, its verb,
+        /// and its arguments. The latter will be found from your file's [.arguments] node.
+        /// </summary>
+        /// <param name="functor">Function responsible for returning additional meta data for endpoint.</param>
+        public void AddMetaDataResolver(Func<Node, string, Node, IEnumerable<Node>> functor)
+        {
+            _endpointMetaRetrievers.Add(functor);
         }
 
         #region [ -- Private helper methods -- ]
@@ -181,14 +206,6 @@ namespace magic.endpoint.services.slots
                 return new Node("description", result);
             return null;
         }
-
-        static readonly List<Func<Node, string, Node, IEnumerable<Node>>> _endpointMetaRetrievers =
-            new List<Func<Node, string, Node, IEnumerable<Node>>>
-        {
-            (lambda, verb, args) => MetaRetrievers.CrudEndpointGet(lambda, verb, args),
-            (lambda, verb, args) => MetaRetrievers.CrudEndpointNotGet(lambda, verb, args),
-            (lambda, verb, args) => MetaRetrievers.StatisticsEndpoint(lambda, verb, args),
-        };
 
         /*
          * Extracts custom information from endpoint,
