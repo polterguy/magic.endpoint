@@ -29,15 +29,7 @@ namespace magic.endpoint.services.slots
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            /*
-             * Retrieving user credentials before we start process, such that we can avoid
-             * returning endpoints the user doesn't have access to.
-             */
-            var node = new Node("");
-            signaler.Signal("auth.ticket.get", node);
-            var roles = node.Children.Select(x => x.GetEx<string>()).ToArray();
             input.AddRange(AddCustomEndpoints(
-                roles,
                 Utilities.RootFolder,
                 Utilities.RootFolder + "modules/").ToList());
         }
@@ -48,12 +40,13 @@ namespace magic.endpoint.services.slots
          * Recursively traverses your folder for any dynamic Hyperlambda
          * endpoints, and returns the result to caller.
          */
-        IEnumerable<Node> AddCustomEndpoints(string[] roles, string rootFolder, string currentFolder)
+        IEnumerable<Node> AddCustomEndpoints(string rootFolder, string currentFolder)
         {
             // Looping through each folder inside of "currentFolder".
             var folders = Directory
                 .GetDirectories(currentFolder)
-                .Select(x => x.Replace("\\", "/")).ToList();
+                .Select(x => x.Replace("\\", "/"))
+                .ToList();
             folders.Sort();
             foreach (var idxFolder in folders)
             {
@@ -62,13 +55,13 @@ namespace magic.endpoint.services.slots
                 if (Utilities.IsLegalHttpName(folder))
                 {
                     // Retrieves all files inside of currently iterated folder.
-                    foreach (var idxFile in GetDynamicFiles(roles, rootFolder, idxFolder))
+                    foreach (var idxFile in GetDynamicFiles(rootFolder, idxFolder))
                     {
                         yield return idxFile;
                     }
 
                     // Recursively retrieving inner folders of currently iterated folder.
-                    foreach (var idx in AddCustomEndpoints(roles, rootFolder, idxFolder))
+                    foreach (var idx in AddCustomEndpoints(rootFolder, idxFolder))
                     {
                         yield return idx;
                     }
@@ -79,28 +72,20 @@ namespace magic.endpoint.services.slots
         /*
          * Returns all fildes from current folder that matches some HTTP verb.
          */
-        IEnumerable<Node> GetDynamicFiles(string[] roles, string rootFolder, string folder)
+        IEnumerable<Node> GetDynamicFiles(string rootFolder, string folder)
         {
-            /*
-             * Retrieving all Hyperlambda files inside of folder, making sure we
-             * substitute all "windows slashes" with forward slash.
-             */
-            var folderFiles = Directory.GetFiles(folder, "*.hl").Select(x => x.Replace("\\", "/")).ToList();
-            folderFiles.Sort();
-
-            // Looping through each file in currently iterated folder.
-            foreach (var idxFile in folderFiles)
+            // Looping through each file in current folder.
+            var files = Directory
+                .GetFiles(folder, "*.hl")
+                .Select(x => x.Replace("\\", "/"))
+                .ToList();
+            files.Sort();
+            foreach (var idxFile in files)
             {
-                /*
-                 * This will remove the root folder parts of the path to the file,
-                 * which we're not interested in.
-                 */
+                // Removing the root folder, to return only relativ filename back to caller.
                 var filename = idxFile.Substring(rootFolder.Length);
 
-                /*
-                 * Verifying this is an HTTP file, which implies it must
-                 * have the structure of "path.HTTP-VERB.hl", for instance "foo.get.hl".
-                 */
+                // Making sure we only return files with format of "foo.xxx.hl", where xxx is some valid HTTP verb.
                 var entities = filename.Split('.');
                 if (entities.Length == 3)
                 {
@@ -111,9 +96,7 @@ namespace magic.endpoint.services.slots
                         case "put":
                         case "post":
                         case "get":
-                            var tmp = GetPath(roles, entities[0], entities[1], idxFile);
-                            if (tmp != null)
-                                yield return tmp;
+                            yield return GetFilenameMetaData(entities[0], entities[1], idxFile);
                             break;
                     }
                 }
@@ -124,46 +107,31 @@ namespace magic.endpoint.services.slots
          * Returns a single node, representing the endpoint given
          * as verb/filename/path, and its associated meta information.
          */
-        Node GetPath(string[] roles, string path, string verb, string filename)
+        Node GetFilenameMetaData(
+            string path,
+            string verb,
+            string filename)
         {
-            /*
-             * Creating our result node, and making sure we return path and verb.
-             */
+            // Creating our result node, and making sure we return path and verb.
             var result = new Node("");
             result.Add(new Node("path", "magic/" + path.Replace("\\", "/"))); // Must add "Route" parts.
             result.Add(new Node("verb", verb));
 
-            /*
-             * Reading the file, to figure out what type of authorization the
-             * currently traversed endpoint has.
-             */
+            // We need to inspect content of file to retrieve meta information about it, such as authorization, etc.
             using (var stream = File.OpenRead(filename))
             {
                 var lambda = new Parser(stream).Lambda();
-                foreach (var idx in lambda.Children)
-                {
-                    if (idx.Name == "auth.ticket.verify")
-                    {
-                        if (roles.Length == 0)
-                            return null; // User is not authenticated at all, and endpoint requires authentication.
 
-                        var auth = new Node("auth");
-                        var hasRole = false;
-                        foreach (var idxRole in idx.GetEx<string>()?.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>())
-                        {
-                            var role = idxRole.Trim();
-                            auth.Add(new Node("", role));
-                            if (!hasRole && roles.Contains(role))
-                                hasRole = true;
-                        }
-                        if (!hasRole && auth.Children.Any())
-                            return null; // Current user is not authenticated to see this endpoint!
-
-                        result.Add(auth);
-                    }
-                }
-
-                Node args = ExtractMeta(result, lambda);
+                // Extracting different existing components from file.
+                var auth = ExtractAuth(lambda);
+                if (auth != null)
+                    result.Add(auth);
+                var args = ExtractArgs(lambda);
+                if (args != null)
+                    result.Add(args);
+                var desc = ExtractDescription(lambda);
+                if (desc != null)
+                    result.Add(desc);
 
                 // Then checking to see if this is a dynamically created CRUD wrapper endpoint.
                 var slotNode = lambda.Children.LastOrDefault(x => x.Name == "wait.signal");
@@ -185,6 +153,48 @@ namespace magic.endpoint.services.slots
 
             // Returning results to caller.
             return result;
+        }
+
+        /*
+         * Extracts authorization for executing Hyperlambda file.
+         */
+        static Node ExtractAuth(Node lambda)
+        {
+            Node result = new Node("auth");
+            foreach (var idx in lambda.Children)
+            {
+                if (idx.Name == "auth.ticket.verify")
+                {
+                    result.AddRange(
+                        idx.GetEx<string>()?
+                        .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => new Node("", x)) ?? Array.Empty<Node>());
+                }
+            }
+            return result.Children.Any() ? result : null;
+        }
+
+        /*
+         * Extracts arguments, if existing.
+         */
+        static Node ExtractArgs(Node lambda)
+        {
+            var result = new Node("input");
+            var args = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
+            if (args != null)
+                result.AddRange(args.Children.Select(x => x.Clone()));
+            return result.Children.Any() ? result : null;
+        }
+
+        /*
+         * Extracts description, if existing.
+         */
+        static Node ExtractDescription(Node lambda)
+        {
+            var result = lambda.Children.FirstOrDefault(x => x.Name == ".description");
+            if (result != null)
+                return new Node("description", result.Get<string>());
+            return null;
         }
 
         /*
@@ -258,32 +268,6 @@ namespace magic.endpoint.services.slots
                     result.Add(new Node("type", "crud-delete"));
                     break;
             }
-        }
-
-        /*
-         * Extracts arguments and description, if existing.
-         */
-        static Node ExtractMeta(Node result, Node lambda)
-        {
-            // Then figuring out the endpoints input arguments, if any.
-            var args = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
-            if (args != null)
-            {
-                // Endpoint have declared its input arguments.
-                var argsNode = new Node("input");
-                argsNode.AddRange(args.Children.Select(x => x.Clone()));
-                result.Add(argsNode);
-            }
-
-            // Then figuring out the endpoints input description, if any.
-            var descriptionNode = lambda.Children.FirstOrDefault(x => x.Name == ".description");
-            if (descriptionNode != null)
-            {
-                // Endpoint have a descriptive node.
-                result.Add(new Node("description", descriptionNode.GetEx<string>()));
-            }
-
-            return args;
         }
 
         #endregion
