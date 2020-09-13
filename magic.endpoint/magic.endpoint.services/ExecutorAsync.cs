@@ -20,7 +20,7 @@ using magic.node.extensions.hyperlambda;
 namespace magic.endpoint.services
 {
     /// <summary>
-    /// Implementation of IExecutor contract, allowing you to
+    /// Implementation of IExecutor serive contract, allowing you to
     /// execute a dynamically created Hyperlambda endpoint.
     /// </summary>
     public class ExecutorAsync : IExecutorAsync
@@ -44,8 +44,7 @@ namespace magic.endpoint.services
             string url,
             IEnumerable<(string Name, string Value)> args)
         {
-            // Executing dynamically resolved URL.
-            return await ExecuteUrl(url, "get", args, null);
+            return await ExecuteUrl(url, "get", args);
         }
 
         /// <inheritdoc/>
@@ -85,44 +84,21 @@ namespace magic.endpoint.services
             IEnumerable<(string Name, string Value)> args,
             JContainer payload = null)
         {
-            // Defaulting url to "" if not given.
             url = url ?? "";
 
-            // Retrieving file, and verifying it exists.
+            // Figuring out file to execute, anbd doing some basic sanity check.
             var path = Utilities.GetEndpointFile(url, verb);
-            System.Console.WriteLine(path);
             if (!File.Exists(path))
                 return new HttpResponse { Result = 404 };
 
             // Reading and parsing file as Hyperlambda.
             using (var stream = File.OpenRead(path))
             {
-                // Creating a lambda object out of file.
                 var lambda = new Parser(stream).Lambda();
-
-                /*
-                 * Attaching arguments to lambda, which will also to some
-                 * extent sanity check the arguments, and possibly convert
-                 * them according to the declaration node.
-                 */
                 AttachArguments(lambda, url, args, payload);
 
-                /*
-                 * Evaluating our lambda async, making sure we allow for the
-                 * lambda object to return values, and to modify the response HTTP headers,
-                 * and its status code, etc.
-                 */
                 var evalResult = new Node();
                 var httpResponse = new HttpResponse();
-
-                /*
-                 * Evaluating our lambda async, making sure we allow for the
-                 * lambda object to return values, and to modify the response HTTP headers,
-                 * and its status code, etc.
-                 *
-                 * Wrapping execution in try/catch block, to make sure we dispose disposables
-                 * in case of exceptions.
-                 */
                 try
                 {
                     await _signaler.ScopeAsync("http.response", httpResponse, async () =>
@@ -132,8 +108,6 @@ namespace magic.endpoint.services
                             await _signaler.SignalAsync("wait.eval", lambda);
                         });
                     });
-
-                    // Retrieving content for request.
                     httpResponse.Content = GetReturnValue(evalResult);
                     return httpResponse;
                 }
@@ -157,28 +131,21 @@ namespace magic.endpoint.services
             IEnumerable<(string Name, string Value)> args, 
             JContainer payload)
         {
-            // Checking if file has [.arguments] node, and removing it if it exists.
             var fileArgs = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
             fileArgs?.UnTie();
 
-            // Our arguments node.
             var argsNode = new Node(".arguments");
 
-            // We only pass in URL if this is not a Magically resolved URL.
-            if (!url.StartsWith("magic/"))
-                argsNode.Add(new Node("url", url));
-
-            // First payload arguments.
             if (payload != null)
             {
-                // Converting the given arguments from JSON to lambda.
                 argsNode.Value = payload;
                 _signaler.Signal(".json2lambda-raw", argsNode);
                 argsNode.Value = null; // To remove actual JContainer from node.
 
                 /*
                  * Checking if we need to convert the individual arguments,
-                 * which is true if lambda file contains [.arguments] declaration.
+                 * and sanity check arguments, which is true if lambda file
+                 * contains an [.arguments] declaration.
                  */
                 if (fileArgs != null)
                 {
@@ -191,7 +158,6 @@ namespace magic.endpoint.services
                 }
             }
 
-            // Then doing QUERY parameters.
             if (args != null)
             {
                 foreach (var idxArg in args)
@@ -207,7 +173,6 @@ namespace magic.endpoint.services
                 }
             }
 
-            // Inserting the arguments specified to the endpoint as arguments, but only if there are any arguments.
             lambda.Insert(0, argsNode);
         }
 

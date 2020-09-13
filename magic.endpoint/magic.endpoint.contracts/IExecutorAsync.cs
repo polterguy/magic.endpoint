@@ -3,7 +3,6 @@
  * See the enclosed LICENSE file for details.
  */
 
-using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
