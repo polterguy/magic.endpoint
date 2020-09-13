@@ -126,112 +126,109 @@ namespace magic.endpoint.services
          * Attaches arguments (payload + query params) to lambda node.
          */
         void AttachArguments(
-            Node lambda, 
+            Node fileLambda, 
             string url,
-            IEnumerable<(string Name, string Value)> args, 
+            IEnumerable<(string Name, string Value)> queryParameters, 
             JContainer payload)
         {
-            var fileArgs = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
-            fileArgs?.UnTie();
+            var declaration = fileLambda.Children.FirstOrDefault(x => x.Name == ".arguments");
+            declaration?.UnTie();
 
-            var argsNode = new Node(".arguments");
+            var args = new Node(".arguments");
+
+            if (queryParameters != null)
+                AttachQueryParameters(declaration, args, queryParameters);
 
             if (payload != null)
+                AttachPayloadParameters(declaration, args, payload);
+
+            if (args.Children.Any())
+                fileLambda.Insert(0, args);
+        }
+
+        /*
+         * Converts if necessary, and attaches arguments found in
+         * query parameters to args node, sanity checking that the
+         * query parameter is allowed in the process.
+         */
+        void AttachQueryParameters(
+            Node declaration,
+            Node args,
+            IEnumerable<(string Name, string Value)> queryParameters)
+        {
+            foreach (var idxArg in queryParameters)
             {
-                argsNode.Value = payload;
-                _signaler.Signal(".json2lambda-raw", argsNode);
-                argsNode.Value = null; // To remove actual JContainer from node.
+                object value = idxArg.Value;
 
                 /*
-                 * Checking if we need to convert the individual arguments,
-                 * and sanity check arguments, which is true if lambda file
-                 * contains an [.arguments] declaration.
+                 * Checking if file contains a declaration at all.
+                 * This is done since by default all endpoints accepts all arguments,
+                 * unless an explicit [.arguments] declaration node is found.
                  */
-                if (fileArgs != null)
+                if (declaration != null)
                 {
-                    foreach (var idxArg in argsNode.Children)
-                    {
-                        idxArg.Value = ConvertArgument(
-                            idxArg,
-                            fileArgs.Children.FirstOrDefault(x => x.Name == idxArg.Name));
-                    }
+                    var declarationType = declaration?
+                        .Children
+                        .FirstOrDefault(x => x.Name == idxArg.Name)?
+                        .Get<string>() ??
+                        throw new ArgumentException($"I don't know how to handle the '{idxArg.Name}' query parameter");
+                    value = Converter.ToObject(idxArg.Value, declarationType);
                 }
+                args.Add(
+                    new Node(
+                        idxArg.Name,
+                        value));
             }
+        }
 
-            if (args != null)
+        /*
+         * Converts if necessary, and attaches arguments found in
+         * payload to args node, sanity checking that the
+         * parameter is allowed in the process.
+         */
+        void AttachPayloadParameters(
+            Node declaration,
+            Node args,
+            JContainer payload)
+        {
+            var converterNode = new Node("", payload);
+            _signaler.Signal(".json2lambda-raw", converterNode);
+
+            /*
+             * Checking if file contains a declaration at all.
+             * This is done since by default all endpoints accepts all arguments,
+             * unless an explicit [.arguments] declaration node is found.
+             */
+            System.Console.WriteLine(converterNode.ToHyperlambda());
+            if (declaration != null)
             {
-                foreach (var idxArg in args)
+                foreach (var idxArg in converterNode.Children)
                 {
-                    object value = idxArg.Value;
-                    var declaration = fileArgs?.Children.FirstOrDefault(x => x.Name == idxArg.Name);
-                    if (declaration != null)
-                        value = Converter.ToObject(idxArg.Value, declaration.Get<string>());
-                    argsNode.Add(
-                        new Node(
-                            idxArg.Name,
-                            value));
+                    ConvertArgument(
+                        idxArg,
+                        declaration.Children.FirstOrDefault(x => x.Name == idxArg.Name));
                 }
             }
-
-            lambda.Insert(0, argsNode);
+            args.AddRange(converterNode.Children.ToList());
         }
 
         /*
          * Converts the given input argument to the type specified in the
-         * declaration node. Making sure the argument is legally given to the
+         * declaration node. Making sure the argument is allowed for the
          * endpoint.
          */
-        object ConvertArgument(Node node, Node declaration)
+        void ConvertArgument(Node arg, Node declaration)
         {
             if (declaration == null)
-                throw new ArgumentException($"I don't know how to handle the '{node.Name}' argument");
-
-            if (node.Value == null)
-                return null; // Allowing for null values
+                throw new ArgumentException($"I don't know how to handle the '{arg.Name}' argument");
 
             var type = declaration.Get<string>();
-            if (string.IsNullOrEmpty(type))
+            if (type == "*")
+                return; // Turning OFF all argument sanity checking explicitly for currently traversed node.
+            foreach (var idxChild in arg.Children)
             {
-                // No conversion can be done on main node, but declaration node might have children.
-                return ConvertRecursively(node, declaration);
-
+                ConvertArgument(idxChild, declaration.Children.FirstOrDefault(x => x.Name == idxChild.Name));
             }
-            else if (type == "*")
-            {
-                // Any object tolerated!
-                return node.Value;
-            }
-            return Converter.ToObject(node.Value, type);
-        }
-
-        /*
-         * Recursively tries to convert arguments.
-         */
-        private object ConvertRecursively(Node node, Node declaration)
-        {
-            if (declaration.Children.Any())
-            {
-                if (node.Children.Count() == 1 && node.Children.First().Name == "." && node.Children.First().Value == null)
-                {
-                    // Array!
-                    if (declaration.Children.Count() != 1 || declaration.Children.First().Name != "." || declaration.Children.First().Value != null)
-                        throw new ArgumentException($"We were given an array argument ('{node.Children.First().Value}') where an object argument was expected.");
-
-                    foreach (var idxArg in node.Children.First().Children)
-                    {
-                        idxArg.Value = ConvertArgument(idxArg, declaration.Children.First().Children.FirstOrDefault(x => x.Name == idxArg.Name));
-                    }
-                }
-                else
-                {
-                    // Object!
-                    foreach (var idxArg in node.Children)
-                    {
-                        idxArg.Value = ConvertArgument(idxArg, declaration.Children.FirstOrDefault(x => x.Name == idxArg.Name));
-                    }
-                }
-            }
-            return node.Value;
         }
 
         /*
