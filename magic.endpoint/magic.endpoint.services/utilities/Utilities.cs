@@ -57,7 +57,7 @@ namespace magic.endpoint.services.utilities
                 throw new ArgumentException($"The URL '{url}' is not a legal URL for Magic");
 
             // Making sure we resolve "magic/" folder files correctly.
-            return RootFolder + url + $".{verb}.hl";
+            return RootFolder + url.TrimStart('/') + $".{verb}.hl";
         }
     }
 }

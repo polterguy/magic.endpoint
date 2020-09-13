@@ -112,27 +112,19 @@ namespace magic.endpoint.controller
                 Response.Headers.Add(idx.Key, idx.Value);
             }
 
-            // Unless explicitly overridden by Hyperlambda file, we default Content-Type to JSON.
-            if (!response.Headers.ContainsKey("Content-Type"))
-                Response.ContentType = "application/json";
-
             // If empty result, we return nothing.
             if (response.Content == null)
                 return new StatusCodeResult(response.Result);
 
-            // Checking if we have a non-successful result status code.
-            if (response.Result < 200 || response.Result >= 300)
-            {
-                // Making sure we dispose any already added streams/disposables, if already added.
-                if (response.Content is IDisposable strResponse)
-                    strResponse.Dispose();
-
-                return new StatusCodeResult(response.Result);
-            }
+            // Unless explicitly overridden by service, we default Content-Type to JSON.
+            if (!response.Headers.ContainsKey("Content-Type"))
+                Response.ContentType = "application/json";
 
             // Converting string values to JSON if necessary.
             if (response.Content is string strContent && Response.ContentType.StartsWith("application/json"))
                 return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
+
+            // Returning object as is, either it's already JSON, or service didn't want to return JSON.
             return new ObjectResult(response.Content) { StatusCode = response.Result };
         }
 
