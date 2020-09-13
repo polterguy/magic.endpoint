@@ -4,10 +4,8 @@
  */
 
 using System;
-using System.IO;
 using System.Net;
 using System.Linq;
-using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
@@ -16,19 +14,24 @@ using magic.endpoint.contracts;
 namespace magic.endpoint.controller
 {
     /// <summary>
-    /// Hyperlambda controller for evaluating a Hyperlambda file, from a URL
-    /// and a verb, allowing the caller tooptionally pass in arguments, if the
-    /// endpoint can accept arguments.
+    /// Dynamic controller for exuting dynamic logic, resolved with dynamic endpoint URLs,
+    /// which again is passed into the executor service, to allow it to dynamically resolve
+    /// towards whatever it wants to resolve the request using.
+    /// 
+    /// Can be used to execute scripts and such, based upon what URL is supplied by caller.
+    /// Normally used for executing Hyperlambda files, resolved to files on disc, using the URL
+    /// supplied as a file path and name.
+    /// 
+    /// Basically, anything starting with "magic" in its name, will be resolved using this
+    /// controller, as long as its a POST, PUT, GET or DELETE request.
     /// </summary>
     [Route("magic")]
-    [Consumes("application/json")]
-    [Produces("application/json")]
     public class EndpointController : ControllerBase
     {
         readonly IExecutorAsync _executor;
 
         /// <summary>
-        /// Creates a new instance of your type.
+        /// Creates a new instance of your controller.
         /// </summary>
         /// <param name="executor">Service implementation.</param>
         public EndpointController(IExecutorAsync executor)
@@ -37,7 +40,7 @@ namespace magic.endpoint.controller
         }
 
         /// <summary>
-        /// Executes a dynamically registered Hyperlambda HTTP GET endpoint.
+        /// Executes a dynamically resolved HTTP GET endpoint.
         /// </summary>
         /// <param name="url">The requested URL.</param>
         [HttpGet]
@@ -103,17 +106,21 @@ namespace magic.endpoint.controller
          */
         ActionResult TransformToActionResult(HttpResponse response)
         {
-            // Making sure we attach any HTTP headers to the response.
+            // Making sure we attach any explicitly added HTTP headers to the response.
             foreach (var idx in response.Headers)
             {
                 Response.Headers.Add(idx.Key, idx.Value);
             }
 
+            // Unless explicitly overridden by Hyperlambda file, we default Content-Type to JSON.
+            if (!response.Headers.ContainsKey("Content-Type"))
+                Response.ContentType = "application/json";
+
             // If empty result, we return nothing.
             if (response.Content == null)
                 return new StatusCodeResult(response.Result);
 
-            // Sanity checking to verify status code is success.
+            // Checking if we have a non-successful result status code.
             if (response.Result < 200 || response.Result >= 300)
             {
                 // Making sure we dispose any already added streams/disposables, if already added.
@@ -123,8 +130,6 @@ namespace magic.endpoint.controller
                 return new StatusCodeResult(response.Result);
             }
 
-            if (response.Content is string strContent)
-                return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
             return new ObjectResult(response.Content) { StatusCode = response.Result };
         }
 
