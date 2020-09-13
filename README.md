@@ -33,12 +33,23 @@ files/modules/foo/bar.get.hl
 ```
 
 Notice, only the _"magic"_ part in the URL is rewritten, before the verb is appended to the URL, and
-the extension _".hl"_ appended. Then this file is loaded and parsed as Hyperlambda, and whatever arguments
+the extension _".hl"_ appended. Then the file is loaded and parsed as Hyperlambda, and whatever arguments
 you pass in, either as query parameters, or as JSON payload, is appended into your resulting lambda
 node's **[.arguments]** node as arguments to your invocation.
 
 **Notice** - Only `PUT` and `POST` can handle JSON payloads, `GET` and `DELETE` can _only_ handle
 query parameter arguments. However, all 4 verbs can handle query parameters.
+
+Below is probably the simplest HTTP endpoint you could create. Save the following Hyperlambda in a
+file at the path of `/files/modules/magic/foo1.get.hl` using for instance your Magic Dashboard's
+_"Files"_ menu item.
+
+```
+return
+   result:Hello from Magic
+```
+
+## Passing in arguments
 
 The default implementation can explicitly declare what arguments the file can legally accept, and
 if an argument is given during invocation that the file doesn't allow for, an exception will be
@@ -61,14 +72,18 @@ return
    result:x:@strings.concat
 ```
 
-If you save this file on disc as `/files/modules/magic/foo.get.hl`, you can invoke it as follows, using
+If you save this file on disc as `/files/modules/magic/foo2.get.hl`, you can invoke it as follows, using
 the HTTP GET verb.
 
 ```
-http://localhost:55247/magic/modules/magic/foo?arg1=howdy&arg2=5
+http://localhost:55247/magic/modules/magic/foo2?arg1=howdy&arg2=5
 ```
 
 Assuming you're backend is running on localhost, at port 55247 of course.
+
+JSON payloads are automatically converted to lambda/nodes - And query parameters are treated
+indiscriminately the same way as JSON payloads - Except of course, query parameters cannot
+pass in complex graph objects, but only simply key/value arguments.
 
 **Notice** - To allow for _any_ arguments to your files, simply _ommit_ the **[.arguments]** node
 in your Hyperlambda althogether. Alternatively, you can also partially ignore arguments sanity checking
