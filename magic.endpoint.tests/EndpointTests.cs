@@ -5,10 +5,11 @@
 
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Xunit;
 using Newtonsoft.Json.Linq;
+using magic.lambda.exceptions;
 using magic.endpoint.contracts;
-using System.Collections.Generic;
 
 namespace magic.endpoint.tests
 {
@@ -25,6 +26,23 @@ namespace magic.endpoint.tests
             var j = result.Content as JObject;
             Assert.NotNull(j);
             Assert.Equal("hello world", j["result"].Value<string>());
+        }
+
+        [Fact]
+        public async Task Get404()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var result = await executor.ExecuteGetAsync("not-existing", null);
+            Assert.Equal(404, result.Result);
+        }
+
+        [Fact]
+        public async Task Get_Throws()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            await Assert.ThrowsAsync<HyperlambdaException>(async () => await executor.ExecuteGetAsync("throws", null));
         }
 
         [Fact]
@@ -80,7 +98,7 @@ namespace magic.endpoint.tests
         }
 
         [Fact]
-        public async Task Get_Throws()
+        public async Task GetBadInput_Throws()
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
@@ -129,6 +147,19 @@ namespace magic.endpoint.tests
         }
 
         [Fact]
+        public async Task SimpleDelete()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var result = await executor.ExecuteDeleteAsync("foo-1", null);
+            Assert.Equal(200, result.Result);
+            Assert.Empty(result.Headers);
+            var j = result.Content as JObject;
+            Assert.NotNull(j);
+            Assert.Equal("hello world", j["result"].Value<string>());
+        }
+
+        [Fact]
         public async Task PostEcho()
         {
             var svc = Common.Initialize();
@@ -160,6 +191,58 @@ namespace magic.endpoint.tests
                 },
             };
             var result = await executor.ExecutePostAsync("echo", null, input);
+            Assert.Equal(200, result.Result);
+            Assert.Empty(result.Headers);
+            var j = result.Content as JObject;
+            Assert.NotNull(j);
+            Assert.Equal("foo", j["input1"].Value<string>());
+            Assert.Equal(5, j["input2"].Value<int>());
+            Assert.True(j["input3"].Value<bool>());
+            Assert.NotNull(j["input4"].Value<JArray>());
+            Assert.Equal(2, j["input4"].Value<JArray>().Count);
+            Assert.True(j["input4"].Value<JArray>()[0]["arr1"].Value<bool>());
+            Assert.Equal(57, j["input4"].Value<JArray>()[0]["arr2"].Value<int>());
+            Assert.Equal("any-object", j["input4"].Value<JArray>()[0]["arr3"].Value<string>());
+            Assert.False(j["input4"].Value<JArray>()[1]["arr1"].Value<bool>());
+            Assert.Equal(67, j["input4"].Value<JArray>()[1]["arr2"].Value<int>());
+            Assert.True(j["input4"].Value<JArray>()[1]["arr3"].Value<Guid>().ToString() != Guid.Empty.ToString());
+            Assert.NotNull(j["input5"].Value<JObject>());
+            Assert.Equal("foo", j["input5"].Value<JObject>()["obj1"].Value<string>());
+            Assert.True(j["input5"].Value<JObject>()["obj2"].Value<bool>());
+        }
+
+        [Fact]
+        public async Task PutEcho()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var input = new JObject
+            {
+                ["input1"] = "foo",
+                ["input2"] = 5,
+                ["input3"] = true,
+                ["input4"] = new JArray
+                {
+                    new JObject
+                    {
+                        ["arr1"] = true,
+                        ["arr2"] = "57", // Conversion should occur!
+                        ["arr3"] = "any-object", // Any object tolerated
+                    },
+                    new JObject
+                    {
+                        ["arr1"] = false,
+                        ["arr2"] = 67,
+                        ["arr3"] = Guid.NewGuid(), // Any object tolerated
+                    },
+                },
+                ["input5"] = new JObject
+                {
+                    ["obj1"] = "foo",
+                    ["obj2"] = "true", // Conversion should occur!
+                },
+            };
+            var result = await executor.ExecutePutAsync("echo", null, input);
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;
