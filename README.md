@@ -17,7 +17,7 @@ The controller itself will be invoked for all URLs starting with _"magic/"_, for
 * `DELETE`
 
 The default service implementation, will resolve everything after the _"magic/"_ parts in the
-given URL, to a Hyperlambda file that can be found relatively beneath your _"/files/"_ folder.
+given URL, to a Hyperlambda file that can be found relatively beneath your _"files/"_ folder.
 Although, technically, exactly where you physically put your files on disc, can be configured
 through your _"appsettings.json"_ file. The HTTP VERB is assumed to be the last parts of your
 filename, before its extension, implying an HTTP GET request such as the following.
@@ -33,31 +33,35 @@ files/modules/foo/bar.get.hl
 ```
 
 Notice, only the _"magic"_ part in the URL is rewritten, before the verb is appended to the URL, and
-the extension _".hl"_ appended. Then the file is loaded and parsed as Hyperlambda, and whatever arguments
-you pass in, either as query parameters, or as JSON payload, is appended into your resulting lambda
-node's **[.arguments]** node as arguments to your invocation.
+finally the extension _".hl"_ appended. Then the file is loaded and parsed as Hyperlambda, and whatever
+arguments you pass in, either as query parameters, or as JSON payload, is appended into your resulting
+lambda node's **[.arguments]** node, as arguments to your invocation.
 
-**Notice** - Only `PUT` and `POST` can handle JSON payloads, `GET` and `DELETE` can _only_ handle
-query parameter arguments. However, all 4 verbs can handle query parameters.
-
-Below is probably the simplest HTTP endpoint you could create. Save the following Hyperlambda in a
-file at the path of `/files/modules/magic/foo1.get.hl` using for instance your Magic Dashboard's
+**Notice** - Only `PUT` and `POST` can handle JSON payloads. All 4 verbs can handle query parameters
+though. Below is probably the simplest HTTP endpoint you could create. Save the following Hyperlambda in a
+file at the path of `modules/magic/foo1.get.hl` using for instance your Magic Dashboard's
 _"Files"_ menu item.
 
 ```
 return
-   result:Hello from Magic
+   result:Hello from Magic Backend
 ```
 
-## Passing in arguments
+Then invoke the endpoint using the following URL.
+
+```
+http://localhost:55247/magic/modules/magic/foo1
+```
+
+## Arguments
 
 The default implementation can explicitly declare what arguments the file can legally accept, and
 if an argument is given during invocation that the file doesn't allow for, an exception will be
 thrown, and the file will never be executed. This allows you to declare what arguments your
 Hyperlambda file can accept, and avoid having anything _but_ arguments explicitly declared in your
-file from being sent into your endpoint file during execution.
+Hyperlambda file from being sent into your endpoint during invocation of your HTTP endpoint.
 
-An example Hyperlambda file declaring a dynamic Hyperlambda endpoint can be found below.
+An example Hyperlambda file taking two arguments can be found below.
 
 ```
 .arguments
@@ -101,6 +105,11 @@ to `string` or `date` (DateTime) - But the **[arg3]** parts will be completely i
 to invoke it with _anything_ as `arg3` during invocation - Including complete graph JSON objects, assuming
 the above declaration is for a `PUT` or `POST` Hyperlambda file.
 
+To declare what type your arguments can be, set the value of the argument declaration node to
+the Hyperlambda type value inside of your arguments declaration, such as we illustrate above.
+Arguments will be converted, if possible, to the typ declaration in your arguments declaration.
+If no conversion is possible, an exception will be thrown.
+
 Although the sanity check will check graph objects, passed in as JSON payloads, it has its restrictions,
 such as not being able to sanity checking complex objects passed in as arrays, etc. If you need stronger
 sanity checking of your arguments, you will probably have to manually check your more complex graph objects
@@ -109,8 +118,8 @@ yourself.
 ## Meta information
 
 Due to the semantic structure of Hyperlambda, retrieving meta information from your HTTP endpoints
-using this module is very easy. The project has one slot called **[endpoints.list]** that does this.
-This slot again can be invoked using the following URL.
+using this module is very easy. The project has one slot called **[endpoints.list]** that returns
+meta information about _all_ your endpoints. This slot again can be invoked using the following URL.
 
 ```
 http://localhost:55247/magic/modules/system/endpoints/endpoints
@@ -135,8 +144,8 @@ Dashboard.
 ### Extending the meta data retrieval process
 
 If you wish, you can extend the meta data retrieval process, by
-invoking `ListEndpoints.AddMetaDataResolver`. This class can be found in the `magic.endpoint.services.slots`
-namespace.
+invoking `ListEndpoints.AddMetaDataResolver`, and pass in your own function. This class can be
+found in the `magic.endpoint.services.slots` namespace.
 
 The `AddMetaDataResolver` method takes one function object, which will be invoked for every file
 the meta generator is trying to create meta data for, with the complete `lambda`, `verb` and `args`
@@ -154,5 +163,23 @@ amount of time, not clogging the server or HTTP endpoint meta generating process
 In addition to the meta retrieval endpoint described above, the module contains the following
 slots.
 
-** __[http.response.headers.add]__ - Adds an HTTP header to the response object.
-** __[http.response.status-code.set]__ - Sets the status code (e.g. 404) on the response object.
+* __[http.response.headers.add]__ - Adds an HTTP header to the response object.
+* __[http.response.status-code.set]__ - Sets the status code (e.g. 404) on the response object.
+
+## Misc
+
+Unless you explicitly change the `Content-Type` of your response object, by using
+the **[http.response.headers.add]** slot, a Content-Type of `application/json` will be assumed,
+and this header will be appended into the resulting HTTP response object. To return plain
+text for instance, you could create an endpoint containing the following.
+
+```
+http.response.headers.add
+   Content-Type:text/plain
+return:Hello from Magic Backend
+```
+
+You can also return stream objects using for instance the **[return]** slot, at which point
+ASP.NET Core will automatically stream your content back over the response object, and `Dispose`
+your stream automatically for you afterwards. This allows you to return large files back to
+the client, without loading them into memory first, etc.
