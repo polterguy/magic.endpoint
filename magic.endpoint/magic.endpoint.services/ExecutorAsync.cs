@@ -91,7 +91,7 @@ namespace magic.endpoint.services
             using (var stream = File.OpenRead(path))
             {
                 var lambda = new Parser(stream).Lambda();
-                AttachArguments(lambda, url, args, payload);
+                AttachArguments(lambda, args, payload);
 
                 var evalResult = new Node();
                 var httpResponse = new HttpResponse();
@@ -123,7 +123,6 @@ namespace magic.endpoint.services
          */
         void AttachArguments(
             Node fileLambda, 
-            string url,
             IEnumerable<(string Name, string Value)> queryParameters, 
             JContainer payload)
         {

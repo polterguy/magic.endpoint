@@ -17,9 +17,9 @@ namespace magic.endpoint.services.slots.meta
     {
         /*
          * Returns meta data for a CRUD type of endpoint, if the
-         * endpoint is a CRUD endpoint.
+         * endpoint is a CRUD endpoint, and not of type GET.
          */
-        internal static IEnumerable<Node> CrudEndpoint(
+        internal static IEnumerable<Node> CrudEndpointNotGet(
             Node lambda,
             string verb,
             Node arguments)
@@ -36,42 +36,6 @@ namespace magic.endpoint.services.slots.meta
             {
                 switch (verb)
                 {
-                    case "get":
-                        if (slotNode.Children.Any(x => x.Name == "columns"))
-                        {
-                            var resultNode = new Node("returns");
-                            if (slotNode.Children
-                                .First(x => x.Name == "columns")
-                                .Children.Any(x => x.Name == "count(*) as count"))
-                            {
-                                resultNode.Add(new Node("count", "long"));
-                                yield return resultNode;
-                                yield return new Node("array", false);
-                                yield return new Node("type", "crud-count");
-                            }
-                            else
-                            {
-                                resultNode.AddRange(
-                                    slotNode
-                                        .Children
-                                        .First(x => x.Name == "columns")
-                                        .Children
-                                        .Select(x => x.Clone()));
-                                if (arguments != null)
-                                {
-                                    foreach (var idx in resultNode.Children)
-                                    {
-                                        // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
-                                        idx.Value = arguments.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
-                                    }
-                                }
-                                yield return resultNode;
-                                yield return new Node("array", true);
-                                yield return new Node("type", "crud-read");
-                            }
-                        }
-                        break;
-
                     case "post":
                         yield return new Node("type", "crud-create");
                         break;
@@ -83,6 +47,61 @@ namespace magic.endpoint.services.slots.meta
                     case "delete":
                         yield return new Node("type", "crud-delete");
                         break;
+                }
+            }
+        }
+
+        /*
+         * Returns meta data for a CRUD type of endpoint, if the
+         * endpoint is a CRUD endpoint, and its type is GET.
+         */
+        internal static IEnumerable<Node> CrudEndpointGet(
+            Node lambda,
+            string verb,
+            Node arguments)
+        {
+            var slotNode = lambda
+                .Children
+                .LastOrDefault(x => x.Name == "wait.signal");
+
+            if (slotNode != null &&
+                slotNode.Children
+                    .Any(x => x.Name == "database") &&
+                slotNode.Children
+                    .Any(x => x.Name == "table"))
+            {
+                if (verb == "get" && slotNode.Children.Any(x => x.Name == "columns"))
+                {
+                    var resultNode = new Node("returns");
+                    if (slotNode.Children
+                        .First(x => x.Name == "columns")
+                        .Children.Any(x => x.Name == "count(*) as count"))
+                    {
+                        resultNode.Add(new Node("count", "long"));
+                        yield return resultNode;
+                        yield return new Node("array", false);
+                        yield return new Node("type", "crud-count");
+                    }
+                    else
+                    {
+                        resultNode.AddRange(
+                            slotNode
+                                .Children
+                                .First(x => x.Name == "columns")
+                                .Children
+                                .Select(x => x.Clone()));
+                        if (arguments != null)
+                        {
+                            foreach (var idx in resultNode.Children)
+                            {
+                                // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
+                                idx.Value = arguments.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
+                            }
+                        }
+                        yield return resultNode;
+                        yield return new Node("array", true);
+                        yield return new Node("type", "crud-read");
+                    }
                 }
             }
         }
