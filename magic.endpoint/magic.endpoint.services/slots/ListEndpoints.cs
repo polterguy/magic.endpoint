@@ -29,7 +29,7 @@ namespace magic.endpoint.services.slots
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            input.AddRange(AddCustomEndpoints(
+            input.AddRange(HandleFolder(
                 Utilities.RootFolder,
                 Utilities.RootFolder + "modules/").ToList());
         }
@@ -40,7 +40,7 @@ namespace magic.endpoint.services.slots
          * Recursively traverses your folder for any dynamic Hyperlambda
          * endpoints, and returns the result to caller.
          */
-        IEnumerable<Node> AddCustomEndpoints(string rootFolder, string currentFolder)
+        IEnumerable<Node> HandleFolder(string rootFolder, string currentFolder)
         {
             // Looping through each folder inside of "currentFolder".
             var folders = Directory
@@ -55,13 +55,13 @@ namespace magic.endpoint.services.slots
                 if (Utilities.IsLegalHttpName(folder))
                 {
                     // Retrieves all files inside of currently iterated folder.
-                    foreach (var idxFile in GetDynamicFiles(rootFolder, idxFolder))
+                    foreach (var idxFile in HandleFiles(rootFolder, idxFolder))
                     {
                         yield return idxFile;
                     }
 
                     // Recursively retrieving inner folders of currently iterated folder.
-                    foreach (var idx in AddCustomEndpoints(rootFolder, idxFolder))
+                    foreach (var idx in HandleFolder(rootFolder, idxFolder))
                     {
                         yield return idx;
                     }
@@ -72,7 +72,7 @@ namespace magic.endpoint.services.slots
         /*
          * Returns all fildes from current folder that matches some HTTP verb.
          */
-        IEnumerable<Node> GetDynamicFiles(string rootFolder, string folder)
+        IEnumerable<Node> HandleFiles(string rootFolder, string folder)
         {
             // Looping through each file in current folder.
             var files = Directory
@@ -96,7 +96,7 @@ namespace magic.endpoint.services.slots
                         case "put":
                         case "post":
                         case "get":
-                            yield return GetFilenameMetaData(entities[0], entities[1], idxFile);
+                            yield return GetFileMetaData(entities[0], entities[1], idxFile);
                             break;
                     }
                 }
@@ -107,7 +107,7 @@ namespace magic.endpoint.services.slots
          * Returns a single node, representing the endpoint given
          * as verb/filename/path, and its associated meta information.
          */
-        Node GetFilenameMetaData(
+        Node GetFileMetaData(
             string path,
             string verb,
             string filename)
@@ -117,38 +117,22 @@ namespace magic.endpoint.services.slots
             result.Add(new Node("path", "magic/" + path.Replace("\\", "/"))); // Must add "Route" parts.
             result.Add(new Node("verb", verb));
 
-            // We need to inspect content of file to retrieve meta information about it, such as authorization, etc.
+            /*
+             * We need to inspect content of file to retrieve meta information about it,
+              such as authorization, description, etc.
+             */
             using (var stream = File.OpenRead(filename))
             {
                 var lambda = new Parser(stream).Lambda();
 
                 // Extracting different existing components from file.
-                var auth = ExtractAuth(lambda);
-                if (auth != null)
-                    result.Add(auth);
-                var args = ExtractArgs(lambda);
-                if (args != null)
-                    result.Add(args);
-                var desc = ExtractDescription(lambda);
-                if (desc != null)
-                    result.Add(desc);
-
-                // Then checking to see if this is a dynamically created CRUD wrapper endpoint.
-                var slotNode = lambda.Children.LastOrDefault(x => x.Name == "wait.signal");
-                if (slotNode != null && slotNode.Children.Any(x => x.Name == "database") && slotNode.Children.Any(x => x.Name == "table"))
-                {
-                    // This is a database CRUD HTTP endpoint.
-                    HandleCrudEndpoint(verb, result, args, slotNode);
-                }
-                else
-                {
-                    // Checking if this is a Custom SQL type of endpoint.
-                    var sqlConnectNode = lambda.Children.LastOrDefault(x => x.Name == "wait.mysql.connect" || x.Name == "wait.mssql.connect");
-                    if (sqlConnectNode != null)
-                    {
-                        HandleStatisticsEndpoint(result, lambda, sqlConnectNode);
-                    }
-                }
+                var args = GetInputArguments(lambda);
+                result.AddRange(new Node[] {
+                    args,
+                    GetAuthorization(lambda),
+                    GetDescription(lambda),
+                }.Where(x => x!= null));
+                result.AddRange(GetEndpointType(lambda, verb, args));
             }
 
             // Returning results to caller.
@@ -156,9 +140,21 @@ namespace magic.endpoint.services.slots
         }
 
         /*
+         * Extracts arguments, if existing.
+         */
+        static Node GetInputArguments(Node lambda)
+        {
+            var result = new Node("input");
+            var args = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
+            if (args != null)
+                result.AddRange(args.Children.Select(x => x.Clone()));
+            return result.Children.Any() ? result : null;
+        }
+
+        /*
          * Extracts authorization for executing Hyperlambda file.
          */
-        static Node ExtractAuth(Node lambda)
+        static Node GetAuthorization(Node lambda)
         {
             Node result = new Node("auth");
             foreach (var idx in lambda.Children)
@@ -175,55 +171,54 @@ namespace magic.endpoint.services.slots
         }
 
         /*
-         * Extracts arguments, if existing.
-         */
-        static Node ExtractArgs(Node lambda)
-        {
-            var result = new Node("input");
-            var args = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
-            if (args != null)
-                result.AddRange(args.Children.Select(x => x.Clone()));
-            return result.Children.Any() ? result : null;
-        }
-
-        /*
          * Extracts description, if existing.
          */
-        static Node ExtractDescription(Node lambda)
+        static Node GetDescription(Node lambda)
         {
-            var result = lambda.Children.FirstOrDefault(x => x.Name == ".description");
-            if (result != null)
-                return new Node("description", result.Get<string>());
+            var result = lambda.Children.FirstOrDefault(x => x.Name == ".description")?.Get<string>();
+            if (!string.IsNullOrEmpty(result))
+                return new Node("description", result);
             return null;
         }
 
-        /*
-         * Handles a statistic endpoint.
-         */
-        private static void HandleStatisticsEndpoint(Node result, Node lambda, Node sqlConnectNode)
+        static IEnumerable<Node> GetEndpointType(
+            Node lambda,
+            string verb,
+            Node args)
         {
-            // Checking if this has a x.select type of node of some sort.
-            var sqlSelectNode = sqlConnectNode.Children.LastOrDefault(x => x.Name.EndsWith(".select"));
-            if (sqlSelectNode != null)
+            // Then checking to see if this is a dynamically created CRUD wrapper endpoint.
+            var slotNode = lambda
+                .Children
+                .LastOrDefault(x => x.Name == "wait.signal");
+
+            if (slotNode != null &&
+                slotNode.Children
+                    .Any(x => x.Name == "database") &&
+                slotNode.Children
+                    .Any(x => x.Name == "table"))
             {
-                // Checking if this is a statistics type of endpoint.
-                if (lambda.Children.FirstOrDefault(x => x.Name == ".is-statistics")?.Get<bool>() ?? false)
+                // This is a database CRUD HTTP endpoint.
+                foreach (var idx in HandleCrudEndpoint(verb, args, slotNode))
                 {
-                    // This is a Custom SQL type of endpoint of some sort.
-                    result.Add(new Node("type", "crud-statistics"));
+                    yield return idx;
                 }
-                else
-                {
-                    // This is a Custom SQL type of endpoint of some sort.
-                    result.Add(new Node("type", "crud-sql"));
-                }
+            }
+            else
+            {
+                // Checking if this is a Custom SQL type of endpoint.
+                var sqlConnectNode = lambda
+                    .Children
+                    .LastOrDefault(x => x.Name == "wait.mysql.connect" || x.Name == "wait.mssql.connect");
+
+                if (sqlConnectNode != null)
+                    yield return HandleStatisticsEndpoint(lambda, sqlConnectNode);
             }
         }
 
         /*
          * Handles a CRUD HTTP endpoint.
          */
-        static void HandleCrudEndpoint(string verb, Node result, Node args, Node slotNode)
+        static IEnumerable<Node> HandleCrudEndpoint(string verb, Node args, Node slotNode)
         {
             switch (verb)
             {
@@ -231,16 +226,23 @@ namespace magic.endpoint.services.slots
                     if (slotNode.Children.Any(x => x.Name == "columns"))
                     {
                         var resultNode = new Node("returns");
-                        if (slotNode.Children.First(x => x.Name == "columns").Children.Any(x => x.Name == "count(*) as count"))
+                        if (slotNode.Children
+                            .First(x => x.Name == "columns")
+                            .Children.Any(x => x.Name == "count(*) as count"))
                         {
                             resultNode.Add(new Node("count", "long"));
-                            result.Add(resultNode);
-                            result.Add(new Node("array", false));
-                            result.Add(new Node("type", "crud-count"));
+                            yield return resultNode;
+                            yield return new Node("array", false);
+                            yield return new Node("type", "crud-count");
                         }
                         else
                         {
-                            resultNode.AddRange(slotNode.Children.First(x => x.Name == "columns").Children.Select(x => x.Clone()));
+                            resultNode.AddRange(
+                                slotNode
+                                    .Children
+                                    .First(x => x.Name == "columns")
+                                    .Children
+                                    .Select(x => x.Clone()));
                             if (args != null)
                             {
                                 foreach (var idx in resultNode.Children)
@@ -249,25 +251,46 @@ namespace magic.endpoint.services.slots
                                     idx.Value = args.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
                                 }
                             }
-                            result.Add(resultNode);
-                            result.Add(new Node("array", true));
-                            result.Add(new Node("type", "crud-read"));
+                            yield return resultNode;
+                            yield return new Node("array", true);
+                            yield return new Node("type", "crud-read");
                         }
                     }
                     break;
 
                 case "post":
-                    result.Add(new Node("type", "crud-create"));
+                    yield return new Node("type", "crud-create");
                     break;
 
                 case "put":
-                    result.Add(new Node("type", "crud-update"));
+                    yield return new Node("type", "crud-update");
                     break;
 
                 case "delete":
-                    result.Add(new Node("type", "crud-delete"));
+                    yield return new Node("type", "crud-delete");
                     break;
             }
+        }
+
+        /*
+         * Handles a statistic endpoint.
+         */
+        static Node HandleStatisticsEndpoint(Node lambda, Node sqlConnectNode)
+        {
+            // Checking if this has a x.select type of node of some sort.
+            var sqlSelectNode = sqlConnectNode
+                .Children
+                .LastOrDefault(x => x.Name.EndsWith(".select"));
+
+            if (sqlSelectNode != null)
+            {
+                // Checking if this is a statistics type of endpoint.
+                if (lambda.Children.FirstOrDefault(x => x.Name == ".is-statistics")?.Get<bool>() ?? false)
+                    return new Node("type", "crud-statistics");
+                else
+                    return new Node("type", "crud-sql");
+            }
+            return null;
         }
 
         #endregion
