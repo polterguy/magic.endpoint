@@ -15,7 +15,7 @@ namespace magic.endpoint.tests
     public class EndpointTests
     {
         [Fact]
-        public async Task ExecuteSimpleGet()
+        public async Task SimpleGet()
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
@@ -28,7 +28,7 @@ namespace magic.endpoint.tests
         }
 
         [Fact]
-        public async Task ExecuteSimpleGetStringValue()
+        public async Task SimpleGetStringValue()
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
@@ -59,6 +59,54 @@ namespace magic.endpoint.tests
             Assert.Equal("foo", j["input1"].Value<string>());
             Assert.Equal(5, j["input2"].Value<int>());
             Assert.True(j["input3"].Value<bool>());
+        }
+
+        [Fact]
+        public async Task GetEchoPartialArgumentList()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
+            // Notice, GET will convert its arguments.
+            var input = new List<(string, string)>();
+            input.Add(("input1", "foo"));
+            var result = await executor.ExecuteGetAsync("echo", input);
+            Assert.Equal(200, result.Result);
+            Assert.Empty(result.Headers);
+            var j = result.Content as JObject;
+            Assert.NotNull(j);
+            Assert.Single(j);
+            Assert.Equal("foo", j["input1"].Value<string>());
+        }
+
+        [Fact]
+        public async Task Get_Throws()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
+            // Notice, GET will convert its arguments.
+            var input = new List<(string, string)>();
+            input.Add(("inputXXX", "foo"));
+            await Assert.ThrowsAsync<ArgumentException>(async () => await executor.ExecuteGetAsync("echo", input));
+        }
+
+        [Fact]
+        public async Task GetArgumentNoDeclaration()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
+            // Notice, GET will convert its arguments.
+            var input = new List<(string, string)>();
+            input.Add(("inputXXX", "foo"));
+            var result = await executor.ExecuteGetAsync("echo-no-declaration", input);
+
+            Assert.Equal(200, result.Result);
+            Assert.Empty(result.Headers);
+            var j = result.Content as JObject;
+            Assert.NotNull(j);
+            Assert.Equal("foo", j["inputXXX"].Value<string>());
         }
 
         [Fact]
@@ -130,6 +178,26 @@ namespace magic.endpoint.tests
             Assert.NotNull(j["input5"].Value<JObject>());
             Assert.Equal("foo", j["input5"].Value<JObject>()["obj1"].Value<string>());
             Assert.True(j["input5"].Value<JObject>()["obj2"].Value<bool>());
+        }
+
+        [Fact]
+        public async Task PostEchoPartialArgumentList()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var input = new JObject
+            {
+                ["input1"] = "foo",
+                ["input2"] = 5,
+            };
+            var result = await executor.ExecutePostAsync("echo", null, input);
+            Assert.Equal(200, result.Result);
+            Assert.Empty(result.Headers);
+            var j = result.Content as JObject;
+            Assert.NotNull(j);
+            Assert.Equal(2, j.Count);
+            Assert.Equal("foo", j["input1"].Value<string>());
+            Assert.Equal(5, j["input2"].Value<int>());
         }
     }
 }

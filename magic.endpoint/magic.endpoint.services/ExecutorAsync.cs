@@ -133,10 +133,10 @@ namespace magic.endpoint.services
             var args = new Node(".arguments");
 
             if (queryParameters != null)
-                AttachQueryParameters(declaration, args, queryParameters);
+                args.AddRange(GetQueryParameters(declaration, queryParameters));
 
             if (payload != null)
-                AttachPayloadParameters(declaration, args, payload);
+                args.AddRange(GetPayloadParameters(declaration, payload));
 
             if (args.Children.Any())
                 fileLambda.Insert(0, args);
@@ -147,9 +147,8 @@ namespace magic.endpoint.services
          * query parameters to args node, sanity checking that the
          * query parameter is allowed in the process.
          */
-        void AttachQueryParameters(
+        IEnumerable<Node> GetQueryParameters(
             Node declaration,
-            Node args,
             IEnumerable<(string Name, string Value)> queryParameters)
         {
             foreach (var idxArg in queryParameters)
@@ -170,10 +169,7 @@ namespace magic.endpoint.services
                         throw new ArgumentException($"I don't know how to handle the '{idxArg.Name}' query parameter");
                     value = Converter.ToObject(idxArg.Value, declarationType);
                 }
-                args.Add(
-                    new Node(
-                        idxArg.Name,
-                        value));
+                yield return new Node(idxArg.Name, value);
             }
         }
 
@@ -182,10 +178,7 @@ namespace magic.endpoint.services
          * payload to args node, sanity checking that the
          * parameter is allowed in the process.
          */
-        void AttachPayloadParameters(
-            Node declaration,
-            Node args,
-            JContainer payload)
+        IEnumerable<Node> GetPayloadParameters(Node declaration, JContainer payload)
         {
             var converterNode = new Node("", payload);
             _signaler.Signal(".json2lambda-raw", converterNode);
@@ -204,7 +197,7 @@ namespace magic.endpoint.services
                         declaration.Children.FirstOrDefault(x => x.Name == idxArg.Name));
                 }
             }
-            args.AddRange(converterNode.Children.ToList());
+            return converterNode.Children.ToList();
         }
 
         /*
