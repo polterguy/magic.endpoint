@@ -132,7 +132,7 @@ namespace magic.endpoint.services.slots
                     GetAuthorization(lambda),
                     GetDescription(lambda),
                 }.Where(x => x!= null));
-                result.AddRange(GetEndpointType(lambda, verb, args));
+                result.AddRange(GetEndpointMetaInformation(lambda, verb, args));
             }
 
             // Returning results to caller.
@@ -181,7 +181,7 @@ namespace magic.endpoint.services.slots
             return null;
         }
 
-        static IEnumerable<Node> GetEndpointType(
+        static IEnumerable<Node> GetEndpointMetaInformation(
             Node lambda,
             string verb,
             Node args)
