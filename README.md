@@ -86,6 +86,11 @@ to `string` or `date` (DateTime) - But the **[arg3]** parts will be completely i
 to invoke it with _anything_ as `arg3` during invocation - Including complete graph JSON objects, assuming
 the above declaration is for a `PUT` or `POST` Hyperlambda file.
 
+Although the sanity check will check graph objects, passed in as JSON payloads, it has its restrictions,
+such as not being able to sanity checking complex objects passed in as arrays, etc. If you need stronger
+sanity checking of your arguments, you will probably have to manually check your more complex graph objects
+yourself.
+
 ## Meta information
 
 Due to the semantic structure of Hyperlambda, retrieving meta information from your HTTP endpoints
