@@ -12,6 +12,7 @@ using magic.node.extensions;
 using magic.signals.contracts;
 using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
+using magic.endpoint.services.slots.meta;
 
 namespace magic.endpoint.services.slots
 {
@@ -132,7 +133,7 @@ namespace magic.endpoint.services.slots
                     GetAuthorization(lambda),
                     GetDescription(lambda),
                 }.Where(x => x!= null));
-                result.AddRange(GetEndpointMetaInformation(lambda, verb, args));
+                result.AddRange(GetEndpointCustomInformation(lambda, verb, args));
             }
 
             // Returning results to caller.
@@ -181,116 +182,26 @@ namespace magic.endpoint.services.slots
             return null;
         }
 
-        static IEnumerable<Node> GetEndpointMetaInformation(
+        static readonly List<Func<Node, string, Node, IEnumerable<Node>>> _endpointMetaRetrievers =
+            new List<Func<Node, string, Node, IEnumerable<Node>>>
+        {
+            (lambda, verb, args) => MetaRetrievers.CrudEndpoint(lambda, verb, args),
+            (lambda, verb, args) => MetaRetrievers.StatisticsEndpoint(lambda, verb, args),
+        };
+
+        /*
+         * Extracts custom information from endpoint,
+         * which depends upon what type of endpoint this is.
+         */
+        static IEnumerable<Node> GetEndpointCustomInformation(
             Node lambda,
             string verb,
             Node args)
         {
-            // Then checking to see if this is a dynamically created CRUD wrapper endpoint.
-            var slotNode = lambda
-                .Children
-                .LastOrDefault(x => x.Name == "wait.signal");
-
-            if (slotNode != null &&
-                slotNode.Children
-                    .Any(x => x.Name == "database") &&
-                slotNode.Children
-                    .Any(x => x.Name == "table"))
+            foreach (var idxResult in _endpointMetaRetrievers.SelectMany(x => x(lambda, verb, args)))
             {
-                // This is a database CRUD HTTP endpoint.
-                foreach (var idx in HandleCrudEndpoint(verb, args, slotNode))
-                {
-                    yield return idx;
-                }
+                yield return idxResult;
             }
-            else
-            {
-                // Checking if this is a Custom SQL type of endpoint.
-                var sqlConnectNode = lambda
-                    .Children
-                    .LastOrDefault(x => x.Name == "wait.mysql.connect" || x.Name == "wait.mssql.connect");
-
-                if (sqlConnectNode != null)
-                    yield return HandleStatisticsEndpoint(lambda, sqlConnectNode);
-            }
-        }
-
-        /*
-         * Handles a CRUD HTTP endpoint.
-         */
-        static IEnumerable<Node> HandleCrudEndpoint(string verb, Node args, Node slotNode)
-        {
-            switch (verb)
-            {
-                case "get":
-                    if (slotNode.Children.Any(x => x.Name == "columns"))
-                    {
-                        var resultNode = new Node("returns");
-                        if (slotNode.Children
-                            .First(x => x.Name == "columns")
-                            .Children.Any(x => x.Name == "count(*) as count"))
-                        {
-                            resultNode.Add(new Node("count", "long"));
-                            yield return resultNode;
-                            yield return new Node("array", false);
-                            yield return new Node("type", "crud-count");
-                        }
-                        else
-                        {
-                            resultNode.AddRange(
-                                slotNode
-                                    .Children
-                                    .First(x => x.Name == "columns")
-                                    .Children
-                                    .Select(x => x.Clone()));
-                            if (args != null)
-                            {
-                                foreach (var idx in resultNode.Children)
-                                {
-                                    // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
-                                    idx.Value = args.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
-                                }
-                            }
-                            yield return resultNode;
-                            yield return new Node("array", true);
-                            yield return new Node("type", "crud-read");
-                        }
-                    }
-                    break;
-
-                case "post":
-                    yield return new Node("type", "crud-create");
-                    break;
-
-                case "put":
-                    yield return new Node("type", "crud-update");
-                    break;
-
-                case "delete":
-                    yield return new Node("type", "crud-delete");
-                    break;
-            }
-        }
-
-        /*
-         * Handles a statistic endpoint.
-         */
-        static Node HandleStatisticsEndpoint(Node lambda, Node sqlConnectNode)
-        {
-            // Checking if this has a x.select type of node of some sort.
-            var sqlSelectNode = sqlConnectNode
-                .Children
-                .LastOrDefault(x => x.Name.EndsWith(".select"));
-
-            if (sqlSelectNode != null)
-            {
-                // Checking if this is a statistics type of endpoint.
-                if (lambda.Children.FirstOrDefault(x => x.Name == ".is-statistics")?.Get<bool>() ?? false)
-                    return new Node("type", "crud-statistics");
-                else
-                    return new Node("type", "crud-sql");
-            }
-            return null;
         }
 
         #endregion
