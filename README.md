@@ -183,3 +183,8 @@ You can also return stream objects using for instance the **[return]** slot, at 
 ASP.NET Core will automatically stream your content back over the response object, and `Dispose`
 your stream automatically for you afterwards. This allows you to return large files back to
 the client, without loading them into memory first, etc.
+
+Below is a link for you if you want to further your understanding of Hyperlambda, in order
+to understand what you can put _into_ your Magic Endpoints files.
+
+* [Magic Lambda](https://github.com/polterguy/magic.lambda)
