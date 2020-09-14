@@ -1,12 +1,12 @@
 
-# Magic Endpoints
+# Magic Endpoint
 
 [![Build status](https://travis-ci.com/polterguy/magic.endpoint.svg?master)](https://travis-ci.com/polterguy/magic.endpoint)
 
-Magic Endpoints is a dynamic endpoint URL controller, allowing you to declare endpoints that are dynamically
+Magic Endpoint is a dynamic endpoint URL controller, allowing you to declare endpoints that are dynamically
 resolved using your `IExecutorAsync` service implementation. The default implementation of this interface, is the
 class called `ExecutorAsync`, and the rest of this file, will be focusing on documenting this implementation,
-since it's the default service implementation for Magic Endpoints - Although, technically, you could exchange
+since it's the default service implementation for Magic Endpoint - Although, technically, you could exchange
 this with your own implementation if you wish, completely changing the behaviour of the library.
 
 The controller itself will be invoked for all URLs starting with _"magic/"_, for the following verbs.
@@ -185,7 +185,7 @@ your stream automatically for you afterwards. This allows you to return large fi
 the client, without loading them into memory first, etc.
 
 Below is a link for you if you want to further your understanding of Hyperlambda, in order
-to understand what you can put _into_ your Magic Endpoints files.
+to understand what you can put _into_ your Magic Endpoint files.
 
 * [Magic Lambda](https://github.com/polterguy/magic.lambda)
 
