@@ -1,8 +1,6 @@
 
 # Magic Endpoint
 
-[![Build status](https://travis-ci.com/polterguy/magic.endpoint.svg?master)](https://travis-ci.com/polterguy/magic.endpoint)
-
 Magic Endpoint is a dynamic endpoint URL controller, allowing you to declare endpoints that are dynamically
 resolved using your `IExecutorAsync` service implementation. The default implementation of this interface, is the
 class called `ExecutorAsync`, and the rest of this file, will be focusing on documenting this implementation,
