@@ -187,7 +187,7 @@ the client, without loading them into memory first, etc.
 Below is a link for you if you want to further your understanding of Hyperlambda, in order
 to understand what you can put _into_ your Magic Endpoint files.
 
-* [Magic Lambda](https://github.com/polterguy/magic.lambda)
+* [Main documentation](https://polterguy.github.io/)
 
 ## Quality gates
 
