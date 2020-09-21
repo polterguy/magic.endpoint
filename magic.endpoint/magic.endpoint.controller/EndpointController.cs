@@ -3,7 +3,6 @@
  * See the enclosed LICENSE file for details.
  */
 
-using System;
 using System.Net;
 using System.Linq;
 using System.Threading.Tasks;
@@ -50,7 +49,8 @@ namespace magic.endpoint.controller
             return TransformToActionResult(
                 await _executor.ExecuteGetAsync(
                     WebUtility.UrlDecode(url),
-                    Request.Query.Select(x => (x.Key, x.Value.ToString()))));
+                    Request.Query.Select(x => (x.Key, x.Value.ToString())),
+                    Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
         }
 
         /// <summary>
@@ -64,7 +64,8 @@ namespace magic.endpoint.controller
             return TransformToActionResult(
                 await _executor.ExecuteDeleteAsync(
                     WebUtility.UrlDecode(url), 
-                    Request.Query.Select(x => (x.Key, x.Value.ToString()))));
+                    Request.Query.Select(x => (x.Key, x.Value.ToString())),
+                    Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
         }
 
         /// <summary>
@@ -80,7 +81,8 @@ namespace magic.endpoint.controller
                 await _executor.ExecutePostAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    payload));
+                    payload,
+                    Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
         }
 
         /// <summary>
@@ -96,7 +98,8 @@ namespace magic.endpoint.controller
                 await _executor.ExecutePutAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    payload));
+                    payload,
+                    Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
         }
 
         #region [ -- Private helper methods -- ]

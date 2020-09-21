@@ -21,10 +21,12 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">URL that was requested.</param>
         /// <param name="args">QUERY arguments to your endpoint.</param>
+        /// <param name="headers">HTTP request headers.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecuteGetAsync(
             string url, 
-            IEnumerable<(string Name, string Value)> args);
+            IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> headers);
 
         /// <summary>
         /// Executes an HTTP DELETE endpoint with the specified URL and the
@@ -32,10 +34,12 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">URL that was requested.</param>
         /// <param name="args">QUERY arguments to your endpoint.</param>
+        /// <param name="headers">HTTP request headers.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecuteDeleteAsync(
             string url, 
-            IEnumerable<(string Name, string Value)> args);
+            IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> headers);
 
         /// <summary>
         /// Executes an HTTP POST endpoint with the specified URL and the
@@ -44,11 +48,13 @@ namespace magic.endpoint.contracts
         /// <param name="url">URL that was requested.</param>
         /// <param name="args">HTTP arguments to endpoints.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
+        /// <param name="headers">HTTP request headers.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePostAsync(
             string url, 
             IEnumerable<(string Name, string Value)> args,
-            JContainer payload);
+            JContainer payload,
+            IEnumerable<(string Name, string Value)> headers);
 
         /// <summary>
         /// Executes an HTTP PUT endpoint with the specified URL and the
@@ -57,10 +63,12 @@ namespace magic.endpoint.contracts
         /// <param name="url">URL that was requested.</param>
         /// <param name="args">HTTP arguments to endpoints.</param>
         /// <param name="payload">JSON payload to your endpoint.</param>
+        /// <param name="headers">HTTP request headers.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePutAsync(
             string url, 
             IEnumerable<(string Name, string Value)> args, 
-            JContainer payload);
+            JContainer payload,
+            IEnumerable<(string Name, string Value)> headers);
     }
 }

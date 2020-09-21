@@ -105,7 +105,7 @@ the above declaration is for a `PUT` or `POST` Hyperlambda file.
 
 To declare what type your arguments can be, set the value of the argument declaration node to
 the Hyperlambda type value inside of your arguments declaration, such as we illustrate above.
-Arguments will be converted, if possible, to the typ declaration in your arguments declaration.
+Arguments will be converted, if possible, to the type declaration in your arguments declaration.
 If no conversion is possible, an exception will be thrown.
 
 Although the sanity check will check graph objects, passed in as JSON payloads, it has its restrictions,
@@ -181,9 +181,6 @@ You can also return stream objects using for instance the **[return]** slot, at 
 ASP.NET Core will automatically stream your content back over the response object, and `Dispose`
 your stream automatically for you afterwards. This allows you to return large files back to
 the client, without loading them into memory first, etc.
-
-Below is a link for you if you want to further your understanding of Hyperlambda, in order
-to understand what you can put _into_ your Magic Endpoint files.
 
 ## Quality gates
 

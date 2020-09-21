@@ -38,35 +38,39 @@ namespace magic.endpoint.services
         /// <inheritdoc/>
         public async Task<HttpResponse> ExecuteGetAsync(
             string url,
-            IEnumerable<(string Name, string Value)> args)
+            IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> headers)
         {
-            return await ExecuteUrl(url, "get", args);
+            return await ExecuteUrl(url, "get", args, headers);
         }
 
         /// <inheritdoc/>
         public async Task<HttpResponse> ExecuteDeleteAsync(
             string url, 
-            IEnumerable<(string Name, string Value)> args)
+            IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> headers)
         {
-            return await ExecuteUrl(url, "delete", args);
+            return await ExecuteUrl(url, "delete", args, headers);
         }
 
         /// <inheritdoc/>
         public async Task<HttpResponse> ExecutePostAsync(
             string url,
             IEnumerable<(string Name, string Value)> args,
-            JContainer payload)
+            JContainer payload,
+            IEnumerable<(string Name, string Value)> headers)
         {
-            return await ExecuteUrl(url, "post", args, payload);
+            return await ExecuteUrl(url, "post", args, headers, payload);
         }
 
         /// <inheritdoc/>
         public async Task<HttpResponse> ExecutePutAsync(
             string url,
             IEnumerable<(string Name, string Value)> args,
-            JContainer payload)
+            JContainer payload,
+            IEnumerable<(string Name, string Value)> headers)
         {
-            return await ExecuteUrl(url, "put", args, payload);
+            return await ExecuteUrl(url, "put", args, headers, payload);
         }
 
         #region [ -- Private helper methods -- ]
@@ -78,6 +82,7 @@ namespace magic.endpoint.services
             string url,
             string verb,
             IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> headers,
             JContainer payload = null)
         {
             url = url ?? "";
@@ -97,11 +102,14 @@ namespace magic.endpoint.services
                 var httpResponse = new HttpResponse();
                 try
                 {
-                    await _signaler.ScopeAsync("http.response", httpResponse, async () =>
+                    await _signaler.ScopeAsync("http.request.headers", headers, async () =>
                     {
-                        await _signaler.ScopeAsync("slots.result", evalResult, async () =>
+                        await _signaler.ScopeAsync("http.response", httpResponse, async () =>
                         {
-                            await _signaler.SignalAsync("wait.eval", lambda);
+                            await _signaler.ScopeAsync("slots.result", evalResult, async () =>
+                            {
+                                await _signaler.SignalAsync("wait.eval", lambda);
+                            });
                         });
                     });
                     httpResponse.Content = GetReturnValue(evalResult);
