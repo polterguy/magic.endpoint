@@ -10,7 +10,7 @@
     <Description>Contracts for magic.endpoint that allows you to dynamically execute Hyperlambda endpoints.</Description>
     <PackageProjectUrl>https://github.com/polterguy/magic.endpoint</PackageProjectUrl>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>8.1.17</PackageVersion>
+    <PackageVersion>8.1.18</PackageVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/polterguy/magic.endpoint.git</RepositoryUrl>
