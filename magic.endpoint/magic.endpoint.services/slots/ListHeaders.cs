@@ -6,7 +6,6 @@
 using System.Linq;
 using System.Collections.Generic;
 using magic.node;
-using magic.node.extensions;
 using magic.signals.contracts;
 
 namespace magic.endpoint.services.slots
