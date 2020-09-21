@@ -11,10 +11,10 @@ using magic.signals.contracts;
 namespace magic.endpoint.services.slots
 {
     /// <summary>
-    /// [http.response.headers.add] slot for adding a Response HTTP header that will be
+    /// [response.headers.add] slot for adding a Response HTTP header that will be
     /// returned back to the client as an HTTP header.
     /// </summary>
-    [Slot(Name = "http.request.headers.list")]
+    [Slot(Name = "request.headers.list")]
     public class ListHeaders : ISlot
     {
         /// <summary>

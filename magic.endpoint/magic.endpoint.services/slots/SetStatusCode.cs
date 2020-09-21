@@ -13,7 +13,7 @@ namespace magic.endpoint.services.slots
     /// <summary>
     /// [http.response.status-code] slot for modifying the HTTP status code of the response.
     /// </summary>
-    [Slot(Name = "http.response.status-code.set")]
+    [Slot(Name = "response.status.set")]
     public class SetStatusCode : ISlot
     {
         /// <summary>

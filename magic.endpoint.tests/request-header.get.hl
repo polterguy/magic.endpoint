@@ -1,9 +1,9 @@
 ﻿
-http.request.headers.get:foo
+request.headers.get:foo
 if
    not
       eq
-         get-value:x:@http.request.headers.get
+         get-value:x:@request.headers.get
          .:bar
    .lambda
       throw:Error
