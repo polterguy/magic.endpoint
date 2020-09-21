@@ -110,6 +110,19 @@ namespace magic.endpoint.tests
         }
 
         [Fact]
+        public async Task GetBadInputSameArgumentTwice_Throws()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
+            // Notice, GET will convert its arguments.
+            var input = new List<(string, string)>();
+            input.Add(("input1", "foo1"));
+            input.Add(("input1", "foo2"));
+            await Assert.ThrowsAsync<ArgumentException>(async () => await executor.ExecuteGetAsync("echo", input));
+        }
+
+        [Fact]
         public async Task GetArgumentNoDeclaration()
         {
             var svc = Common.Initialize();

@@ -137,6 +137,10 @@ namespace magic.endpoint.services
             if (payload != null)
                 args.AddRange(GetPayloadParameters(declaration, payload));
 
+            // Sanity checking arguments, avoiding duplicated arguments.
+            if (args.Children.GroupBy(x => x.Name).Where(x => x.Count() > 1).Any())
+                throw new ArgumentException("Argument was duplicated in HTTP endpoint");
+
             if (args.Children.Any())
                 fileLambda.Insert(0, args);
         }
