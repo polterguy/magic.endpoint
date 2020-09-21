@@ -46,7 +46,7 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
             var headers = new List<(string Name, string Value)>();
-            await Assert.ThrowsAsync<ArgumentException>(async () => await executor.ExecuteGetAsync("request-header", null, headers));
+            await Assert.ThrowsAsync<HyperlambdaException>(async () => await executor.ExecuteGetAsync("request-header", null, headers));
         }
 
         [Fact]

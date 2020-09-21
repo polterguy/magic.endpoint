@@ -6,4 +6,4 @@ if
          get-value:x:@http.request.headers.get
          .:bar
    .lambda
-      throws:Error
+      throw:Error
