@@ -4,12 +4,15 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Xunit;
 using Newtonsoft.Json.Linq;
 using magic.lambda.exceptions;
 using magic.endpoint.contracts;
+using magic.node.extensions.hyperlambda;
+using magic.node.extensions;
 
 namespace magic.endpoint.tests
 {
@@ -55,6 +58,22 @@ namespace magic.endpoint.tests
             headers.Add(("foo", "bar"));
             var result = await executor.ExecuteGetAsync("request-header", null, headers);
             Assert.Equal(200, result.Result);
+        }
+
+        [Fact]
+        public async Task ListHeaders()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var headers = new List<(string Name, string Value)>();
+            headers.Add(("foo1", "bar1"));
+            headers.Add(("foo2", "bar2"));
+            var result = await executor.ExecuteGetAsync("list-headers", null, headers);
+            Assert.Equal(200, result.Result);
+            var content = result.Content as JContainer;
+            Assert.Equal(2, content.Count());
+            Assert.Equal("bar1", content["foo1"].Value<string>());
+            Assert.Equal("bar2", content["foo2"].Value<string>());
         }
 
         [Fact]
