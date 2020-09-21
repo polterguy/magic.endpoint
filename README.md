@@ -163,12 +163,14 @@ slots.
 
 * __[http.response.headers.add]__ - Adds an HTTP header to the response object.
 * __[http.response.status-code.set]__ - Sets the status code (e.g. 404) on the response object.
+* __[http.request.headers.get]__ - Retrieves the value of an HTTP request header
+* __[http.request.headers.list]__ - Lists all HTTP request headers
 
 ## Misc
 
 Unless you explicitly change the `Content-Type` of your response object, by using
 the **[http.response.headers.add]** slot, a Content-Type of `application/json` will be assumed,
-and this header will be appended into the resulting HTTP response object. To return plain
+and this header will be added to the resulting HTTP response object. To return plain
 text for instance, you could create an endpoint containing the following.
 
 ```
