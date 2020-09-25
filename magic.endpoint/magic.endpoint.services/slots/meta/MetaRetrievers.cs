@@ -127,7 +127,7 @@ namespace magic.endpoint.services.slots.meta
         {
             var result = lambda
                 .Children
-                .LastOrDefault(x => x.Name == "wait.signal");
+                .LastOrDefault(x => x.Name == "signal");
             if (result != null &&
                 result.Children.Any(x => x.Name == "database") &&
                 result.Children.Any(x => x.Name == "table") &&
