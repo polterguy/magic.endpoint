@@ -3,6 +3,7 @@
  * See the enclosed LICENSE file for details.
  */
 
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using magic.node;
@@ -24,69 +25,56 @@ namespace magic.endpoint.services.slots.meta
             string verb,
             Node arguments)
         {
-            var slotNode = GetReturnNodeForCrud(lambda, false);
-            if (slotNode != null && verb != "get")
-            {
-                switch (verb)
-                {
-                    case "post":
-                        yield return new Node("type", "crud-create");
-                        break;
-
-                    case "put":
-                        yield return new Node("type", "crud-update");
-                        break;
-
-                    case "delete":
-                        yield return new Node("type", "crud-delete");
-                        break;
-                }
-            }
+            var crudType = GetCrudEndpointType(lambda);
+            if (!string.IsNullOrEmpty(crudType) && verb != "get")
+                yield return new Node("type", crudType);
         }
 
         /*
          * Returns meta data for a CRUD type of endpoint, if the
          * endpoint is a CRUD endpoint, and its type is GET.
+         *
+         * This is specially handled, to accommodate for "count" type
+         * of CRUD endpoints.
          */
         internal static IEnumerable<Node> CrudEndpointGet(
             Node lambda,
             string verb,
             Node arguments)
         {
-            var returnNode = GetReturnNodeForCrud(lambda, true);
-            if (returnNode != null && verb == "get")
+            var crudType = GetCrudEndpointType(lambda);
+            if (crudType == "crud-count" && verb == "get")
             {
-                if (returnNode.Children
-                    .First(x => x.Name == "columns")
-                    .Children.Any(x => x.Name == "count(*) as count"))
+                // count(*) endpoint.
+                yield return new Node("returns", null, new Node[] { new Node("count", "long") });
+                yield return new Node("array", false);
+                yield return new Node("type", "crud-count");
+            }
+            else if (crudType == "crud-read" && verb == "get")
+            {
+                // Read endpoint.
+                var resultNode = new Node("returns");
+                resultNode.AddRange(
+                    lambda
+                        .Children
+                        .FirstOrDefault(x => x.Name.EndsWith(".connect"))?
+                        .Children
+                        .FirstOrDefault(x => x.Name.EndsWith(".read"))?
+                        .Children
+                        .FirstOrDefault(x => x.Name == "columns")?
+                        .Children
+                        .Select(x => x.Clone()) ?? Array.Empty<Node>());
+                if (arguments != null)
                 {
-                    // count(*) endpoint.
-                    yield return new Node("returns", null, new Node[] { new Node("count", "long") });
-                    yield return new Node("array", false);
-                    yield return new Node("type", "crud-count");
-                }
-                else
-                {
-                    // Read endpoint.
-                    var resultNode = new Node("returns");
-                    resultNode.AddRange(
-                        returnNode
-                            .Children
-                            .First(x => x.Name == "columns")
-                            .Children
-                            .Select(x => x.Clone()));
-                    if (arguments != null)
+                    foreach (var idx in resultNode.Children)
                     {
-                        foreach (var idx in resultNode.Children)
-                        {
-                            // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
-                            idx.Value = arguments.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
-                        }
+                        // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
+                        idx.Value = arguments.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
                     }
-                    yield return resultNode;
-                    yield return new Node("array", true);
-                    yield return new Node("type", "crud-read");
                 }
+                yield return resultNode;
+                yield return new Node("array", true);
+                yield return new Node("type", "crud-read");
             }
         }
 
@@ -100,13 +88,11 @@ namespace magic.endpoint.services.slots.meta
             Node arguments)
         {
             // Checking if this has a x.select type of node of some sort.
-            var sqlSelectNode = lambda
+            var crudType = lambda
                 .Children
-                .FirstOrDefault(x => x.Name.EndsWith(".connect"))?
-                .Children
-                .LastOrDefault(x => x.Name.EndsWith(".select"));
+                .FirstOrDefault(x => x.Name == ".type")?.Get<string>();
 
-            if (sqlSelectNode != null)
+            if (crudType == "sql")
             {
                 // Checking if this is a statistics type of endpoint.
                 if (lambda.Children
@@ -123,17 +109,11 @@ namespace magic.endpoint.services.slots.meta
         /*
          * Helper method to retrieve return node for CRUD endpoints.
          */
-        static Node GetReturnNodeForCrud(Node lambda, bool mustHaveColumns)
+        static string GetCrudEndpointType(Node lambda)
         {
-            var result = lambda
+            return lambda
                 .Children
-                .LastOrDefault(x => x.Name == "signal");
-            if (result != null &&
-                result.Children.Any(x => x.Name == "database") &&
-                result.Children.Any(x => x.Name == "table") &&
-                (!mustHaveColumns || result.Children.Any(x => x.Name == "columns")))
-                return result;
-            return null;
+                .FirstOrDefault(x => x.Name == ".type" && x.Get<string>().StartsWith("crud-"))?.Get<string>();
         }
 
         #endregion
