@@ -20,14 +20,13 @@ namespace magic.endpoint.services.slots.meta
          * Returns meta data for a CRUD type of endpoint, if the
          * endpoint is a CRUD endpoint, and not of type GET.
          */
-        internal static IEnumerable<Node> CrudEndpoint(
+        internal static IEnumerable<Node> EndpointType(
             Node lambda,
             string verb,
             Node arguments)
         {
             var crudType = GetCrudEndpointType(lambda);
-            if (!string.IsNullOrEmpty(crudType) && verb != "get")
-                yield return new Node("type", crudType);
+            yield return new Node("type", crudType);
         }
 
         /*
@@ -48,7 +47,6 @@ namespace magic.endpoint.services.slots.meta
                 // count(*) endpoint.
                 yield return new Node("returns", null, new Node[] { new Node("count", "long") });
                 yield return new Node("array", false);
-                yield return new Node("type", "crud-count");
             }
             else if (crudType == "crud-read" && verb == "get")
             {
@@ -74,34 +72,34 @@ namespace magic.endpoint.services.slots.meta
                 }
                 yield return resultNode;
                 yield return new Node("array", true);
-                yield return new Node("type", "crud-read");
             }
         }
 
         /*
-         * Returns meta data for an SQL select type of endpoint,
-         * possibly attaching statistics meta information, if existing.
+         * Returns meta data for a CRUD type of endpoint, if the
+         * endpoint is a CRUD endpoint, and not of type GET.
          */
-        internal static IEnumerable<Node> StatisticsEndpoint(
+        internal static IEnumerable<Node> ContentType(
             Node lambda,
             string verb,
             Node arguments)
         {
-            // Checking if this has a x.select type of node of some sort.
-            var crudType = lambda
-                .Children
-                .FirstOrDefault(x => x.Name == ".type")?.Get<string>();
+            var x = new Expression("*/response.headers.add/*/Content-Type");
+            var result = x.Evaluate(lambda);
 
-            if (crudType == "sql")
-            {
-                // Checking if this is a statistics type of endpoint.
-                if (lambda.Children
-                    .FirstOrDefault(x => x.Name == ".is-statistics")?
-                    .Get<bool>() ?? false)
-                    yield return new Node("type", "crud-statistics");
-                else
-                    yield return new Node("type", "crud-sql");
-            }
+            /*
+             * If there are no Content-Type declarations in endpoint, it will default
+             * to application/json
+             */
+            if (!result.Any())
+                yield return new Node("Content-Type", "application/json");
+
+            /*
+             * If there are multiple nodes, no Content-Type can positively be deducted,
+             * since it might be a result of branching.
+             */
+            if (result.Count() == 1)
+                yield return new Node("Content-Type", result.First().GetEx<string>());
         }
 
         #region [ -- Private helper methods -- ]

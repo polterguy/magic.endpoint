@@ -29,9 +29,9 @@ namespace magic.endpoint.services.slots
         static readonly List<Func<Node, string, Node, IEnumerable<Node>>> _endpointMetaRetrievers =
             new List<Func<Node, string, Node, IEnumerable<Node>>>
         {
-            (lambda, verb, args) => MetaRetrievers.CrudEndpoint(lambda, verb, args),
+            (lambda, verb, args) => MetaRetrievers.EndpointType(lambda, verb, args),
             (lambda, verb, args) => MetaRetrievers.CrudEndpointGet(lambda, verb, args),
-            (lambda, verb, args) => MetaRetrievers.StatisticsEndpoint(lambda, verb, args),
+            (lambda, verb, args) => MetaRetrievers.ContentType(lambda, verb, args),
         };
 
         /// <summary>
