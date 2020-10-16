@@ -3,7 +3,9 @@
  * See the enclosed LICENSE file for details.
  */
 
+using System.IO;
 using System.Net;
+using System.Text;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -100,6 +102,27 @@ namespace magic.endpoint.controller
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
                     payload,
                     Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+        }
+
+        /// <summary>
+        /// Executes a dynamically registered Hyperlambda HTTP PUT endpoint.
+        /// </summary>
+        /// <param name="url">The requested URL.</param>
+        /// <param name="payload">Payload from client.</param>
+        [HttpPatch]
+        [Route("{*url}")]
+        public async Task<ActionResult> Patch(string url)
+        {
+            using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
+            {  
+                var payload = await reader.ReadToEndAsync();
+                return TransformToActionResult(
+                    await _executor.ExecutePatchAsync(
+                        WebUtility.UrlDecode(url),
+                        Request.Query.Select(x => (x.Key, x.Value.ToString())),
+                        payload,
+                        Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+            }
         }
 
         #region [ -- Private helper methods -- ]

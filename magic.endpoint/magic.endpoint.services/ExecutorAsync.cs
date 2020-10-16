@@ -73,6 +73,19 @@ namespace magic.endpoint.services
             return await ExecuteUrl(url, "put", args, headers, payload);
         }
 
+        /// <inheritdoc/>
+        public async Task<HttpResponse> ExecutePatchAsync(
+            string url,
+            IEnumerable<(string Name, string Value)> args,
+            string payload,
+            IEnumerable<(string Name, string Value)> headers)
+        {
+            return await ExecuteUrl(url, "patch", args, headers, new JObject
+            {
+                ["body"] = payload,
+            });
+        }
+
         #region [ -- Private helper methods -- ]
 
         /*

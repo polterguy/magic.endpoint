@@ -70,5 +70,20 @@ namespace magic.endpoint.contracts
             IEnumerable<(string Name, string Value)> args, 
             JContainer payload,
             IEnumerable<(string Name, string Value)> headers);
+
+        /// <summary>
+        /// Executes an HTTP PATCH endpoint with the specified URL and the
+        /// specified payload.
+        /// </summary>
+        /// <param name="url">URL that was requested.</param>
+        /// <param name="args">HTTP arguments to endpoints.</param>
+        /// <param name="payload">String payload to your endpoint.</param>
+        /// <param name="headers">HTTP request headers.</param>
+        /// <returns>The result of the evaluation.</returns>
+        Task<HttpResponse> ExecutePatchAsync(
+            string url, 
+            IEnumerable<(string Name, string Value)> args, 
+            string payload,
+            IEnumerable<(string Name, string Value)> headers);
     }
 }

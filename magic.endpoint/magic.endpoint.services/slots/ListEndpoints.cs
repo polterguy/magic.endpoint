@@ -32,6 +32,7 @@ namespace magic.endpoint.services.slots
             (lambda, verb, args) => MetaRetrievers.EndpointType(lambda, verb, args),
             (lambda, verb, args) => MetaRetrievers.CrudEndpointGet(lambda, verb, args),
             (lambda, verb, args) => MetaRetrievers.ContentType(lambda, verb, args),
+            (lambda, verb, args) => MetaRetrievers.Accepts(lambda, verb, args),
         };
 
         /// <summary>
@@ -120,6 +121,7 @@ namespace magic.endpoint.services.slots
                     {
                         case "delete":
                         case "put":
+                        case "patch":
                         case "post":
                         case "get":
                             yield return GetFileMetaData(entities[0], entities[1], idxFile);

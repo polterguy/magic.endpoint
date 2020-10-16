@@ -76,8 +76,8 @@ namespace magic.endpoint.services.slots.meta
         }
 
         /*
-         * Returns meta data for a CRUD type of endpoint, if the
-         * endpoint is a CRUD endpoint, and not of type GET.
+         * Returns what Content-Type endpoint produces, if this is
+         * possible to retrieve.
          */
         internal static IEnumerable<Node> ContentType(
             Node lambda,
@@ -100,6 +100,33 @@ namespace magic.endpoint.services.slots.meta
              */
             if (result.Count() == 1)
                 yield return new Node("Content-Type", result.First().GetEx<string>());
+        }
+
+        /*
+         * Returns what Content-Type endpoint consumes, if this is
+         * possible to retrieve.
+         */
+        internal static IEnumerable<Node> Accepts(
+            Node lambda,
+            string verb,
+            Node arguments)
+        {
+            var x = new Expression("*/.accept");
+            var result = x.Evaluate(lambda);
+
+            /*
+             * If there are no Content-Type declarations in endpoint, it will default
+             * to application/json
+             */
+            if (!result.Any())
+                yield return new Node("Accept", "application/json");
+
+            /*
+             * If there are multiple nodes, no Content-Type can positively be deducted,
+             * since it might be a result of branching.
+             */
+            if (result.Count() == 1)
+                yield return new Node("Accept", result.First().GetEx<string>());
         }
 
         #region [ -- Private helper methods -- ]
