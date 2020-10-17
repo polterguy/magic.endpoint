@@ -83,7 +83,7 @@ namespace magic.endpoint.contracts
         Task<HttpResponse> ExecutePatchAsync(
             string url, 
             IEnumerable<(string Name, string Value)> args, 
-            string payload,
+            JContainer payload,
             IEnumerable<(string Name, string Value)> headers);
     }
 }

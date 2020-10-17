@@ -113,15 +113,45 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Patch(string url)
         {
-            using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {  
-                var payload = await reader.ReadToEndAsync();
-                return TransformToActionResult(
-                    await _executor.ExecutePatchAsync(
-                        WebUtility.UrlDecode(url),
-                        Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                        payload,
-                        Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+            switch (Request.ContentType)
+            {
+                case "application/x-www-form-urlencoded":
+
+                    // URL encoded transmission, having potentially multiple arguments.
+                    var args = new JObject();
+                    var collection = await Request.ReadFormAsync();
+                    foreach (var idx in collection)
+                    {
+                        args[idx.Key] = idx.Value.ToString();
+                    }
+                    return TransformToActionResult(
+                        await _executor.ExecutePatchAsync(
+                            WebUtility.UrlDecode(url),
+                            Request.Query.Select(x => (x.Key, x.Value.ToString())),
+                            args,
+                            Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+
+                case "application/hyperlambda":
+                case "application/x-hyperlambda":
+                case "text/plain":
+
+                    // Anything BUT MIME and URL encoded parameters transmission
+                    using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
+                    {  
+                        var payload = await reader.ReadToEndAsync();
+                        return TransformToActionResult(
+                            await _executor.ExecutePatchAsync(
+                                WebUtility.UrlDecode(url),
+                                Request.Query.Select(x => (x.Key, x.Value.ToString())),
+                                new JObject
+                                {
+                                    ["body"] = payload,
+                                },
+                                Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+                    }
+
+                default:
+                    return BadRequest("I cannot handle your payload");
             }
         }
 

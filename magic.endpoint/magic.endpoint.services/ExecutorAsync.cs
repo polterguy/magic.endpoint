@@ -77,13 +77,10 @@ namespace magic.endpoint.services
         public async Task<HttpResponse> ExecutePatchAsync(
             string url,
             IEnumerable<(string Name, string Value)> args,
-            string payload,
+            JContainer payload,
             IEnumerable<(string Name, string Value)> headers)
         {
-            return await ExecuteUrl(url, "patch", args, headers, new JObject
-            {
-                ["body"] = payload,
-            });
+            return await ExecuteUrl(url, "patch", args, headers, payload);
         }
 
         #region [ -- Private helper methods -- ]
