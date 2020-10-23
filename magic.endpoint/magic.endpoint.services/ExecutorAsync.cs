@@ -248,7 +248,7 @@ namespace magic.endpoint.services
             if (lambda.Value != null)
             {
                 // IDisposables are automatically disposed by ASP.NET Core.
-                if (lambda.Value is IDisposable)
+                if (lambda.Value is IDisposable || lambda.Value is byte[])
                     return lambda.Value;
                 return lambda.Get<string>();
             }

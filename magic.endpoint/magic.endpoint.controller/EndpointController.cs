@@ -7,6 +7,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
@@ -150,6 +151,22 @@ namespace magic.endpoint.controller
                                 Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
                     }
 
+                case "application/octet-stream":
+
+                    using (var rawStream = new MemoryStream())
+                    {
+                        await Request.Body.CopyToAsync(rawStream);
+                        return TransformToActionResult(
+                            await _executor.ExecutePatchAsync(
+                                WebUtility.UrlDecode(url),
+                                Request.Query.Select(x => (x.Key, x.Value.ToString())),
+                                new JObject
+                                {
+                                    ["body"] = rawStream.GetBuffer()
+                                },
+                                Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+                    }
+
                 default:
                     return BadRequest("I cannot handle your payload");
             }
@@ -179,6 +196,10 @@ namespace magic.endpoint.controller
             // Converting string values to JSON if necessary.
             if (response.Content is string strContent && Response.ContentType.StartsWith("application/json"))
                 return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
+            else if (response.Content is byte[] byteContent && Response.ContentType.StartsWith("application/octet-stream"))
+                return File(byteContent, "application/octet-stream");
+            else if (response.Content is string strContent2 && Response.ContentType.StartsWith("application/octet-stream"))
+                return File(Encoding.UTF8.GetBytes(strContent2), "application/octet-stream");
 
             // Returning object as is, either it's already JSON, or service didn't want to return JSON.
             return new ObjectResult(response.Content) { StatusCode = response.Result };
