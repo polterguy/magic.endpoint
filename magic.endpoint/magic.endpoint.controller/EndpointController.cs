@@ -7,7 +7,6 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
@@ -193,16 +192,30 @@ namespace magic.endpoint.controller
             if (!response.Headers.ContainsKey("Content-Type"))
                 Response.ContentType = "application/json";
 
-            // Converting string values to JSON if necessary.
-            if (response.Content is string strContent && Response.ContentType.StartsWith("application/json"))
-                return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
-            else if (response.Content is byte[] byteContent && Response.ContentType.StartsWith("application/octet-stream"))
-                return File(byteContent, "application/octet-stream");
-            else if (response.Content is string strContent2 && Response.ContentType.StartsWith("application/octet-stream"))
-                return File(Encoding.UTF8.GetBytes(strContent2), "application/octet-stream");
+            // Null value.
+            if (response.Content == null)
+                return new ObjectResult(response.Content) { StatusCode = response.Result };
 
-            // Returning object as is, either it's already JSON, or service didn't want to return JSON.
-            return new ObjectResult(response.Content) { StatusCode = response.Result };
+            // Making sure we return the correct ActionResult according to Content-Type
+            switch (Response.ContentType.Split(';')[0])
+            {
+                case "application/json":
+                    if (response.Content is string strContent)
+                        return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
+                    return new ObjectResult(response.Content) { StatusCode = response.Result };
+
+                case "application/octet-stream":
+                    var bytes = response.Content is byte[] rawBytes ?
+                        rawBytes :
+                        Encoding.UTF8.GetBytes(response.Content as string);
+                    return File(bytes, "application/octet-stream");
+
+                case "application/hyperlambda":
+                    return Content(response.Content as string);
+
+                default:
+                    return new ObjectResult(response.Content) { StatusCode = response.Result };
+            }
         }
 
         #endregion
