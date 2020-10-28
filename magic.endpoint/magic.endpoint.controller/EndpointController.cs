@@ -108,7 +108,6 @@ namespace magic.endpoint.controller
         /// Executes a dynamically registered Hyperlambda HTTP PUT endpoint.
         /// </summary>
         /// <param name="url">The requested URL.</param>
-        /// <param name="payload">Payload from client.</param>
         [HttpPatch]
         [Route("{*url}")]
         public async Task<ActionResult> Patch(string url)
