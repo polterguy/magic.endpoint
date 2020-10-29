@@ -122,7 +122,7 @@ namespace magic.endpoint.services
                             });
                         });
                     });
-                    httpResponse.Content = GetReturnValue(evalResult);
+                    httpResponse.Content = GetReturnValue(httpResponse, evalResult);
                     return httpResponse;
                 }
                 catch
@@ -243,26 +243,40 @@ namespace magic.endpoint.services
         /*
          * Creates a returned payload of some sort and returning to caller.
          */
-        object GetReturnValue(Node lambda)
+        object GetReturnValue(HttpResponse httpResponse, Node lambda)
         {
+            object result = null;
             if (lambda.Value != null)
             {
                 // IDisposables are automatically disposed by ASP.NET Core.
                 if (lambda.Value is IDisposable || lambda.Value is byte[])
                     return lambda.Value;
-                return lambda.Get<string>();
+                result = lambda.Get<string>();
             }
-
-            if (lambda.Children.Any())
+            else if (lambda.Children.Any())
             {
-                var convert = new Node();
-                convert.AddRange(lambda.Children.ToList());
-                _signaler.Signal(".lambda2json-raw", convert);
-                return convert.Value as JToken;
+                var isJson = true;
+                if (httpResponse.Headers.ContainsKey("Content-Type"))
+                {
+                    switch (httpResponse.Headers["Content-Type"]?.Split(';').FirstOrDefault() ?? "application/json")
+                    {
+                        case "application/hyperlambda":
+                        case "application/x-hyperlambda":
+                            var hyper = Generator.GetHyper(lambda.Children);
+                            result = hyper;
+                            isJson = false;
+                            break;
+                    }
+                }
+                if (isJson)
+                {
+                    var convert = new Node();
+                    convert.AddRange(lambda.Children.ToList());
+                    _signaler.Signal(".lambda2json-raw", convert);
+                    result = convert.Value as JToken;
+                }
             }
-
-            // Nothing here ...
-            return null;
+            return result;
         }
 
         #endregion

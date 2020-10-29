@@ -3,6 +3,7 @@
  * See the enclosed LICENSE file for details.
  */
 
+using System;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -206,10 +207,11 @@ namespace magic.endpoint.controller
                 case "application/octet-stream":
                     var bytes = response.Content is byte[] rawBytes ?
                         rawBytes :
-                        Encoding.UTF8.GetBytes(response.Content as string);
+                        Convert.FromBase64String(response.Content as string);
                     return File(bytes, "application/octet-stream");
 
                 case "application/hyperlambda":
+                case "application/x-hyperlambda":
                     return Content(response.Content as string);
 
                 default:
