@@ -10,7 +10,7 @@
     <Description>Magic endpoint is a dynamic Hyperlambda endpoint evaluator, allowing you to create HTTP REST API endpoints dynamically, that will execute a Hyperlambda file when evaluated, where the URL is a reference to the physical path on disc to your Hyperlambda file. To use package go to https://polterguy.github.io</Description>
     <PackageProjectUrl>https://github.com/polterguy/magic.endpoint</PackageProjectUrl>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>8.6.0</PackageVersion>
+    <PackageVersion>8.6.1</PackageVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/polterguy/magic.endpoint.git</RepositoryUrl>
