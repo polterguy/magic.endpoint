@@ -175,7 +175,15 @@ namespace magic.endpoint.services.slots
             var result = new Node("input");
             var args = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
             if (args != null)
-                result.AddRange(args.Children.Select(x => x.Clone()));
+            {
+                foreach (var idx in args.Children)
+                {
+                    var node = new Node(".");
+                    node.Add(new Node("name", idx.Name));
+                    node.Add(new Node("type", idx.Value));
+                    result.Add(node);
+                }
+            }
             return result.Children.Any() ? result : null;
         }
 
