@@ -234,6 +234,7 @@ namespace magic.endpoint.services
             var type = declaration.Get<string>();
             if (type == "*")
                 return; // Turning OFF all argument sanity checking and conversion explicitly for currently traversed node.
+            arg.Value = Converter.ToObject(arg.Value, declaration.Get<string>());
             foreach (var idxChild in arg.Children)
             {
                 ConvertArgumentRecursively(idxChild, declaration.Children.FirstOrDefault(x => x.Name == idxChild.Name));
