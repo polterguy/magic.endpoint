@@ -100,7 +100,7 @@ namespace magic.endpoint.services.slots.meta
             string verb,
             Node arguments)
         {
-            var x = new Expression("*/response.headers.add/*/Content-Type");
+            var x = new Expression("**/response.headers.add/*/Content-Type");
             var result = x.Evaluate(lambda);
 
             /*
@@ -108,14 +108,14 @@ namespace magic.endpoint.services.slots.meta
              * to application/json
              */
             if (!result.Any())
-                yield return new Node("output_type", "application/json");
+                yield return new Node("produces", "application/json");
 
             /*
              * If there are multiple nodes, no Content-Type can positively be deducted,
              * since it might be a result of branching.
              */
             if (result.Count() == 1)
-                yield return new Node("output_type", result.First().GetEx<string>());
+                yield return new Node("produces", result.First().GetEx<string>());
         }
 
         /*
@@ -140,14 +140,14 @@ namespace magic.endpoint.services.slots.meta
              * to application/json
              */
             if (!result.Any())
-                yield return new Node("input_type", "application/json");
+                yield return new Node("consumes", "application/json");
 
             /*
              * If there are multiple nodes, no Content-Type can positively be deducted,
              * since it might be a result of branching.
              */
             if (result.Count() == 1)
-                yield return new Node("input_type", result.First().GetEx<string>());
+                yield return new Node("consumes", result.First().GetEx<string>());
         }
 
         #region [ -- Private helper methods -- ]
