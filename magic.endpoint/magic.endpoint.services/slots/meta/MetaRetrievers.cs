@@ -44,30 +44,46 @@ namespace magic.endpoint.services.slots.meta
             var crudType = GetCrudEndpointType(lambda);
             if (crudType == "crud-count" && verb == "get")
             {
-                // count(*) endpoint.
-                yield return new Node("returns", null, new Node[] { new Node("count", "long") });
+                // count(*) type of endpoint.
+                yield return new Node(
+                    "output",
+                    null,
+                    new Node[]
+                    {
+                        new Node(".", null, new Node[]
+                        {
+                            new Node("name", "count"),
+                            new Node("type", "long")
+                        })
+                    });
                 yield return new Node("array", false);
             }
             else if (crudType == "crud-read" && verb == "get")
             {
-                // Read endpoint.
+                // CRUD read type of endpoint.
                 var resultNode = new Node("returns");
-                resultNode.AddRange(
-                    lambda
-                        .Children
-                        .FirstOrDefault(x => x.Name.EndsWith(".connect"))?
-                        .Children
-                        .FirstOrDefault(x => x.Name.EndsWith(".read"))?
-                        .Children
-                        .FirstOrDefault(x => x.Name == "columns")?
-                        .Children
-                        .Select(x => x.Clone()) ?? Array.Empty<Node>());
-                if (arguments != null)
+                var enumerator = lambda.Children
+                    .FirstOrDefault(x => x.Name.EndsWith(".connect"))?.Children
+                    .FirstOrDefault(x => x.Name.EndsWith(".read"))?.Children
+                    .FirstOrDefault(x => x.Name == "columns")?.Children;
+                if (enumerator != null)
                 {
-                    foreach (var idx in resultNode.Children)
+                    foreach (var idx in enumerator)
                     {
-                        // Doing lookup for [.arguments][xxx.eq] to figure out type of object.
-                        idx.Value = arguments.Children.FirstOrDefault(x => x.Name == idx.Name + ".eq")?.Value;
+                        var node = new Node(".");
+                        node.Add(new Node("name", idx.Name));
+                        if (arguments != null)
+                        {
+                            foreach (var idxType in arguments.Children)
+                            {
+                                foreach (var idxInnerType in idxType.Children)
+                                {
+                                    if (idxInnerType.Name == "name" && idxInnerType.Get<string>() == idx.Name + ".eq")
+                                        node.Add(new Node("type", idxType.Children.FirstOrDefault(x => x.Name == "type")?.Value));
+                                }
+                            }
+                        }
+                        resultNode.Add(node);
                     }
                 }
                 yield return resultNode;
@@ -84,7 +100,7 @@ namespace magic.endpoint.services.slots.meta
             string verb,
             Node arguments)
         {
-            var x = new Expression("*/response.headers.add/*/Content-Type");
+            var x = new Expression("**/response.headers.add/*/Content-Type");
             var result = x.Evaluate(lambda);
 
             /*
@@ -92,14 +108,14 @@ namespace magic.endpoint.services.slots.meta
              * to application/json
              */
             if (!result.Any())
-                yield return new Node("Content-Type", "application/json");
+                yield return new Node("produces", "application/json");
 
             /*
              * If there are multiple nodes, no Content-Type can positively be deducted,
              * since it might be a result of branching.
              */
             if (result.Count() == 1)
-                yield return new Node("Content-Type", result.First().GetEx<string>());
+                yield return new Node("produces", result.First().GetEx<string>());
         }
 
         /*
@@ -111,6 +127,11 @@ namespace magic.endpoint.services.slots.meta
             string verb,
             Node arguments)
         {
+            // GET and DELETE endpoints don't have any type of input, since they have no payload.
+            if (verb == "get" || verb == "delete")
+                yield break;
+
+            // Finding [.accept] meta node, if existing.
             var x = new Expression("*/.accept");
             var result = x.Evaluate(lambda);
 
@@ -119,14 +140,14 @@ namespace magic.endpoint.services.slots.meta
              * to application/json
              */
             if (!result.Any())
-                yield return new Node("Accept", "application/json");
+                yield return new Node("consumes", "application/json");
 
             /*
              * If there are multiple nodes, no Content-Type can positively be deducted,
              * since it might be a result of branching.
              */
             if (result.Count() == 1)
-                yield return new Node("Accept", result.First().GetEx<string>());
+                yield return new Node("consumes", result.First().GetEx<string>());
         }
 
         #region [ -- Private helper methods -- ]
@@ -138,7 +159,7 @@ namespace magic.endpoint.services.slots.meta
         {
             return lambda
                 .Children
-                .FirstOrDefault(x => x.Name == ".type" && x.Get<string>().StartsWith("crud-"))?.Get<string>();
+                .FirstOrDefault(x => x.Name == ".type" && x.Get<string>().StartsWith("crud-"))?.Get<string>() ?? "custom";
         }
 
         #endregion
