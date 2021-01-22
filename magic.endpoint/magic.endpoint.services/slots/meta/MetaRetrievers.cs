@@ -61,7 +61,7 @@ namespace magic.endpoint.services.slots.meta
             else if (crudType == "crud-read" && verb == "get")
             {
                 // CRUD read type of endpoint.
-                var resultNode = new Node("returns");
+                var resultNode = new Node("output");
                 var enumerator = lambda.Children
                     .FirstOrDefault(x => x.Name.EndsWith(".connect"))?.Children
                     .FirstOrDefault(x => x.Name.EndsWith(".read"))?.Children
