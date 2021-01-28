@@ -78,6 +78,7 @@ namespace magic.endpoint.controller
         /// <param name="payload">Payload from client.</param>
         [HttpPost]
         [Route("{*url}")]
+        [DisableRequestSizeLimit]
         public async Task<ActionResult> Post(string url, [FromBody] JContainer payload)
         {
             return TransformToActionResult(
@@ -95,6 +96,7 @@ namespace magic.endpoint.controller
         /// <param name="payload">Payload from client.</param>
         [HttpPut]
         [Route("{*url}")]
+        [DisableRequestSizeLimit]
         public async Task<ActionResult> Put(string url, [FromBody] JContainer payload)
         {
             return TransformToActionResult(
