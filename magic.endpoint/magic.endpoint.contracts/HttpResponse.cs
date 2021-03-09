@@ -19,6 +19,11 @@ namespace magic.endpoint.contracts
         public Dictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
+        /// List of cookies that will be returned to client.
+        /// </summary>
+        public List<Cookie> Cookies { get; set; } = new List<Cookie>();
+
+        /// <summary>
         /// The resulting HTTP response code.
         /// </summary>
         public int Result { get; set; } = 200;

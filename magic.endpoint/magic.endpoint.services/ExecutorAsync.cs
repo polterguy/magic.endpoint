@@ -39,18 +39,20 @@ namespace magic.endpoint.services
         public async Task<HttpResponse> ExecuteGetAsync(
             string url,
             IEnumerable<(string Name, string Value)> args,
-            IEnumerable<(string Name, string Value)> headers)
+            IEnumerable<(string Name, string Value)> headers,
+            IEnumerable<(string Name, string Value)> cookies)
         {
-            return await ExecuteUrl(url, "get", args, headers);
+            return await ExecuteUrl(url, "get", args, headers, cookies);
         }
 
         /// <inheritdoc/>
         public async Task<HttpResponse> ExecuteDeleteAsync(
             string url, 
             IEnumerable<(string Name, string Value)> args,
-            IEnumerable<(string Name, string Value)> headers)
+            IEnumerable<(string Name, string Value)> headers,
+            IEnumerable<(string Name, string Value)> cookies)
         {
-            return await ExecuteUrl(url, "delete", args, headers);
+            return await ExecuteUrl(url, "delete", args, headers, cookies);
         }
 
         /// <inheritdoc/>
@@ -58,9 +60,10 @@ namespace magic.endpoint.services
             string url,
             IEnumerable<(string Name, string Value)> args,
             JContainer payload,
-            IEnumerable<(string Name, string Value)> headers)
+            IEnumerable<(string Name, string Value)> headers,
+            IEnumerable<(string Name, string Value)> cookies)
         {
-            return await ExecuteUrl(url, "post", args, headers, payload);
+            return await ExecuteUrl(url, "post", args, headers, cookies, payload);
         }
 
         /// <inheritdoc/>
@@ -68,9 +71,10 @@ namespace magic.endpoint.services
             string url,
             IEnumerable<(string Name, string Value)> args,
             JContainer payload,
-            IEnumerable<(string Name, string Value)> headers)
+            IEnumerable<(string Name, string Value)> headers,
+            IEnumerable<(string Name, string Value)> cookies)
         {
-            return await ExecuteUrl(url, "put", args, headers, payload);
+            return await ExecuteUrl(url, "put", args, headers, cookies, payload);
         }
 
         /// <inheritdoc/>
@@ -78,9 +82,10 @@ namespace magic.endpoint.services
             string url,
             IEnumerable<(string Name, string Value)> args,
             JContainer payload,
-            IEnumerable<(string Name, string Value)> headers)
+            IEnumerable<(string Name, string Value)> headers,
+            IEnumerable<(string Name, string Value)> cookies)
         {
-            return await ExecuteUrl(url, "patch", args, headers, payload);
+            return await ExecuteUrl(url, "patch", args, headers, cookies, payload);
         }
 
         #region [ -- Private helper methods -- ]
@@ -93,6 +98,7 @@ namespace magic.endpoint.services
             string verb,
             IEnumerable<(string Name, string Value)> args,
             IEnumerable<(string Name, string Value)> headers,
+            IEnumerable<(string Name, string Value)> cookies,
             JContainer payload = null)
         {
             url = url ?? "";
@@ -112,13 +118,16 @@ namespace magic.endpoint.services
                 var httpResponse = new HttpResponse();
                 try
                 {
-                    await _signaler.ScopeAsync("http.request.headers", headers, async () =>
+                    await _signaler.ScopeAsync("http.request.cookies", cookies, async () =>
                     {
-                        await _signaler.ScopeAsync("http.response", httpResponse, async () =>
+                        await _signaler.ScopeAsync("http.request.headers", headers, async () =>
                         {
-                            await _signaler.ScopeAsync("slots.result", evalResult, async () =>
+                            await _signaler.ScopeAsync("http.response", httpResponse, async () =>
                             {
-                                await _signaler.SignalAsync("eval", lambda);
+                                await _signaler.ScopeAsync("slots.result", evalResult, async () =>
+                                {
+                                    await _signaler.SignalAsync("eval", lambda);
+                                });
                             });
                         });
                     });

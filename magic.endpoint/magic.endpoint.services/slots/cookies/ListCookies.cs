@@ -3,18 +3,18 @@
  * See the enclosed LICENSE file for details.
  */
 
+using System.Linq;
+using System.Collections.Generic;
 using magic.node;
-using magic.node.extensions;
 using magic.signals.contracts;
-using magic.endpoint.contracts;
 
-namespace magic.endpoint.services.slots
+namespace magic.endpoint.services.slots.cookies
 {
     /// <summary>
-    /// [response.status-code] slot for modifying the HTTP status code of the response.
+    /// [request.cookies.list] slot for listing all cookies associated with the request.
     /// </summary>
-    [Slot(Name = "response.status.set")]
-    public class SetStatusCode : ISlot
+    [Slot(Name = "request.cookies.list")]
+    public class ListCookies : ISlot
     {
         /// <summary>
         /// Implementation of your slot.
@@ -23,8 +23,8 @@ namespace magic.endpoint.services.slots
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            var response = signaler.Peek<HttpResponse>("http.response");
-            response.Result = input.GetEx<int>();
+            var headers = signaler.Peek<IEnumerable<(string Key, string Value)>>("http.request.cookies");
+            input.AddRange(headers.Select(x => new Node(x.Key, x.Value)));
         }
     }
 }

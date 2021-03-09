@@ -9,14 +9,13 @@ using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
 
-namespace magic.endpoint.services.slots
+namespace magic.endpoint.services.slots.cookies
 {
     /// <summary>
-    /// [response.headers.add] slot for adding a Response HTTP header that will be
-    /// returned back to the client as an HTTP header.
+    /// [request.cookies.get] slot for retrieving value of a cookie passed in through the request.
     /// </summary>
-    [Slot(Name = "request.headers.get")]
-    public class GetHeader : ISlot
+    [Slot(Name = "request.cookies.get")]
+    public class GetCookie : ISlot
     {
         /// <summary>
         /// Implementation of your slot.
@@ -25,10 +24,12 @@ namespace magic.endpoint.services.slots
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            var headers = signaler.Peek<IEnumerable<(string Key, string Value)>>("http.request.headers");
+            var cookies = signaler.Peek<IEnumerable<(string Key, string Value)>>("http.request.cookies");
             var key = input.GetEx<string>();
-            if (headers.Any(x => x.Key == key))
-                input.Value = headers.FirstOrDefault(x => x.Key == key).Value;
+            if (cookies.Any(x => x.Key == key))
+                input.Value = cookies.FirstOrDefault(x => x.Key == key).Value;
+            else
+                input.Value = null;
         }
     }
 }

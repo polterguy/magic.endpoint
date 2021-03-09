@@ -161,10 +161,14 @@ amount of time, not clogging the server or HTTP endpoint meta generating process
 In addition to the meta retrieval endpoint described above, the module contains the following
 slots.
 
-* __[response.headers.add]__ - Adds an HTTP header to the response object.
 * __[response.status.set]__ - Sets the status code (e.g. 404) on the response object.
-* __[request.headers.get]__ - Retrieves the value of an HTTP request header
-* __[request.headers.list]__ - Lists all HTTP request headers
+* __[response.headers.add]__ - Adds an HTTP header to the response object.
+* __[response.cookies.set]__ - Creates a cookie that will be returned to the client.
+* __[response.cookies.get]__ - Returns the value of a previously set cookie.
+* __[request.headers.list]__ - Lists all HTTP request headers.
+* __[request.headers.get]__ - Returns a single HTTP header associated with the request.
+* __[request.cookies.list]__ - Lists all HTTP request headers.
+* __[request.cookies.get]__ - Returns a single HTTP header associated with the request.
 
 ## Misc
 

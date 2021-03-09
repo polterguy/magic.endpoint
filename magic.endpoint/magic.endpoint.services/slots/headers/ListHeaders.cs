@@ -3,19 +3,19 @@
  * See the enclosed LICENSE file for details.
  */
 
+using System.Linq;
+using System.Collections.Generic;
 using magic.node;
-using magic.node.extensions;
 using magic.signals.contracts;
-using magic.endpoint.contracts;
 
-namespace magic.endpoint.services.slots
+namespace magic.endpoint.services.slots.headers
 {
     /// <summary>
     /// [response.headers.add] slot for adding a Response HTTP header that will be
     /// returned back to the client as an HTTP header.
     /// </summary>
-    [Slot(Name = "response.headers.add")]
-    public class AddHeader : ISlot
+    [Slot(Name = "request.headers.list")]
+    public class ListHeaders : ISlot
     {
         /// <summary>
         /// Implementation of your slot.
@@ -24,11 +24,8 @@ namespace magic.endpoint.services.slots
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            var response = signaler.Peek<HttpResponse>("http.response");
-            foreach (var idx in input.Children)
-            {
-                response.Headers[idx.Name] = idx.GetEx<string>();
-            }
+            var headers = signaler.Peek<IEnumerable<(string Key, string Value)>>("http.request.headers");
+            input.AddRange(headers.Select(x => new Node(x.Key, x.Value)));
         }
     }
 }

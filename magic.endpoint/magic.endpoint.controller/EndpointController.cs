@@ -53,7 +53,8 @@ namespace magic.endpoint.controller
                 await _executor.ExecuteGetAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+                    Request.Headers.Select(x => (x.Key, x.Value.ToString())),
+                    Request.Cookies.Select(x => (x.Key, x.Value))));
         }
 
         /// <summary>
@@ -68,7 +69,8 @@ namespace magic.endpoint.controller
                 await _executor.ExecuteDeleteAsync(
                     WebUtility.UrlDecode(url), 
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+                    Request.Headers.Select(x => (x.Key, x.Value.ToString())),
+                    Request.Cookies.Select(x => (x.Key, x.Value))));
         }
 
         /// <summary>
@@ -86,7 +88,8 @@ namespace magic.endpoint.controller
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
                     payload,
-                    Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+                    Request.Headers.Select(x => (x.Key, x.Value.ToString())),
+                    Request.Cookies.Select(x => (x.Key, x.Value))));
         }
 
         /// <summary>
@@ -104,7 +107,8 @@ namespace magic.endpoint.controller
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
                     payload,
-                    Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+                    Request.Headers.Select(x => (x.Key, x.Value.ToString())),
+                    Request.Cookies.Select(x => (x.Key, x.Value))));
         }
 
         /// <summary>
@@ -131,7 +135,8 @@ namespace magic.endpoint.controller
                             WebUtility.UrlDecode(url),
                             Request.Query.Select(x => (x.Key, x.Value.ToString())),
                             args,
-                            Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+                            Request.Headers.Select(x => (x.Key, x.Value.ToString())),
+                            Request.Cookies.Select(x => (x.Key, x.Value))));
 
                 case "application/hyperlambda":
                 case "application/x-hyperlambda":
@@ -149,7 +154,8 @@ namespace magic.endpoint.controller
                                 {
                                     ["body"] = payload,
                                 },
-                                Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+                                Request.Headers.Select(x => (x.Key, x.Value.ToString())),
+                                Request.Cookies.Select(x => (x.Key, x.Value))));
                     }
 
                 case "application/octet-stream":
@@ -165,7 +171,8 @@ namespace magic.endpoint.controller
                                 {
                                     ["body"] = rawStream.GetBuffer()
                                 },
-                                Request.Headers.Select(x => (x.Key, x.Value.ToString()))));
+                                Request.Headers.Select(x => (x.Key, x.Value.ToString())),
+                                Request.Cookies.Select(x => (x.Key, x.Value))));
                     }
 
                 default:
@@ -184,6 +191,22 @@ namespace magic.endpoint.controller
             foreach (var idx in response.Headers)
             {
                 Response.Headers.Add(idx.Key, idx.Value);
+            }
+
+            // Making sure we attach all cookies.
+            foreach (var idx in response.Cookies)
+            {
+                var options = new Microsoft.AspNetCore.Http.CookieOptions
+                {
+                    Secure = idx.Secure,
+                    Expires = idx.Expires,
+                    HttpOnly = idx.HttpOnly,
+                    Domain = idx.Domain,
+                    Path = idx.Path,
+                };
+                if (!string.IsNullOrEmpty(idx.SameSite))
+                    options.SameSite = (Microsoft.AspNetCore.Http.SameSiteMode)Enum.Parse(typeof(Microsoft.AspNetCore.Http.SameSiteMode), idx.SameSite, true);
+                Response.Cookies.Append(idx.Name, idx.Value, options);
             }
 
             // If empty result, we return nothing.
