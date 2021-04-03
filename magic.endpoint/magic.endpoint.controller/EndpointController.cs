@@ -81,13 +81,13 @@ namespace magic.endpoint.controller
         [HttpPost]
         [Route("{*url}")]
         [DisableRequestSizeLimit]
-        public async Task<ActionResult> Post(string url, [FromBody] JContainer payload)
+        public async Task<ActionResult> Post(string url)
         {
             return TransformToActionResult(
                 await _executor.ExecutePostAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    payload,
+                    await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value))));
         }
@@ -100,13 +100,13 @@ namespace magic.endpoint.controller
         [HttpPut]
         [Route("{*url}")]
         [DisableRequestSizeLimit]
-        public async Task<ActionResult> Put(string url, [FromBody] JContainer payload)
+        public async Task<ActionResult> Put(string url)
         {
             return TransformToActionResult(
                 await _executor.ExecutePutAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    payload,
+                    await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value))));
         }
@@ -119,68 +119,75 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<ActionResult> Patch(string url)
         {
+            return TransformToActionResult(
+                await _executor.ExecutePatchAsync(
+                    WebUtility.UrlDecode(url),
+                    Request.Query.Select(x => (x.Key, x.Value.ToString())),
+                    await GetPayload(),
+                    Request.Headers.Select(x => (x.Key, x.Value.ToString())),
+                    Request.Cookies.Select(x => (x.Key, x.Value))));
+        }
+
+        #region [ -- Private helper methods -- ]
+
+        /*
+         * Helper method to create arguments from body payload.
+         */
+        async Task<JContainer> GetPayload()
+        {
             switch (Request.ContentType)
             {
                 case "application/x-www-form-urlencoded":
 
                     // URL encoded transmission, having potentially multiple arguments.
-                    var args = new JObject();
                     var collection = await Request.ReadFormAsync();
+                    var args = new JObject();
                     foreach (var idx in collection)
                     {
                         args[idx.Key] = idx.Value.ToString();
                     }
-                    return TransformToActionResult(
-                        await _executor.ExecutePatchAsync(
-                            WebUtility.UrlDecode(url),
-                            Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                            args,
-                            Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                            Request.Cookies.Select(x => (x.Key, x.Value))));
+                    return args;
 
                 case "application/hyperlambda":
-                case "application/x-hyperlambda":
                 case "text/plain":
 
                     // Anything BUT MIME and URL encoded parameters transmission
                     using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
                     {  
                         var payload = await reader.ReadToEndAsync();
-                        return TransformToActionResult(
-                            await _executor.ExecutePatchAsync(
-                                WebUtility.UrlDecode(url),
-                                Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                                new JObject
-                                {
-                                    ["body"] = payload,
-                                },
-                                Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                                Request.Cookies.Select(x => (x.Key, x.Value))));
+                        return new JObject
+                        {
+                            ["body"] = payload,
+                        };
                     }
 
                 case "application/octet-stream":
 
+                    // Binary content of some sort, e.g. image upload etc.
                     using (var rawStream = new MemoryStream())
                     {
                         await Request.Body.CopyToAsync(rawStream);
-                        return TransformToActionResult(
-                            await _executor.ExecutePatchAsync(
-                                WebUtility.UrlDecode(url),
-                                Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                                new JObject
-                                {
-                                    ["body"] = rawStream.GetBuffer()
-                                },
-                                Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                                Request.Cookies.Select(x => (x.Key, x.Value))));
+                        return new JObject
+                        {
+                            ["body"] = rawStream.GetBuffer()
+                        };
+                    }
+
+                case "application/json":
+
+                    // Assuming payload is JSON of some sort.
+                    using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
+                    {  
+                        var payload = await reader.ReadToEndAsync();
+                        return (JContainer)JToken.Parse(payload);
                     }
 
                 default:
-                    return BadRequest("I cannot handle your payload");
+
+                    // Oops, unknown Content-Type.
+                    throw new ArgumentException($"I don't know how to handle Content-Type of '{Request.ContentType}'");
             }
         }
-
-        #region [ -- Private helper methods -- ]
 
         /*
          * Transforms from our internal HttpResponse wrapper to an ActionResult

@@ -3,9 +3,11 @@
 
 Magic Endpoint is a dynamic endpoint URL controller, allowing you to declare endpoints that are dynamically
 resolved using your `IExecutorAsync` service implementation. The default implementation of this interface, is the
-class called `ExecutorAsync`, and the rest of this file, will be focusing on documenting this implementation,
+class called `ExecutorAsync`, and the rest of this file, will be focused on documenting this implementation,
 since it's the default service implementation for Magic Endpoint - Although, technically, you could exchange
-this with your own implementation if you wish, completely changing the behaviour of the library.
+this with your own implementation if you wish, completely changing the behaviour of the library, if you wish
+to for instance resolve endpoints to Python, Ruby, or any other dynamic programming language implementation,
+and you have some means to execute such code from within a .Net 5 environment.
 
 The controller itself will be invoked for all URLs starting with _"magic/"_, for the following verbs.
 
@@ -13,15 +15,16 @@ The controller itself will be invoked for all URLs starting with _"magic/"_, for
 * `POST`
 * `PUT`
 * `DELETE`
+* `PATCH`
 
 The default service implementation, will resolve everything after the _"magic/"_ parts in the
-given URL, to a Hyperlambda file that can be found relatively beneath your _"files/"_ folder.
+given URL, to a Hyperlambda file that can be found relatively beneath your _"/files/"_ folder.
 Although, technically, exactly where you physically put your files on disc, can be configured
 through your _"appsettings.json"_ file. The HTTP VERB is assumed to be the last parts of your
-filename, before its extension, implying an HTTP GET request such as the following.
+filename, before its extension, implying an HTTP request such as the following.
 
 ```
-magic/modules/foo/bar
+GET magic/modules/foo/bar
 ```
 
 Will resolve to the following physical file on disc.
@@ -30,13 +33,13 @@ Will resolve to the following physical file on disc.
 files/modules/foo/bar.get.hl
 ```
 
-Notice, only the _"magic"_ part in the URL is rewritten, before the verb is appended to the URL, and
+Notice, only the _"magic"_ part of your URL is rewritten, before the verb is appended to the URL, and
 finally the extension _".hl"_ appended. Then the file is loaded and parsed as Hyperlambda, and whatever
-arguments you pass in, either as query parameters, or as JSON payload, is appended into your resulting
-lambda node's **[.arguments]** node, as arguments to your invocation.
+arguments you pass in, either as query parameters, or as your JSON payload URL encoded form arguments, etc,
+is appended into your resulting lambda node's **[.arguments]** node, as arguments to your Hyperlambda file
+invocation.
 
-**Notice** - Only `PUT` and `POST` can handle JSON payloads. All 4 verbs can handle query parameters
-though. Below is probably the simplest HTTP endpoint you could create. Save the following Hyperlambda in a
+Below is probably the simplest HTTP endpoint you could create. Save the following Hyperlambda in a
 file at the path of `modules/magic/foo1.get.hl` using for instance your Magic Dashboard's
 _"Files"_ menu item.
 
@@ -112,6 +115,21 @@ Although the sanity check will check graph objects, passed in as JSON payloads, 
 such as not being able to sanity checking complex objects passed in as arrays, etc. If you need stronger
 sanity checking of your arguments, you will probably have to manually check your more complex graph objects
 yourself.
+
+## Accepted Content-Type values
+
+The POST, PUT and PATCH endpoints can accept any of the following Content-Types
+
+* `application/json`
+* `application/x-www-form-urlencoded`
+* `application/hyperlambda`
+* `text/plain`
+* `application/octet-stream`
+
+JSON types of payloads is fairly well described above, and URL encoded form payloads are handled
+the exact same way, except of course the **[.arguments]** node is built from the form values, instead
+of JSON. Hyperlambda, plain text and octet-stream (binary) type of payloads will create *one* argument
+in their **[.arguments]** node, being **[body]** containing the content passed in.
 
 ## Meta information
 
