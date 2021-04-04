@@ -3,11 +3,10 @@
  * See the enclosed LICENSE file for details.
  */
 
-using System.Linq;
-using System.Collections.Generic;
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
+using magic.endpoint.contracts;
 
 namespace magic.endpoint.services.slots.cookies
 {
@@ -24,10 +23,10 @@ namespace magic.endpoint.services.slots.cookies
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            var cookies = signaler.Peek<IEnumerable<(string Key, string Value)>>("http.request.cookies");
+            var request = signaler.Peek<HttpRequest>("http.request");
             var key = input.GetEx<string>();
-            if (cookies.Any(x => x.Key == key))
-                input.Value = cookies.FirstOrDefault(x => x.Key == key).Value;
+            if (request.Cookies.TryGetValue(key, out string value))
+                input.Value = value;
             else
                 input.Value = null;
         }

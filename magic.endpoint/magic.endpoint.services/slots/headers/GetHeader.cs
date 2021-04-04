@@ -3,11 +3,10 @@
  * See the enclosed LICENSE file for details.
  */
 
-using System.Linq;
-using System.Collections.Generic;
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
+using magic.endpoint.contracts;
 
 namespace magic.endpoint.services.slots.headers
 {
@@ -25,10 +24,10 @@ namespace magic.endpoint.services.slots.headers
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            var headers = signaler.Peek<IEnumerable<(string Key, string Value)>>("http.request.headers");
+            var request = signaler.Peek<HttpRequest>("http.request");
             var key = input.GetEx<string>();
-            if (headers.Any(x => x.Key == key))
-                input.Value = headers.FirstOrDefault(x => x.Key == key).Value;
+            if (request.Headers.TryGetValue(key, out string value))
+                input.Value = value;
             else
                 input.Value = null;
         }

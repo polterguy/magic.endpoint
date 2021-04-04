@@ -18,7 +18,7 @@ using magic.node.extensions.hyperlambda;
 namespace magic.endpoint.services
 {
     /// <summary>
-    /// Implementation of IExecutor serive contract, allowing you to
+    /// Implementation of IExecutor service contract, allowing you to
     /// execute a dynamically created Hyperlambda endpoint.
     /// </summary>
     public class ExecutorAsync : IExecutorAsync
@@ -100,11 +100,9 @@ namespace magic.endpoint.services
             IEnumerable<(string Name, string Value)> cookies,
             Node payload = null)
         {
-            url = url ?? "";
-
             // Making sure we never resolve to anything outside of "/modules/" folder.
-            if (!url.StartsWith("modules/"))
-                throw new ArgumentException($"Sorry, I cannot resolve Hyperlambda endpoints outside of the 'modules/' folder, and you tried to access '{url}'");
+            if (url == null || !url.StartsWith("modules/"))
+                throw new ArgumentException($"Sorry, I cannot resolve Hyperlambda endpoints outside of the '/modules/' folder, and you tried to access '{url}'");
 
             // Figuring out file to execute, and doing some basic sanity check.
             var path = Utilities.GetEndpointFile(url, verb);
@@ -114,23 +112,27 @@ namespace magic.endpoint.services
             // Reading and parsing file as Hyperlambda.
             using (var stream = File.OpenRead(path))
             {
+                // Creating our lambda object and attaching arguments specified as query parameters, and/or payload.
                 var lambda = new Parser(stream).Lambda();
-                AttachQueryArguments(lambda, query, payload);
+                AttachArguments(lambda, query, payload);
 
+                // Creating our result wrapper, wrapping whatever the endpoint wants to return to the client.
                 var evalResult = new Node();
                 var httpResponse = new HttpResponse();
+                var httpRequest = new HttpRequest
+                {
+                    Cookies = cookies.ToDictionary(x => x.Name, x => x.Value),
+                    Headers = headers.ToDictionary(x => x.Name, x => x.Value),
+                };
                 try
                 {
-                    await _signaler.ScopeAsync("http.request.cookies", cookies, async () =>
+                    await _signaler.ScopeAsync("http.request", httpRequest, async () =>
                     {
-                        await _signaler.ScopeAsync("http.request.headers", headers, async () =>
+                        await _signaler.ScopeAsync("http.response", httpResponse, async () =>
                         {
-                            await _signaler.ScopeAsync("http.response", httpResponse, async () =>
+                            await _signaler.ScopeAsync("slots.result", evalResult, async () =>
                             {
-                                await _signaler.ScopeAsync("slots.result", evalResult, async () =>
-                                {
-                                    await _signaler.SignalAsync("eval", lambda);
-                                });
+                                await _signaler.SignalAsync("eval", lambda);
                             });
                         });
                     });
@@ -141,7 +143,7 @@ namespace magic.endpoint.services
                 {
                     if (evalResult.Value is IDisposable disposable)
                         disposable.Dispose();
-                    if (httpResponse.Content is IDisposable disposable2)
+                    if (httpResponse.Content is IDisposable disposable2 && !object.ReferenceEquals(httpResponse.Content, evalResult.Value))
                         disposable2.Dispose();
                     throw;
                 }
@@ -151,24 +153,28 @@ namespace magic.endpoint.services
         /*
          * Attaches arguments (payload + query params) to lambda node.
          */
-        void AttachQueryArguments(
-            Node fileLambda, 
+        void AttachArguments(
+            Node lambda, 
             IEnumerable<(string Name, string Value)> query, 
             Node payload)
         {
-            var declaration = fileLambda.Children.FirstOrDefault(x => x.Name == ".arguments");
+            // Finding lambda object's [.arguments] declaration if existing, and making sure we remove it from lambda object.
+            var declaration = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
             declaration?.UnTie();
 
             var args = new Node(".arguments");
 
+            // Checking if query parameters was supplied, and if so, attach them as arguments.
             if (query != null)
                 args.AddRange(GetQueryParameters(declaration, query));
 
+            // Checking if payload was supplied, and if so, attaching it as arguments.
             if (payload != null)
                 args.AddRange(GetPayloadParameters(declaration, payload));
 
+            // Only inserting [.arguments] node if there are any arguments.
             if (args.Children.Any())
-                fileLambda.Insert(0, args);
+                lambda.Insert(0, args);
         }
 
         /*
@@ -182,12 +188,13 @@ namespace magic.endpoint.services
         {
             foreach (var idxArg in queryParameters)
             {
+                // Retrieving string representation of argument.
                 object value = idxArg.Value;
 
                 /*
                  * Checking if file contains a declaration at all.
                  * This is done since by default all endpoints accepts all arguments,
-                 * unless an explicit [.arguments] declaration node is found.
+                 * unless an explicit [.arguments] declaration node is declared in the file.
                  */
                 if (declaration != null)
                 {
@@ -196,6 +203,8 @@ namespace magic.endpoint.services
                         .FirstOrDefault(x => x.Name == idxArg.Name)?
                         .Get<string>() ??
                         throw new ArgumentException($"I don't know how to handle the '{idxArg.Name}' query parameter");
+
+                    // Converting argument to expected type.
                     value = Converter.ToObject(idxArg.Value, declarationType);
                 }
                 yield return new Node(idxArg.Name, value);
@@ -233,16 +242,19 @@ namespace magic.endpoint.services
          */
         void ConvertArgumentRecursively(Node arg, Node declaration)
         {
+            // If declaration node is null here, it means endpoint has no means to handle the argument.
             if (declaration == null)
                 throw new ArgumentException($"I don't know how to handle the '{arg.Name}' argument");
 
             var type = declaration.Get<string>();
             if (type == "*")
-                return; // Turning OFF all argument sanity checking and conversion recursively.
+                return; // Turning OFF all argument sanity checking and conversion recursively below this node.
 
             // Making sure type declaration for argument exists.
-            if (declaration.Value != null)
-                arg.Value = Converter.ToObject(arg.Value, declaration.Get<string>());
+            if (type != null)
+                arg.Value = Converter.ToObject(arg.Value, type); // Converting argument, which might throw an exception if conversion is not possible
+
+            // Recursively running through children.
             foreach (var idxChild in arg.Children)
             {
                 ConvertArgumentRecursively(idxChild, declaration.Children.FirstOrDefault(x => x.Name == idxChild.Name));

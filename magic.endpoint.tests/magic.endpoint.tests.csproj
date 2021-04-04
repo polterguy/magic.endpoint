@@ -34,7 +34,13 @@
     <Content Include="modules/request-header.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="modules/list-headers.get.hl">
+    <Content Include="modules/request-cookie.get.hl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="modules/echo-headers.get.hl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="modules/echo-cookies.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="modules/echo.post.hl">

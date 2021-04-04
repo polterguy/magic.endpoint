@@ -22,7 +22,13 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("modules/foo-1", null, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/foo-1",
+                null,
+                new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;
@@ -35,7 +41,13 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("modules/not-existing", null, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/not-existing",
+                null,
+                new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Equal(404, result.Result);
         }
 
@@ -44,8 +56,13 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var headers = new List<(string Name, string Value)>();
-            await Assert.ThrowsAsync<HyperlambdaException>(async () => await executor.ExecuteGetAsync("modules/request-header", null, headers, new List<(string, string)>()));
+
+            await Assert.ThrowsAsync<HyperlambdaException>(
+                async () => await executor.ExecuteGetAsync(
+                    "modules/request-header",
+                    null,
+                    new List<(string Name, string Value)>(),
+                    new List<(string, string)>()));
         }
 
         [Fact]
@@ -53,21 +70,78 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
             var headers = new List<(string Name, string Value)>();
             headers.Add(("foo", "bar"));
-            var result = await executor.ExecuteGetAsync("modules/request-header", null, headers, new List<(string, string)>());
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/request-header",
+                null,
+                headers,
+                new List<(string, string)>());
+
             Assert.Equal(200, result.Result);
+            Assert.Equal("success", result.Content);
         }
 
         [Fact]
-        public async Task ListHeaders()
+        public async Task GetWithCookie()
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
+            var cookies = new List<(string Name, string Value)>();
+            cookies.Add(("foo", "bar"));
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/request-cookie",
+                null,
+                new List<(string, string)>(),
+                cookies);
+
+            Assert.Equal(200, result.Result);
+            Assert.Equal("success", result.Content);
+        }
+
+        [Fact]
+        public async Task EchoHeaders()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
             var headers = new List<(string Name, string Value)>();
             headers.Add(("foo1", "bar1"));
             headers.Add(("foo2", "bar2"));
-            var result = await executor.ExecuteGetAsync("modules/list-headers", null, headers, new List<(string, string)>());
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/echo-headers",
+                null,
+                headers,
+                new List<(string, string)>());
+
+            Assert.Equal(200, result.Result);
+            var content = result.Content as JContainer;
+            Assert.Equal(2, content.Count());
+            Assert.Equal("bar1", content["foo1"].Value<string>());
+            Assert.Equal("bar2", content["foo2"].Value<string>());
+        }
+
+        [Fact]
+        public async Task EchoCookies()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
+            var cookies = new List<(string Name, string Value)>();
+            cookies.Add(("foo1", "bar1"));
+            cookies.Add(("foo2", "bar2"));
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/echo-cookies",
+                null,
+                new List<(string, string)>(),
+                cookies);
+
             Assert.Equal(200, result.Result);
             var content = result.Content as JContainer;
             Assert.Equal(2, content.Count());
@@ -80,7 +154,13 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            await Assert.ThrowsAsync<HyperlambdaException>(async () => await executor.ExecuteGetAsync("modules/throws", null, new List<(string, string)>(), new List<(string, string)>()));
+
+            await Assert.ThrowsAsync<HyperlambdaException>(
+                async () => await executor.ExecuteGetAsync(
+                    "modules/throws",
+                    null,
+                    new List<(string, string)>(),
+                    new List<(string, string)>()));
         }
 
         [Fact]
@@ -88,7 +168,13 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("modules/foo-2", null, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/foo-2",
+                null,
+                new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as string;
@@ -102,12 +188,18 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            // Notice, GET will convert its arguments.
+            // Notice, executor will convert arguments according to [.arguments] declaration.
             var input = new List<(string, string)>();
             input.Add(("input1", "foo"));
             input.Add(("input2", "5"));
             input.Add(("input3", "true"));
-            var result = await executor.ExecuteGetAsync("modules/echo", input, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/echo",
+                input,
+                new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;
@@ -123,10 +215,15 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            // Notice, GET will convert its arguments.
+            // Notice, executor will convert arguments according to [.arguments] declaration.
             var input = new List<(string, string)>();
             input.Add(("input1", "foo"));
-            var result = await executor.ExecuteGetAsync("modules/echo", input, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/echo",
+                input, new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;
@@ -141,10 +238,15 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            // Notice, GET will convert its arguments.
+            // Notice, executor will convert arguments according to [.arguments] declaration.
             var input = new List<(string, string)>();
             input.Add(("inputXXX", "foo"));
-            await Assert.ThrowsAsync<ArgumentException>(async () => await executor.ExecuteGetAsync("modules/echo", input, new List<(string, string)>(), new List<(string, string)>()));
+
+            await Assert.ThrowsAsync<ArgumentException>(
+                async () => await executor.ExecuteGetAsync(
+                    "modules/echo",
+                    input, new List<(string, string)>(),
+                    new List<(string, string)>()));
         }
 
         [Fact]
@@ -153,11 +255,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            // Notice, GET will convert its arguments.
+            // Notice, executor will convert arguments according to [.arguments] declaration.
             var input = new List<(string, string)>();
             input.Add(("input1", "foo1"));
             input.Add(("input1", "foo2"));
-            await Assert.ThrowsAsync<ArgumentException>(async () => await executor.ExecuteGetAsync("modules/echo", input, new List<(string, string)>(), new List<(string, string)>()));
+
+            await Assert.ThrowsAsync<ArgumentException>(
+                async () => await executor.ExecuteGetAsync(
+                    "modules/echo",
+                    input,
+                    new List<(string, string)>(),
+                    new List<(string, string)>()));
         }
 
         [Fact]
@@ -166,10 +274,14 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            // Notice, GET will convert its arguments.
+            // Notice, executor will convert arguments according to [.arguments] declaration.
             var input = new List<(string, string)>();
             input.Add(("inputXXX", "foo"));
-            var result = await executor.ExecuteGetAsync("modules/echo-no-declaration", input, new List<(string, string)>(), new List<(string, string)>());
+            var result = await executor.ExecuteGetAsync(
+                "modules/echo-no-declaration",
+                input,
+                new List<(string, string)>(),
+                new List<(string, string)>());
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -183,7 +295,13 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("modules/status", null, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/status",
+                null,
+                new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Equal(201, result.Result);
         }
 
@@ -192,7 +310,13 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteGetAsync("modules/header", null, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecuteGetAsync(
+                "modules/header",
+                null,
+                new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Single(result.Headers);
             Assert.Equal("bar", result.Headers["foo"]);
         }
@@ -202,7 +326,13 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var result = await executor.ExecuteDeleteAsync("modules/foo-1", null, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecuteDeleteAsync(
+                "modules/foo-1",
+                null,
+                new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;
@@ -215,6 +345,7 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
             var input = new Parser(@"
 input1:foo
 input2:int:5
@@ -231,7 +362,14 @@ input4
 input5
    obj1:foo
    obj2:true").Lambda();
-            var result = await executor.ExecutePostAsync("modules/echo", null, input, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecutePostAsync(
+                "modules/echo",
+                null,
+                input,
+                new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;
@@ -257,6 +395,7 @@ input5
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
             var input = new Parser(@"
 input1:foo
 input2:int:5
@@ -273,7 +412,14 @@ input4
 input5
    obj1:foo
    obj2:true").Lambda();
-            var result = await executor.ExecutePutAsync("modules/echo", null, input, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecutePutAsync(
+                "modules/echo",
+                null,
+                input,
+                new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;
@@ -299,10 +445,18 @@ input5
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+
             var input = new Parser(@"
 input1:foo
 input2:int:5").Lambda();
-            var result = await executor.ExecutePostAsync("modules/echo", null, input, new List<(string, string)>(), new List<(string, string)>());
+
+            var result = await executor.ExecutePostAsync(
+                "modules/echo",
+                null,
+                input,
+                new List<(string, string)>(),
+                new List<(string, string)>());
+
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
             var j = result.Content as JObject;

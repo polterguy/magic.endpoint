@@ -10,7 +10,7 @@ using magic.node;
 namespace magic.endpoint.contracts
 {
     /// <summary>
-    /// Service interface for executing a dynamic Magic URL.
+    /// Service interface for executing a dynamically resolved Magic URL.
     /// </summary>
     public interface IExecutorAsync
     {
@@ -50,7 +50,7 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">URL that was requested.</param>
         /// <param name="query">Query parameters to your endpoint.</param>
-        /// <param name="payload">Payload to your endpoint in structure format.</param>
+        /// <param name="payload">Payload to your endpoint in structured format.</param>
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <returns>The result of the evaluation.</returns>
@@ -67,7 +67,7 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">URL that was requested.</param>
         /// <param name="query">Query parameters to your endpoint.</param>
-        /// <param name="payload">Payload to your endpoint in structure format.</param>
+        /// <param name="payload">Payload to your endpoint in structured format.</param>
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <returns>The result of the evaluation.</returns>
@@ -84,7 +84,7 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">URL that was requested.</param>
         /// <param name="query">Query parameters to your endpoint.</param>
-        /// <param name="payload">Payload to your endpoint in structure format.</param>
+        /// <param name="payload">Payload to your endpoint in structured format.</param>
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <returns>The result of the evaluation.</returns>

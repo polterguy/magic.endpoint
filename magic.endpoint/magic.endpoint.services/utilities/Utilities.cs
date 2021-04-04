@@ -37,7 +37,6 @@ namespace magic.endpoint.services.utilities
                         break;
                     default:
                         if ((idx < 'a' || idx > 'z') &&
-                            (idx < 'A' || idx > 'Z') &&
                             (idx < '0' || idx > '9'))
                             return false;
                         break;

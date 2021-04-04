@@ -4,9 +4,9 @@
  */
 
 using System.Linq;
-using System.Collections.Generic;
 using magic.node;
 using magic.signals.contracts;
+using magic.endpoint.contracts;
 
 namespace magic.endpoint.services.slots.headers
 {
@@ -27,8 +27,8 @@ namespace magic.endpoint.services.slots.headers
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            var headers = signaler.Peek<IEnumerable<(string Key, string Value)>>("http.request.headers");
-            input.AddRange(headers.Select(x => new Node(x.Key, x.Value)));
+            var request = signaler.Peek<HttpRequest>("http.request");
+            input.AddRange(request.Headers.Select(x => new Node(x.Key, x.Value)));
         }
     }
 }

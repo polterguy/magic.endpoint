@@ -38,7 +38,13 @@ finally the extension _".hl"_ appended. Then the file is loaded and parsed as Hy
 arguments you pass in, either as query parameters, or as your JSON payload URL encoded form arguments, etc,
 is appended into your resulting lambda node's **[.arguments]** node, as arguments to your Hyperlambda file
 invocation. The resolver will never return files directly, but is only able to execute Hyperlambda files,
-so by default there is no way to return files as is.
+so by default there is no way to simply get files.
+
+The default resolver will never allow the client to resolve files outside of your main _"/files/modules/"_
+folder. This allows you to safely keep files that other parts of your system relies upon inside your dynamic _"/files/"_
+folder, without accidentally creating endpoints, clients can resolve, resulting in breaches in your security.
+Only characters a-z, 0-9 and '-', '\_' and '/' are legal characters for the resolvers, and only lowercase
+characters, to avoid file system incompatibilities between Linux and Windows.
 
 Below is probably the simplest HTTP endpoint you could create. Save the following Hyperlambda in a
 file at the path of `modules/magic/foo1.get.hl` using for instance your Magic Dashboard's
@@ -106,9 +112,12 @@ of individual nodes, by setting their values to `*`, such as the following illus
 In the above arguments declaration, **[arg1]** and **[arg2]** will be sanity checked, and input converted
 to `string` or `date` (DateTime) - But the **[arg3]** parts will be completely ignored, allowing the caller
 to invoke it with _anything_ as `arg3` during invocation - Including complete graph JSON objects, assuming
-the above declaration is for a `PUT` or `POST` Hyperlambda file. Arguments declared like the above are considered
-optional, and the file will still resolve if the argument is not given, except of course the argument
-won't exist in the **[.arguments]** node.
+the above declaration is for a `PUT` or `POST` Hyperlambda file. The '\*' value for an argument also turn
+off all conversion, implying everything will be given your lambda object with the JSON type the argument
+was passed in as.
+
+All arguments declared are considered optional, and the file will still resolve if the argument is not given,
+except of course the argument won't exist in the **[.arguments]** node.
 
 To declare what type your arguments can be, set the value of the argument declaration node to
 the Hyperlambda type value inside of your arguments declaration, such as illustrated above.
