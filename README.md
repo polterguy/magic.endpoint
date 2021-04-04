@@ -134,17 +134,19 @@ yourself.
 The POST, PUT and PATCH endpoints can accept any of the following Content-Types
 
 * `application/json`
-* `application/javascript`
 * `application/x-www-form-urlencoded`
-* `text/plain`
 * `application/hyperlambda`
 * `application/x-hyperlambda`
 
 JSON types of payloads are fairly well described above, and URL encoded form payloads are handled
-the exact same way, except of course the **[.arguments]** node is built from the form values instead
-of JSON. Hyperlambda and plain text content will be passed in as a **[body]** argument to your file
-as text. All other types of payloads will be passed in as raw `byte[]` as a **[body]** argument.
-All text based payloads will be assumed to be UTF8 encoded.
+the exact same way, except of course the **[.arguments]** node is built from form values instead
+of JSON - However, internally this is transparent for you, and JSON, query parameters, and URL encoded
+forms can be interchanged 100% transparently from your code's perspective. Hyperlambda content
+will be passed in as a **[body]** argument to your file as text.
+
+All other types of payloads will be passed in as the raw stream, not trying to read from it in any
+ways, allowing you to intercept reading with things such as authentication, authorisation, logic of
+where to persist content, etc.
 
 ## Meta information
 

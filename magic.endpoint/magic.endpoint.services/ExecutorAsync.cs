@@ -162,6 +162,7 @@ namespace magic.endpoint.services
             var declaration = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
             declaration?.UnTie();
 
+            // [.arguments] not to insert into lambda if we have any arguments.
             var args = new Node(".arguments");
 
             // Checking if query parameters was supplied, and if so, attach them as arguments.

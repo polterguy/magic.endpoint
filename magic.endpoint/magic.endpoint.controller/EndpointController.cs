@@ -18,22 +18,21 @@ using magic.endpoint.contracts;
 namespace magic.endpoint.controller
 {
     /// <summary>
-    /// Dynamic controller for exuting dynamic logic, resolved with dynamic endpoint URLs,
+    /// Dynamic controller for executing dynamic logic, resolved with dynamic endpoint URLs,
     /// which again is passed into the executor service, to allow it to dynamically resolve
-    /// towards whatever it wants to resolve the request using.
+    /// towards whatever it wants to resolve the request with.
     /// 
     /// Can be used to execute scripts and such, based upon what URL is supplied by caller.
-    /// Normally used for executing Hyperlambda files, resolved to files on disc, using the URL
+    /// Normally used for executing Hyperlambda files, resolving to files on disc, using the URL
     /// supplied as a file path and name.
     /// 
     /// Basically, anything starting with "magic" in its name, will be resolved using this
-    /// controller, as long as its a POST, PUT, GET or DELETE request.
+    /// controller, as long as it is a POST, PUT, GET, DELETE or PATCH request.
     /// </summary>
     [Route("magic")]
     public class EndpointController : ControllerBase
     {
         readonly ISignaler _signaler;
-
         readonly IExecutorAsync _executor;
 
         /// <summary>
@@ -144,10 +143,23 @@ namespace magic.endpoint.controller
         {
             switch (Request.ContentType)
             {
+                case "application/json":
+                {
+                    // Reading body as JSON from request.
+                    using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
+                    {  
+                        var payload = await reader.ReadToEndAsync();
+                        var args = new Node("", payload);
+
+                        // NOTE: Requires this slot to be declared somewhere.
+                        // magic.lambda.json declares this slot by default.
+                        _signaler.Signal(".json2lambda-raw", args);
+                        return args;
+                    }
+                }
                 case "application/x-www-form-urlencoded":
                 {
-
-                    // URL encoded transmission, having potentially multiple arguments.
+                    // URL encoded transmission, reading arguments as such.
                     var collection = await Request.ReadFormAsync();
                     var args = new Node();
                     foreach (var idx in collection)
@@ -157,27 +169,11 @@ namespace magic.endpoint.controller
                     return args;
                 }
 
-                case "application/json":
-                case "application/javascript":
-                {
 
-                    // Reading body as JSON from request.
-                    using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
-                    {  
-                        var payload = await reader.ReadToEndAsync();
-                        var json = JToken.Parse(payload);
-                        var args = new Node("", json);
-                        _signaler.Signal(".json2lambda-raw", args);
-                        return args;
-                    }
-                }
-
-                case "text/plain":
                 case "application/hyperlambda":
                 case "application/x-hyperlambda":
                 {
-
-                    // Anything BUT MIME and URL encoded parameters transmission
+                    // Reading content as plain UTF8 text, and passing in as [.arguments]/[body] argument.
                     using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
                     {  
                         var payload = await reader.ReadToEndAsync();
@@ -187,13 +183,9 @@ namespace magic.endpoint.controller
 
                 default:
                 {
-
                     // Binary content of some sort, e.g. image upload etc.
-                    using (var rawStream = new MemoryStream())
-                    {
-                        await Request.Body.CopyToAsync(rawStream);
-                        return new Node("body", rawStream.GetBuffer());
-                    }
+                    // Simply passing in stream raw to resolver, allowing resolver to do whatever it wish with it.
+                    return new Node("body", Request.Body);
                 }
             }
         }
