@@ -1,5 +1,5 @@
 ﻿/*
- * Magic, Copyright(c) Thomas Hansen 2019 - 2020, thomas@servergardens.com, all rights reserved.
+ * Magic, Copyright(c) Thomas Hansen 2019 - 2021, thomas@servergardens.com, all rights reserved.
  * See the enclosed LICENSE file for details.
  */
 
@@ -37,54 +37,54 @@ namespace magic.endpoint.services
         /// <inheritdoc/>
         public async Task<HttpResponse> ExecuteGetAsync(
             string url,
-            IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> query,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies)
         {
-            return await ExecuteUrl(url, "get", args, headers, cookies);
+            return await ExecuteUrl(url, "get", query, headers, cookies);
         }
 
         /// <inheritdoc/>
         public async Task<HttpResponse> ExecuteDeleteAsync(
             string url, 
-            IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> query,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies)
         {
-            return await ExecuteUrl(url, "delete", args, headers, cookies);
+            return await ExecuteUrl(url, "delete", query, headers, cookies);
         }
 
         /// <inheritdoc/>
         public async Task<HttpResponse> ExecutePostAsync(
             string url,
-            IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> query,
             Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies)
         {
-            return await ExecuteUrl(url, "post", args, headers, cookies, payload);
+            return await ExecuteUrl(url, "post", query, headers, cookies, payload);
         }
 
         /// <inheritdoc/>
         public async Task<HttpResponse> ExecutePutAsync(
             string url,
-            IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> query,
             Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies)
         {
-            return await ExecuteUrl(url, "put", args, headers, cookies, payload);
+            return await ExecuteUrl(url, "put", query, headers, cookies, payload);
         }
 
         /// <inheritdoc/>
         public async Task<HttpResponse> ExecutePatchAsync(
             string url,
-            IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> query,
             Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies)
         {
-            return await ExecuteUrl(url, "patch", args, headers, cookies, payload);
+            return await ExecuteUrl(url, "patch", query, headers, cookies, payload);
         }
 
         #region [ -- Private helper methods -- ]
@@ -95,14 +95,18 @@ namespace magic.endpoint.services
         async Task<HttpResponse> ExecuteUrl(
             string url,
             string verb,
-            IEnumerable<(string Name, string Value)> args,
+            IEnumerable<(string Name, string Value)> query,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies,
             Node payload = null)
         {
             url = url ?? "";
 
-            // Figuring out file to execute, anbd doing some basic sanity check.
+            // Making sure we never resolve to anything outside of "/modules/" folder.
+            if (!url.StartsWith("modules/"))
+                throw new ArgumentException($"Sorry, I cannot resolve Hyperlambda endpoints outside of the 'modules/' folder, and you tried to access '{url}'");
+
+            // Figuring out file to execute, and doing some basic sanity check.
             var path = Utilities.GetEndpointFile(url, verb);
             if (!File.Exists(path))
                 return new HttpResponse { Result = 404 };
@@ -111,7 +115,7 @@ namespace magic.endpoint.services
             using (var stream = File.OpenRead(path))
             {
                 var lambda = new Parser(stream).Lambda();
-                AttachArguments(lambda, args, payload);
+                AttachQueryArguments(lambda, query, payload);
 
                 var evalResult = new Node();
                 var httpResponse = new HttpResponse();
@@ -147,9 +151,9 @@ namespace magic.endpoint.services
         /*
          * Attaches arguments (payload + query params) to lambda node.
          */
-        void AttachArguments(
+        void AttachQueryArguments(
             Node fileLambda, 
-            IEnumerable<(string Name, string Value)> queryParameters, 
+            IEnumerable<(string Name, string Value)> query, 
             Node payload)
         {
             var declaration = fileLambda.Children.FirstOrDefault(x => x.Name == ".arguments");
@@ -157,8 +161,8 @@ namespace magic.endpoint.services
 
             var args = new Node(".arguments");
 
-            if (queryParameters != null)
-                args.AddRange(GetQueryParameters(declaration, queryParameters));
+            if (query != null)
+                args.AddRange(GetQueryParameters(declaration, query));
 
             if (payload != null)
                 args.AddRange(GetPayloadParameters(declaration, payload));

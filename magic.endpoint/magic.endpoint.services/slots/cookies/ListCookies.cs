@@ -1,5 +1,5 @@
 ﻿/*
- * Magic, Copyright(c) Thomas Hansen 2019 - 2020, thomas@servergardens.com, all rights reserved.
+ * Magic, Copyright(c) Thomas Hansen 2019 - 2021, thomas@servergardens.com, all rights reserved.
  * See the enclosed LICENSE file for details.
  */
 
@@ -11,7 +11,7 @@ using magic.signals.contracts;
 namespace magic.endpoint.services.slots.cookies
 {
     /// <summary>
-    /// [request.cookies.list] slot for listing all cookies associated with the request.
+    /// [request.cookies.list] slot for listing all cookies attached to the request.
     /// </summary>
     [Slot(Name = "request.cookies.list")]
     public class ListCookies : ISlot

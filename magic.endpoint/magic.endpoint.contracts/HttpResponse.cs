@@ -1,5 +1,5 @@
 ﻿/*
- * Magic, Copyright(c) Thomas Hansen 2019 - 2020, thomas@servergardens.com, all rights reserved.
+ * Magic, Copyright(c) Thomas Hansen 2019 - 2021, thomas@servergardens.com, all rights reserved.
  * See the enclosed LICENSE file for details.
  */
 
@@ -30,7 +30,9 @@ namespace magic.endpoint.contracts
 
         /// <summary>
         /// The actual content of your response.
-        /// </summary>
+        /// 
+        /// Notice, if you return a stream, the stream will be copied directly
+        /// to the response stream, without being loaded into memory in its entirety.
         public object Content { get; set; }
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Magic, Copyright(c) Thomas Hansen 2019 - 2020, thomas@servergardens.com, all rights reserved.
+ * Magic, Copyright(c) Thomas Hansen 2019 - 2021, thomas@servergardens.com, all rights reserved.
  * See the enclosed LICENSE file for details.
  */
 
@@ -17,20 +17,23 @@ using magic.endpoint.services.slots.meta;
 namespace magic.endpoint.services.slots
 {
     /// <summary>
-    /// [system.endpoints] slot for returning all dynamica Hyperlambda endpoints
-    /// for your application.
+    /// [endpoints.list] slot for returning all dynamica Hyperlambda endpoints
+    /// for your application, in addition to their meta information.
     /// </summary>
     [Slot(Name = "endpoints.list")]
     public class ListEndpoints : ISlot
     {
         /*
          * Resolvers for meta data.
+         *
+         * These are the default meta retrievers, but can easily be extended by creating your 
+         * own meta resolvers using the static `AddMetaDataResolver` method.
          */
         static readonly List<Func<Node, string, Node, IEnumerable<Node>>> _endpointMetaRetrievers =
             new List<Func<Node, string, Node, IEnumerable<Node>>>
         {
             (lambda, verb, args) => MetaRetrievers.EndpointType(lambda, verb, args),
-            (lambda, verb, args) => MetaRetrievers.CrudEndpointGet(lambda, verb, args),
+            (lambda, verb, args) => MetaRetrievers.CrudEndpointMetaGet(lambda, verb, args),
             (lambda, verb, args) => MetaRetrievers.ContentType(lambda, verb, args),
             (lambda, verb, args) => MetaRetrievers.Accepts(lambda, verb, args),
         };

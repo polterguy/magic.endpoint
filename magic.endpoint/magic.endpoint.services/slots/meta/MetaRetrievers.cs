@@ -1,9 +1,8 @@
 ﻿/*
- * Magic, Copyright(c) Thomas Hansen 2019 - 2020, thomas@servergardens.com, all rights reserved.
+ * Magic, Copyright(c) Thomas Hansen 2019 - 2021, thomas@servergardens.com, all rights reserved.
  * See the enclosed LICENSE file for details.
  */
 
-using System;
 using System.Linq;
 using System.Collections.Generic;
 using magic.node;
@@ -12,7 +11,10 @@ using magic.node.extensions;
 namespace magic.endpoint.services.slots.meta
 {
     /*
-     * Built in meta data retrievers.
+     * Internal data retriever helper class helping you to retrieve
+     * meta information associated with yout Hyperlambda endpoint, such
+     * as input arguments, Content-Type, Accept value, type of CRUD endpoint, 
+     * description, etc.
      */
     internal static class MetaRetrievers
     {
@@ -36,7 +38,7 @@ namespace magic.endpoint.services.slots.meta
          * This is specially handled, to accommodate for "count" type
          * of CRUD endpoints.
          */
-        internal static IEnumerable<Node> CrudEndpointGet(
+        internal static IEnumerable<Node> CrudEndpointMetaGet(
             Node lambda,
             string verb,
             Node arguments)

@@ -7,14 +7,14 @@
     <Authors>Thomas Hansen</Authors>
     <Company>Thomas Hansen</Company>
     <Copyright>Thomas Hansen, thomas@servergardens.com</Copyright>
-    <Description>Contracts for magic.endpoint that allows you to dynamically execute Hyperlambda endpoints. To use package go to https://polterguy.github.io</Description>
+    <Description>Contracts for magic.endpoint that allows you to dynamically execute Magic endpoints, resolving to some executable piece of code. To use package go to https://polterguy.github.io</Description>
     <PackageProjectUrl>https://github.com/polterguy/magic.endpoint</PackageProjectUrl>
     <PackOnBuild>true</PackOnBuild>
     <PackageVersion>8.9.9</PackageVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/polterguy/magic.endpoint.git</RepositoryUrl>
-    <PackageTags>http, rest, json, api</PackageTags>
+    <PackageTags>http, rest, api</PackageTags>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
