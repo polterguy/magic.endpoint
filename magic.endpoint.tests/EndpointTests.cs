@@ -216,32 +216,22 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var input = new JObject
-            {
-                ["input1"] = "foo",
-                ["input2"] = 5,
-                ["input3"] = true,
-                ["input4"] = new JArray
-                {
-                    new JObject
-                    {
-                        ["arr1"] = true,
-                        ["arr2"] = "57", // Conversion should occur!
-                        ["arr3"] = "any-object", // Any object tolerated
-                    },
-                    new JObject
-                    {
-                        ["arr1"] = false,
-                        ["arr2"] = 67,
-                        ["arr3"] = Guid.NewGuid(), // Any object tolerated
-                    },
-                },
-                ["input5"] = new JObject
-                {
-                    ["obj1"] = "foo",
-                    ["obj2"] = "true", // Conversion should occur!
-                },
-            };
+            var input = new Parser(@"
+input1:foo
+input2:int:5
+input3:bool:true
+input4
+   .
+      arr1:bool:true
+      arr2:57
+      arr3:any-object
+   .
+      arr1:bool:false
+      arr2:int:67
+      arr3:guid:4c248403-23a7-4808-988c-1be59a4a90af
+input5
+   obj1:foo
+   obj2:true").Lambda();
             var result = await executor.ExecutePostAsync("echo", null, input, new List<(string, string)>(), new List<(string, string)>());
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -268,32 +258,22 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var input = new JObject
-            {
-                ["input1"] = "foo",
-                ["input2"] = 5,
-                ["input3"] = true,
-                ["input4"] = new JArray
-                {
-                    new JObject
-                    {
-                        ["arr1"] = true,
-                        ["arr2"] = "57", // Conversion should occur!
-                        ["arr3"] = "any-object", // Any object tolerated
-                    },
-                    new JObject
-                    {
-                        ["arr1"] = false,
-                        ["arr2"] = 67,
-                        ["arr3"] = Guid.NewGuid(), // Any object tolerated
-                    },
-                },
-                ["input5"] = new JObject
-                {
-                    ["obj1"] = "foo",
-                    ["obj2"] = "true", // Conversion should occur!
-                },
-            };
+            var input = new Parser(@"
+input1:foo
+input2:int:5
+input3:bool:true
+input4
+   .
+      arr1:bool:true
+      arr2:57
+      arr3:any-object
+   .
+      arr1:bool:false
+      arr2:int:67
+      arr3:guid:4c248403-23a7-4808-988c-1be59a4a90af
+input5
+   obj1:foo
+   obj2:true").Lambda();
             var result = await executor.ExecutePutAsync("echo", null, input, new List<(string, string)>(), new List<(string, string)>());
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -320,11 +300,9 @@ namespace magic.endpoint.tests
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-            var input = new JObject
-            {
-                ["input1"] = "foo",
-                ["input2"] = 5,
-            };
+            var input = new Parser(@"
+input1:foo
+input2:int:5").Lambda();
             var result = await executor.ExecutePostAsync("echo", null, input, new List<(string, string)>(), new List<(string, string)>());
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);

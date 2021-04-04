@@ -11,6 +11,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using magic.node;
+using magic.signals.contracts;
 using magic.endpoint.contracts;
 
 namespace magic.endpoint.controller
@@ -30,15 +32,19 @@ namespace magic.endpoint.controller
     [Route("magic")]
     public class EndpointController : ControllerBase
     {
+        readonly ISignaler _signaler;
+
         readonly IExecutorAsync _executor;
 
         /// <summary>
         /// Creates a new instance of your controller.
         /// </summary>
-        /// <param name="executor">Service implementation.</param>
-        public EndpointController(IExecutorAsync executor)
+        /// <param name="executor">Service implementation for executing URLs.</param>
+        /// <param name="signaler">Super signals implementation, needed to convert from JSON to Node.</param>
+        public EndpointController(IExecutorAsync executor, ISignaler signaler)
         {
             _executor = executor;
+            _signaler = signaler;
         }
 
         /// <summary>
@@ -133,56 +139,61 @@ namespace magic.endpoint.controller
         /*
          * Helper method to create arguments from body payload.
          */
-        async Task<JContainer> GetPayload()
+        async Task<Node> GetPayload()
         {
             switch (Request.ContentType)
             {
                 case "application/x-www-form-urlencoded":
+                {
 
                     // URL encoded transmission, having potentially multiple arguments.
                     var collection = await Request.ReadFormAsync();
-                    var args = new JObject();
+                    var args = new Node();
                     foreach (var idx in collection)
                     {
-                        args[idx.Key] = idx.Value.ToString();
+                        args.Add(new Node(idx.Key, idx.Value.ToString()));
                     }
                     return args;
+                }
 
                 case "application/json":
                 case "application/javascript":
+                {
 
                     // Reading body as JSON from request.
                     using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
                     {  
                         var payload = await reader.ReadToEndAsync();
-                        return (JContainer)JToken.Parse(payload);
+                        var json = JToken.Parse(payload);
+                        var args = new Node("", json);
+                        _signaler.Signal(".json2lambda-raw", args);
+                        return args;
                     }
+                }
 
                 case "text/plain":
                 case "application/hyperlambda":
                 case "application/x-hyperlambda":
+                {
 
                     // Anything BUT MIME and URL encoded parameters transmission
                     using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
                     {  
                         var payload = await reader.ReadToEndAsync();
-                        return new JObject
-                        {
-                            ["body"] = payload,
-                        };
+                        return new Node("body", payload);
                     }
+                }
 
                 default:
+                {
 
                     // Binary content of some sort, e.g. image upload etc.
                     using (var rawStream = new MemoryStream())
                     {
                         await Request.Body.CopyToAsync(rawStream);
-                        return new JObject
-                        {
-                            ["body"] = rawStream.GetBuffer()
-                        };
+                        return new Node("body", rawStream.GetBuffer());
                     }
+                }
             }
         }
 

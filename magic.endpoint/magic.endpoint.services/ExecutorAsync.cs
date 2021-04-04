@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
@@ -59,7 +58,7 @@ namespace magic.endpoint.services
         public async Task<HttpResponse> ExecutePostAsync(
             string url,
             IEnumerable<(string Name, string Value)> args,
-            JContainer payload,
+            Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies)
         {
@@ -70,7 +69,7 @@ namespace magic.endpoint.services
         public async Task<HttpResponse> ExecutePutAsync(
             string url,
             IEnumerable<(string Name, string Value)> args,
-            JContainer payload,
+            Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies)
         {
@@ -81,7 +80,7 @@ namespace magic.endpoint.services
         public async Task<HttpResponse> ExecutePatchAsync(
             string url,
             IEnumerable<(string Name, string Value)> args,
-            JContainer payload,
+            Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies)
         {
@@ -99,7 +98,7 @@ namespace magic.endpoint.services
             IEnumerable<(string Name, string Value)> args,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies,
-            JContainer payload = null)
+            Node payload = null)
         {
             url = url ?? "";
 
@@ -151,7 +150,7 @@ namespace magic.endpoint.services
         void AttachArguments(
             Node fileLambda, 
             IEnumerable<(string Name, string Value)> queryParameters, 
-            JContainer payload)
+            Node payload)
         {
             var declaration = fileLambda.Children.FirstOrDefault(x => x.Name == ".arguments");
             declaration?.UnTie();
@@ -163,10 +162,6 @@ namespace magic.endpoint.services
 
             if (payload != null)
                 args.AddRange(GetPayloadParameters(declaration, payload));
-
-            // Sanity checking arguments, avoiding duplicated arguments.
-            if (args.Children.GroupBy(x => x.Name).Any(x => x.Count() > 1))
-                throw new ArgumentException("Argument was duplicated in HTTP endpoint");
 
             if (args.Children.Any())
                 fileLambda.Insert(0, args);
@@ -208,11 +203,8 @@ namespace magic.endpoint.services
          * payload to args node, sanity checking that the
          * parameter is allowed in the process.
          */
-        IEnumerable<Node> GetPayloadParameters(Node declaration, JContainer payload)
+        IEnumerable<Node> GetPayloadParameters(Node declaration, Node payload)
         {
-            var converterNode = new Node("", payload);
-            _signaler.Signal(".json2lambda-raw", converterNode);
-
             /*
              * Checking if file contains a declaration at all.
              * This is done since by default all endpoints accepts all arguments,
@@ -220,14 +212,14 @@ namespace magic.endpoint.services
              */
             if (declaration != null)
             {
-                foreach (var idxArg in converterNode.Children)
+                foreach (var idxArg in payload.Children)
                 {
                     ConvertArgumentRecursively(
                         idxArg,
                         declaration.Children.FirstOrDefault(x => x.Name == idxArg.Name));
                 }
             }
-            return converterNode.Children.ToList();
+            return payload.Children.ToList();
         }
 
         /*
@@ -286,7 +278,7 @@ namespace magic.endpoint.services
                     var convert = new Node();
                     convert.AddRange(lambda.Children.ToList());
                     _signaler.Signal(".lambda2json-raw", convert);
-                    result = convert.Value as JToken;
+                    result = convert.Value;
                 }
             }
             return result;

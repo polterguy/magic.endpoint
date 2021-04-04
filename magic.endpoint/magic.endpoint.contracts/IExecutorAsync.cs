@@ -5,7 +5,7 @@
 
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+using magic.node;
 
 namespace magic.endpoint.contracts
 {
@@ -51,14 +51,14 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">URL that was requested.</param>
         /// <param name="args">HTTP arguments to endpoints.</param>
-        /// <param name="payload">JSON payload to your endpoint.</param>
+        /// <param name="payload">Payload to your endpoint in structure format.</param>
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePostAsync(
             string url, 
             IEnumerable<(string Name, string Value)> args,
-            JContainer payload,
+            Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies);
 
@@ -68,14 +68,14 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">URL that was requested.</param>
         /// <param name="args">HTTP arguments to endpoints.</param>
-        /// <param name="payload">JSON payload to your endpoint.</param>
+        /// <param name="payload">Payload to your endpoint in structure format.</param>
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePutAsync(
             string url, 
             IEnumerable<(string Name, string Value)> args, 
-            JContainer payload,
+            Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies);
 
@@ -85,14 +85,14 @@ namespace magic.endpoint.contracts
         /// </summary>
         /// <param name="url">URL that was requested.</param>
         /// <param name="args">HTTP arguments to endpoints.</param>
-        /// <param name="payload">String payload to your endpoint.</param>
+        /// <param name="payload">Payload to your endpoint in structure format.</param>
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePatchAsync(
             string url, 
             IEnumerable<(string Name, string Value)> args, 
-            JContainer payload,
+            Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies);
     }

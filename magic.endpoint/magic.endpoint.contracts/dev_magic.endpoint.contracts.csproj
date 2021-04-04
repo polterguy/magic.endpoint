@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <ProjectReference Include="..\..\..\magic.node\magic.node\dev_magic.node.csproj" />
   </ItemGroup>
 
 </Project>
