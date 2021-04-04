@@ -148,8 +148,19 @@ namespace magic.endpoint.controller
                     }
                     return args;
 
-                case "application/hyperlambda":
+                case "application/json":
+                case "application/javascript":
+
+                    // Reading body as JSON from request.
+                    using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
+                    {  
+                        var payload = await reader.ReadToEndAsync();
+                        return (JContainer)JToken.Parse(payload);
+                    }
+
                 case "text/plain":
+                case "application/hyperlambda":
+                case "application/x-hyperlambda":
 
                     // Anything BUT MIME and URL encoded parameters transmission
                     using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
@@ -161,7 +172,7 @@ namespace magic.endpoint.controller
                         };
                     }
 
-                case "application/octet-stream":
+                default:
 
                     // Binary content of some sort, e.g. image upload etc.
                     using (var rawStream = new MemoryStream())
@@ -172,20 +183,6 @@ namespace magic.endpoint.controller
                             ["body"] = rawStream.GetBuffer()
                         };
                     }
-
-                case "application/json":
-
-                    // Assuming payload is JSON of some sort.
-                    using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
-                    {  
-                        var payload = await reader.ReadToEndAsync();
-                        return (JContainer)JToken.Parse(payload);
-                    }
-
-                default:
-
-                    // Oops, unknown Content-Type.
-                    throw new ArgumentException($"I don't know how to handle Content-Type of '{Request.ContentType}'");
             }
         }
 

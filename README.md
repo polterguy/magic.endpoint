@@ -3,13 +3,13 @@
 
 Magic Endpoint is a dynamic endpoint URL controller, allowing you to declare endpoints that are dynamically
 resolved using your `IExecutorAsync` service implementation. The default implementation of this interface, is the
-class called `ExecutorAsync`, and the rest of this file, will be focused on documenting this implementation,
+class called `ExecutorAsync`, and the rest of this file will be focused on documenting this implementation,
 since it's the default service implementation for Magic Endpoint - Although, technically, you could exchange
 this with your own implementation if you wish, completely changing the behaviour of the library, if you wish
 to for instance resolve endpoints to Python, Ruby, or any other dynamic programming language implementation,
 and you have some means to execute such code from within a .Net 5 environment.
 
-The controller itself will be invoked for all URLs starting with _"magic/"_, for the following verbs.
+The resolver will be invoked for all relative URLs starting with _"magic/"_, for the following verbs.
 
 * `GET`
 * `POST`
@@ -17,7 +17,7 @@ The controller itself will be invoked for all URLs starting with _"magic/"_, for
 * `DELETE`
 * `PATCH`
 
-The default service implementation, will resolve everything after the _"magic/"_ parts in the
+The default service implementation will resolve everything after the _"magic/"_ parts in the
 given URL, to a Hyperlambda file that can be found relatively beneath your _"/files/"_ folder.
 Although, technically, exactly where you physically put your files on disc, can be configured
 through your _"appsettings.json"_ file. The HTTP VERB is assumed to be the last parts of your
@@ -37,7 +37,8 @@ Notice, only the _"magic"_ part of your URL is rewritten, before the verb is app
 finally the extension _".hl"_ appended. Then the file is loaded and parsed as Hyperlambda, and whatever
 arguments you pass in, either as query parameters, or as your JSON payload URL encoded form arguments, etc,
 is appended into your resulting lambda node's **[.arguments]** node, as arguments to your Hyperlambda file
-invocation.
+invocation. The resolver will never return files directly, but is only able to execute Hyperlambda files,
+so by default there is no way to return files as is.
 
 Below is probably the simplest HTTP endpoint you could create. Save the following Hyperlambda in a
 file at the path of `modules/magic/foo1.get.hl` using for instance your Magic Dashboard's
@@ -84,11 +85,12 @@ the HTTP GET verb.
 http://localhost:55247/magic/modules/magic/foo2?arg1=howdy&arg2=5
 ```
 
-Assuming you're backend is running on localhost, at port 55247 of course.
+Assuming your backend is running on localhost, at port 55247 of course.
 
-JSON payloads are automatically converted to lambda/nodes - And query parameters are treated
-indiscriminately the same way as JSON payloads - Except of course, query parameters cannot
-pass in complex graph objects, but only simply key/value arguments.
+JSON payloads and form URL encoded payloads are automatically converted to lambda/nodes -
+And query parameters are treated indiscriminately the same way as JSON payloads -
+Except of course, query parameters cannot pass in complex graph objects, but only
+simply key/value arguments. Only POST, PUT and PATCH endpoints can handle payloads.
 
 **Notice** - To allow for _any_ arguments to your files, simply _ommit_ the **[.arguments]** node
 in your Hyperlambda althogether. Alternatively, you can also partially ignore arguments sanity checking
@@ -104,16 +106,18 @@ of individual nodes, by setting their values to `*`, such as the following illus
 In the above arguments declaration, **[arg1]** and **[arg2]** will be sanity checked, and input converted
 to `string` or `date` (DateTime) - But the **[arg3]** parts will be completely ignored, allowing the caller
 to invoke it with _anything_ as `arg3` during invocation - Including complete graph JSON objects, assuming
-the above declaration is for a `PUT` or `POST` Hyperlambda file.
+the above declaration is for a `PUT` or `POST` Hyperlambda file. Arguments declared like the above are considered
+optional, and the file will still resolve if the argument is not given, except of course the argument
+won't exist in the **[.arguments]** node.
 
 To declare what type your arguments can be, set the value of the argument declaration node to
-the Hyperlambda type value inside of your arguments declaration, such as we illustrate above.
-Arguments will be converted, if possible, to the type declaration in your arguments declaration.
+the Hyperlambda type value inside of your arguments declaration, such as illustrated above.
+Arguments will be converted if possible, to the type declaration in your arguments declaration.
 If no conversion is possible, an exception will be thrown.
 
 Although the sanity check will check graph objects, passed in as JSON payloads, it has its restrictions,
-such as not being able to sanity checking complex objects passed in as arrays, etc. If you need stronger
-sanity checking of your arguments, you will probably have to manually check your more complex graph objects
+such as not being able to sanity check complex objects passed in as arrays, etc. If you need stronger
+sanity checking of your arguments, you will have to manually check your more complex graph objects
 yourself.
 
 ## Accepted Content-Type values
@@ -121,15 +125,17 @@ yourself.
 The POST, PUT and PATCH endpoints can accept any of the following Content-Types
 
 * `application/json`
+* `application/javascript`
 * `application/x-www-form-urlencoded`
-* `application/hyperlambda`
 * `text/plain`
-* `application/octet-stream`
+* `application/hyperlambda`
+* `application/x-hyperlambda`
 
-JSON types of payloads is fairly well described above, and URL encoded form payloads are handled
-the exact same way, except of course the **[.arguments]** node is built from the form values, instead
-of JSON. Hyperlambda, plain text and octet-stream (binary) type of payloads will create *one* argument
-in their **[.arguments]** node, being **[body]** containing the content passed in.
+JSON types of payloads are fairly well described above, and URL encoded form payloads are handled
+the exact same way, except of course the **[.arguments]** node is built from the form values instead
+of JSON. Hyperlambda and plain text content will be passed in as a **[body]** argument to your file
+as text. All other types of payloads will be passed in as raw `byte[]` as a **[body]** argument.
+All text based payloads will be assumed to be UTF8 encoded.
 
 ## Meta information
 
