@@ -170,22 +170,25 @@ namespace magic.endpoint.controller
                 }
 
 
-                case "application/hyperlambda":
                 case "application/x-hyperlambda":
                 {
                     // Reading content as plain UTF8 text, and passing in as [.arguments]/[body] argument.
+                    var args = new Node();
                     using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
                     {  
                         var payload = await reader.ReadToEndAsync();
-                        return new Node("body", payload);
+                        args.Add(new Node("body", payload));
                     }
+                    return args;
                 }
 
                 default:
                 {
                     // Binary content of some sort, e.g. image upload etc.
                     // Simply passing in stream raw to resolver, allowing resolver to do whatever it wish with it.
-                    return new Node("body", Request.Body);
+                    var args = new Node();
+                    args.Add(new Node("body", Request.Body));
+                    return args;
                 }
             }
         }

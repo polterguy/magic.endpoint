@@ -131,11 +131,10 @@ yourself.
 
 ## Accepted Content-Type values
 
-The POST, PUT and PATCH endpoints can accept any of the following Content-Types
+The POST, PUT and PATCH endpoints can intelligently handle any of the following Content-Types.
 
 * `application/json`
 * `application/x-www-form-urlencoded`
-* `application/hyperlambda`
 * `application/x-hyperlambda`
 
 JSON types of payloads are fairly well described above, and URL encoded form payloads are handled
