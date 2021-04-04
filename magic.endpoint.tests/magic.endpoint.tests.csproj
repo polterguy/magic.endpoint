@@ -25,40 +25,40 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="header.get.hl">
+    <Content Include="modules/header.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="status.get.hl">
+    <Content Include="modules/status.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="request-header.get.hl">
+    <Content Include="modules/request-header.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="list-headers.get.hl">
+    <Content Include="modules/list-headers.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="echo.post.hl">
+    <Content Include="modules/echo.post.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="echo.put.hl">
+    <Content Include="modules/echo.put.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="echo.get.hl">
+    <Content Include="modules/echo.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="echo-no-declaration.get.hl">
+    <Content Include="modules/echo-no-declaration.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="foo-1.get.hl">
+    <Content Include="modules/foo-1.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="foo-2.get.hl">
+    <Content Include="modules/foo-2.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="throws.get.hl">
+    <Content Include="modules/throws.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="foo-1.delete.hl">
+    <Content Include="modules/foo-1.delete.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
