@@ -82,7 +82,6 @@ namespace magic.endpoint.controller
         /// Executes a dynamically registered Hyperlambda HTTP POST endpoint.
         /// </summary>
         /// <param name="url">The requested URL.</param>
-        /// <param name="payload">Payload from client.</param>
         [HttpPost]
         [Route("{*url}")]
         [RequestSizeLimit(8000000)] // Maximum 8MB payloads are accepted
@@ -101,7 +100,6 @@ namespace magic.endpoint.controller
         /// Executes a dynamically registered Hyperlambda HTTP PUT endpoint.
         /// </summary>
         /// <param name="url">The requested URL.</param>
-        /// <param name="payload">Payload from client.</param>
         [HttpPut]
         [Route("{*url}")]
         [RequestSizeLimit(8000000)] // Maximum 8MB payloads are accepted
