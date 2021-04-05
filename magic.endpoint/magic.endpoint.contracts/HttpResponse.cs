@@ -33,6 +33,7 @@ namespace magic.endpoint.contracts
         /// 
         /// Notice, if you return a stream, the stream will be copied directly
         /// to the response stream, without being loaded into memory in its entirety.
+        /// </summary>
         public object Content { get; set; }
     }
 }
