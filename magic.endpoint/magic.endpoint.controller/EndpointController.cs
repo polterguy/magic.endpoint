@@ -238,7 +238,7 @@ namespace magic.endpoint.controller
                 case "application/json":
                     if (response.Content is string strContent)
                         return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
-                    return new ObjectResult(response.Content) { StatusCode = response.Result };
+                    return new JsonResult(response.Content as JToken) { StatusCode = response.Result };
 
                 case "application/octet-stream":
                     var bytes = response.Content is byte[] rawBytes ?
