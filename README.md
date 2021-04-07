@@ -112,7 +112,7 @@ of individual nodes, by setting their values to `*`, such as the following illus
 In the above arguments declaration, **[arg1]** and **[arg2]** will be sanity checked, and input converted
 to `string` or `date` (DateTime) - But the **[arg3]** parts will be completely ignored, allowing the caller
 to invoke it with _anything_ as `arg3` during invocation - Including complete graph JSON objects, assuming
-the above declaration is for a `PUT` or `POST` Hyperlambda file. The '\*' value for an argument also turn
+the above declaration is for a `PUT`, `POST` or `PATCH` Hyperlambda file. The '\*' value for an argument also turn
 off all conversion, implying everything will be given your lambda object with the JSON type the argument
 was passed in as.
 
@@ -145,7 +145,8 @@ will be passed in as a **[body]** argument to your file as text.
 
 All other types of payloads will be passed in as the raw stream, not trying to read from it in any
 ways, allowing you to intercept reading with things such as authentication, authorisation, logic of
-where to persist content, etc.
+where to persist content, etc. To see how you can handle these streams, check out the _"magic.lambda.io"_
+project's documentation.
 
 ## Meta information
 
@@ -196,13 +197,12 @@ In addition to the meta retrieval endpoint described above, the module contains 
 slots.
 
 * __[response.status.set]__ - Sets the status code (e.g. 404) on the response object.
-* __[response.headers.add]__ - Adds an HTTP header to the response object.
+* __[request.cookies.list]__ - Lists all HTTP request headers.
+* __[request.cookies.get]__ - Returns the value of a previously set cookie.
 * __[response.cookies.set]__ - Creates a cookie that will be returned to the client.
-* __[response.cookies.get]__ - Returns the value of a previously set cookie.
 * __[request.headers.list]__ - Lists all HTTP request headers.
 * __[request.headers.get]__ - Returns a single HTTP header associated with the request.
-* __[request.cookies.list]__ - Lists all HTTP request headers.
-* __[request.cookies.get]__ - Returns a single HTTP header associated with the request.
+* __[response.headers.set]__ - Adds an HTTP header to the response object.
 
 ## Misc
 
@@ -218,10 +218,15 @@ response.headers.add
 return:Hello from Magic Backend
 ```
 
-You can also return stream objects using for instance the **[return]** slot, at which point
+**Notice** - If you intend to return anything but JSON, you _must_ set the `Content-Type` header, because
+the resolver will by default try to serialize your content as JSON, and obviously fail unless it's
+valid JSON.
+
+You can also return stream objects using for instance the **[return-value]** slot, at which point
 ASP.NET Core will automatically stream your content back over the response object, and `Dispose`
 your stream automatically for you afterwards. This allows you to return large files back to
-the client, without loading them into memory first, etc.
+the client, without loading them into memory first, etc. If you do this, you'll have to change
+your `Content-Type` accordingly.
 
 ### Cookies
 

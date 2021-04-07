@@ -11,11 +11,12 @@ using magic.endpoint.contracts;
 namespace magic.endpoint.services.slots.headers
 {
     /// <summary>
-    /// [response.headers.add] slot for adding a Response HTTP header that will be
+    /// [response.headers.set] slot for adding a Response HTTP header that will be
     /// returned back to the client as an HTTP header.
     /// </summary>
-    [Slot(Name = "response.headers.add")]
-    public class AddHeader : ISlot
+    [Slot(Name = "response.headers.add")] // Obsolete! But needs to stay around for a while for backward compatibility reasons ... :/
+    [Slot(Name = "response.headers.set")]
+    public class SetHeader : ISlot
     {
         /// <summary>
         /// Implementation of your slot.
