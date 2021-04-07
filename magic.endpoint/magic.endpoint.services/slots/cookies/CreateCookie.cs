@@ -39,7 +39,7 @@ namespace magic.endpoint.services.slots.cookies
                     Domain = input.Children.FirstOrDefault(x => x.Name == "domain")?.GetEx<string>(),
                     Path = input.Children.FirstOrDefault(x => x.Name == "path")?.GetEx<string>(),
                     SameSite = input.Children.FirstOrDefault(x => x.Name == "same-site")?.GetEx<string>(),
-                });;
+                });
         }
     }
 }
