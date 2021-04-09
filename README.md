@@ -244,6 +244,10 @@ slot takes the following arguments.
 Only the **[value]** from above is mandatory. To delete a cookie on the client, set the expiration date to a value
 in the past.
 
+## Project website
+
+The source code for this repository can be found at [github.com/polterguy/magic.endpoint](https://github.com/polterguy/magic.endpoint), and you can provide feedback, provide bug reports, etc at the same place.
+
 ## Quality gates
 
 - [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=polterguy_magic.endpoint&metric=alert_status)](https://sonarcloud.io/dashboard?id=polterguy_magic.endpoint)
