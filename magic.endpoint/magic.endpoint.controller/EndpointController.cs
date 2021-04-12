@@ -52,7 +52,7 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         [HttpGet]
         [Route("{*url}")]
-        public async Task<ActionResult> Get(string url)
+        public async Task<IActionResult> Get(string url)
         {
             return TransformToActionResult(
                 await _executor.ExecuteGetAsync(
@@ -68,7 +68,7 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         [HttpDelete]
         [Route("{*url}")]
-        public async Task<ActionResult> Delete(string url)
+        public async Task<IActionResult> Delete(string url)
         {
             return TransformToActionResult(
                 await _executor.ExecuteDeleteAsync(
@@ -85,7 +85,7 @@ namespace magic.endpoint.controller
         [HttpPost]
         [Route("{*url}")]
         [RequestSizeLimit(8000000)] // Maximum 8MB payloads are accepted
-        public async Task<ActionResult> Post(string url)
+        public async Task<IActionResult> Post(string url)
         {
             return TransformToActionResult(
                 await _executor.ExecutePostAsync(
@@ -103,7 +103,7 @@ namespace magic.endpoint.controller
         [HttpPut]
         [Route("{*url}")]
         [RequestSizeLimit(8000000)] // Maximum 8MB payloads are accepted
-        public async Task<ActionResult> Put(string url)
+        public async Task<IActionResult> Put(string url)
         {
             return TransformToActionResult(
                 await _executor.ExecutePutAsync(
@@ -121,7 +121,7 @@ namespace magic.endpoint.controller
         [HttpPatch]
         [Route("{*url}")]
         [RequestSizeLimit(8000000)] // Maximum 8MB payloads are accepted
-        public async Task<ActionResult> Patch(string url)
+        public async Task<IActionResult> Patch(string url)
         {
             return TransformToActionResult(
                 await _executor.ExecutePatchAsync(
@@ -194,7 +194,7 @@ namespace magic.endpoint.controller
         /*
          * Transforms from our internal HttpResponse wrapper to an ActionResult
          */
-        ActionResult TransformToActionResult(HttpResponse response)
+        IActionResult TransformToActionResult(HttpResponse response)
         {
             // Making sure we attach any explicitly added HTTP headers to the response.
             foreach (var idx in response.Headers)
