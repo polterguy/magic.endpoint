@@ -43,53 +43,29 @@ namespace magic.endpoint.services.slots.meta
             string verb,
             Node arguments)
         {
-            var crudType = GetCrudEndpointType(lambda);
-            if (crudType == "crud-count" && verb == "get")
+            if (verb == "get")
             {
-                // count(*) type of endpoint.
-                yield return new Node(
-                    "output",
-                    null,
-                    new Node[]
-                    {
-                        new Node(".", null, new Node[]
-                        {
-                            new Node("name", "count"),
-                            new Node("type", "long")
-                        })
-                    });
-                yield return new Node("array", false);
-            }
-            else if (crudType == "crud-read" && verb == "get")
-            {
-                // CRUD read type of endpoint.
-                var resultNode = new Node("output");
-                var enumerator = lambda.Children
-                    .FirstOrDefault(x => x.Name.EndsWith(".connect"))?.Children
-                    .FirstOrDefault(x => x.Name.EndsWith(".read"))?.Children
-                    .FirstOrDefault(x => x.Name == "columns")?.Children;
-                if (enumerator != null)
+                var crudType = GetCrudEndpointType(lambda);
+                switch (crudType)
                 {
-                    foreach (var idx in enumerator)
-                    {
-                        var node = new Node(".");
-                        node.Add(new Node("name", idx.Name));
-                        if (arguments != null)
+                    case "crud-count":
+
+                        // Count(*) type of endpoint.
+                        foreach (var idx in GetCountEndpointMeta())
                         {
-                            foreach (var idxType in arguments.Children)
-                            {
-                                foreach (var idxInnerType in idxType.Children)
-                                {
-                                    if (idxInnerType.Name == "name" && idxInnerType.Get<string>() == idx.Name + ".eq")
-                                        node.Add(new Node("type", idxType.Children.FirstOrDefault(x => x.Name == "type")?.Value));
-                                }
-                            }
+                            yield return idx;
                         }
-                        resultNode.Add(node);
-                    }
+                        break;
+
+                    case "crud-read":
+
+                        // CRUD read type of endpoint.
+                        foreach (var idx in GetReadEndpointMeta(lambda, arguments))
+                        {
+                            yield return idx;
+                        }
+                        break;
                 }
-                yield return resultNode;
-                yield return new Node("array", true);
             }
         }
 
@@ -162,6 +138,59 @@ namespace magic.endpoint.services.slots.meta
             return lambda
                 .Children
                 .FirstOrDefault(x => x.Name == ".type" && x.Get<string>().StartsWith("crud-"))?.Get<string>() ?? "custom";
+        }
+
+        /*
+         * Helper method to retrieve meta information for count(*) type of endpoints.
+         */
+        static IEnumerable<Node> GetCountEndpointMeta()
+        {
+            yield return new Node(
+                "output",
+                null,
+                new Node[]
+                {
+                    new Node(".", null, new Node[]
+                    {
+                        new Node("name", "count"),
+                        new Node("type", "long")
+                    })
+                });
+            yield return new Node("array", false);
+        }
+
+        /*
+         * Helper method to retrieve meta information for count(*) type of endpoints.
+         */
+        static IEnumerable<Node> GetReadEndpointMeta(Node lambda, Node arguments)
+        {
+            var resultNode = new Node("output");
+            var enumerator = lambda.Children
+                .FirstOrDefault(x => x.Name.EndsWith(".connect"))?.Children
+                .FirstOrDefault(x => x.Name.EndsWith(".read"))?.Children
+                .FirstOrDefault(x => x.Name == "columns")?.Children;
+            if (enumerator != null)
+            {
+                foreach (var idx in enumerator)
+                {
+                    var node = new Node(".");
+                    node.Add(new Node("name", idx.Name));
+                    if (arguments != null)
+                    {
+                        foreach (var idxType in arguments.Children)
+                        {
+                            foreach (var idxInnerType in idxType.Children)
+                            {
+                                if (idxInnerType.Name == "name" && idxInnerType.Get<string>() == idx.Name + ".eq")
+                                    node.Add(new Node("type", idxType.Children.FirstOrDefault(x => x.Name == "type")?.Value));
+                            }
+                        }
+                    }
+                    resultNode.Add(node);
+                }
+            }
+            yield return resultNode;
+            yield return new Node("array", true);
         }
 
         #endregion
