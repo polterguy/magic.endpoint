@@ -155,6 +155,7 @@ namespace magic.endpoint.controller
                         return args;
                     }
                 }
+
                 case "application/x-www-form-urlencoded":
                 {
                     // URL encoded transmission, reading arguments as such.
@@ -166,7 +167,6 @@ namespace magic.endpoint.controller
                     }
                     return args;
                 }
-
 
                 case "application/x-hyperlambda":
                 {
@@ -182,7 +182,7 @@ namespace magic.endpoint.controller
 
                 default:
                 {
-                    // Binary content of some sort, e.g. image upload etc.
+                    // Binary content of some sort, e.g. image upload, or some other unhandled MIME type.
                     // Simply passing in stream raw to resolver, allowing resolver to do whatever it wish with it.
                     var args = new Node();
                     args.Add(new Node("body", Request.Body));
@@ -226,16 +226,13 @@ namespace magic.endpoint.controller
             if (!response.Headers.ContainsKey("Content-Type"))
                 Response.ContentType = "application/json";
 
-            // Null value.
-            if (response.Content == null)
-                return new ObjectResult(response.Content) { StatusCode = response.Result };
-
-            // Making sure we return the correct ActionResult according to Content-Type
+            // Making sure we return the correct ActionResult according to Content-Type.
+            // TODO: Fix, make sure we conform to GetPayload.
             switch (Response.ContentType.Split(';')[0])
             {
                 case "application/json":
                     if (response.Content is string strContent)
-                        return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result };
+                        return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result }; // TODO: Fix, shouldn't be necessary
                     return new JsonResult(response.Content as JToken) { StatusCode = response.Result };
 
                 case "application/octet-stream":
