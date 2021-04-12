@@ -227,12 +227,11 @@ namespace magic.endpoint.controller
                 Response.ContentType = "application/json";
 
             // Making sure we return the correct ActionResult according to Content-Type.
-            // TODO: Fix, make sure we conform to GetPayload.
             switch (Response.ContentType.Split(';')[0])
             {
                 case "application/json":
                     if (response.Content is string strContent)
-                        return new JsonResult(JToken.Parse(strContent)) { StatusCode = response.Result }; // TODO: Fix, shouldn't be necessary
+                        return new ContentResult() { Content = strContent, StatusCode = response.Result };
                     return new JsonResult(response.Content as JToken) { StatusCode = response.Result };
 
                 case "application/octet-stream":
@@ -241,7 +240,6 @@ namespace magic.endpoint.controller
                         Convert.FromBase64String(response.Content as string);
                     return File(bytes, "application/octet-stream");
 
-                case "application/hyperlambda":
                 case "application/x-hyperlambda":
                     return Content(response.Content as string);
 
