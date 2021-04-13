@@ -168,26 +168,21 @@ namespace magic.endpoint.services.slots.meta
             var enumerator = lambda.Children
                 .FirstOrDefault(x => x.Name.EndsWith(".connect"))?.Children
                 .FirstOrDefault(x => x.Name.EndsWith(".read"))?.Children
-                .FirstOrDefault(x => x.Name == "columns")?.Children;
-            if (enumerator != null)
+                .FirstOrDefault(x => x.Name == "columns")?.Children ?? new Node[0];
+            foreach (var idx in enumerator)
             {
-                foreach (var idx in enumerator)
+                var node = new Node(".");
+                node.Add(new Node("name", idx.Name));
+                if (arguments != null)
                 {
-                    var node = new Node(".");
-                    node.Add(new Node("name", idx.Name));
-                    if (arguments != null)
+                    foreach (var idxType in arguments.Children
+                        .SelectMany(x => x.Children)
+                        .Where(x => x.Name == "name" && x.Get<string>() == idx.Name + ".eq"))
                     {
-                        foreach (var idxType in arguments.Children)
-                        {
-                            foreach (var idxInnerType in idxType.Children)
-                            {
-                                if (idxInnerType.Name == "name" && idxInnerType.Get<string>() == idx.Name + ".eq")
-                                    node.Add(new Node("type", idxType.Children.FirstOrDefault(x => x.Name == "type")?.Value));
-                            }
-                        }
+                        node.Add(new Node("type", idxType.Children.FirstOrDefault(x => x.Name == "type")?.Value));
                     }
-                    resultNode.Add(node);
                 }
+                resultNode.Add(node);
             }
             yield return resultNode;
             yield return new Node("array", true);
