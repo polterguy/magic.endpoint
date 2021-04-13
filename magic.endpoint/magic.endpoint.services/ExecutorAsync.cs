@@ -102,7 +102,7 @@ namespace magic.endpoint.services
         {
             // Making sure we never resolve to anything outside of "/modules/" folder.
             if (url == null || !url.StartsWith("modules/"))
-                throw new ArgumentException($"Sorry, I cannot resolve Hyperlambda endpoints outside of the '/modules/' folder, and you tried to access '{url}'");
+                return new HttpResponse { Result = 401 };
 
             // Figuring out file to execute, and doing some basic sanity check.
             var path = Utilities.GetEndpointFile(url, verb);
