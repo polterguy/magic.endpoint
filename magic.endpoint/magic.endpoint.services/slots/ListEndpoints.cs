@@ -203,7 +203,7 @@ namespace magic.endpoint.services.slots
                     result.AddRange(
                         idx.GetEx<string>()?
                         .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(x => new Node("", x.Trim())) ?? Array.Empty<Node>());
+                        .Select(x => new Node("", x.Trim())) ?? new Node[] { new Node("", "*") });
                 }
             }
             return result.Children.Any() ? result : null;
