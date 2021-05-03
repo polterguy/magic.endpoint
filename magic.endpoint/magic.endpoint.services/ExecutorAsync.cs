@@ -252,7 +252,7 @@ namespace magic.endpoint.services
                 return; // Turning OFF all argument sanity checking and conversion recursively below this node.
 
             // Making sure type declaration for argument exists.
-            if (type != null)
+            if (type != null && arg.Value != null)
                 arg.Value = Converter.ToObject(arg.Value, type); // Converting argument, which might throw an exception if conversion is not possible
 
             // Recursively running through children.

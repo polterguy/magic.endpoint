@@ -129,6 +129,11 @@ such as not being able to sanity check complex objects passed in as arrays, etc.
 sanity checking of your arguments, you will have to manually check your more complex graph objects
 yourself.
 
+Also realise that if the value originates from a payload, as in from a PUT, PATCH or POST JSON object
+for instance, these types of objects might contain null values. If they do, no conversion will be attempted,
+and internally within your endpoint's Hyperlambda code, you might therefor expect to see for instance
+`long` values being in fact _null_, even though technically these are not nullable types in .Net.
+
 ## Accepted Content-Type values
 
 The POST, PUT and PATCH endpoints can intelligently handle any of the following Content-Types.
