@@ -14,7 +14,7 @@ using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
 using magic.endpoint.services.slots.meta;
 
-namespace magic.endpoint.services.slots
+namespace magic.endpoint.services.slots.misc
 {
     /// <summary>
     /// [endpoints.list] slot for returning all dynamica Hyperlambda endpoints

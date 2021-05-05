@@ -27,7 +27,8 @@ namespace magic.endpoint.tests
                 "modules/foo-1",
                 null,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -46,7 +47,8 @@ namespace magic.endpoint.tests
                 "modules/not-existing",
                 null,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(404, result.Result);
         }
@@ -62,7 +64,8 @@ namespace magic.endpoint.tests
                     "modules/request-header",
                     null,
                     new List<(string Name, string Value)>(),
-                    new List<(string, string)>()));
+                    new List<(string, string)>(),
+                    "localhost"));
         }
 
         [Fact]
@@ -78,7 +81,8 @@ namespace magic.endpoint.tests
                 "modules/request-header",
                 null,
                 headers,
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Equal("success", result.Content);
@@ -97,7 +101,8 @@ namespace magic.endpoint.tests
                 "modules/request-cookie",
                 null,
                 new List<(string, string)>(),
-                cookies);
+                cookies,
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Equal("success", result.Content);
@@ -117,7 +122,8 @@ namespace magic.endpoint.tests
                 "modules/echo-headers",
                 null,
                 headers,
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             var content = result.Content as JContainer;
@@ -140,7 +146,8 @@ namespace magic.endpoint.tests
                 "modules/echo-cookies",
                 null,
                 new List<(string, string)>(),
-                cookies);
+                cookies,
+                "localhost");
 
             Assert.Equal(200, result.Result);
             var content = result.Content as JContainer;
@@ -160,7 +167,8 @@ namespace magic.endpoint.tests
                     "modules/throws",
                     null,
                     new List<(string, string)>(),
-                    new List<(string, string)>()));
+                    new List<(string, string)>(),
+                    "localhost"));
         }
 
         [Fact]
@@ -173,7 +181,8 @@ namespace magic.endpoint.tests
                 "modules/foo-2",
                 null,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -198,7 +207,8 @@ namespace magic.endpoint.tests
                 "modules/echo",
                 input,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -222,7 +232,8 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteGetAsync(
                 "modules/echo",
                 input, new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -246,7 +257,8 @@ namespace magic.endpoint.tests
                 async () => await executor.ExecuteGetAsync(
                     "modules/echo",
                     input, new List<(string, string)>(),
-                    new List<(string, string)>()));
+                    new List<(string, string)>(),
+                    "localhost"));
         }
 
         [Fact]
@@ -265,7 +277,8 @@ namespace magic.endpoint.tests
                     "modules/echo",
                     input,
                     new List<(string, string)>(),
-                    new List<(string, string)>()));
+                    new List<(string, string)>(),
+                    "localhost"));
         }
 
         [Fact]
@@ -281,7 +294,8 @@ namespace magic.endpoint.tests
                 "modules/echo-no-declaration",
                 input,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -300,7 +314,8 @@ namespace magic.endpoint.tests
                 "modules/status",
                 null,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(201, result.Result);
         }
@@ -315,7 +330,8 @@ namespace magic.endpoint.tests
                 "modules/header",
                 null,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Single(result.Headers);
             Assert.Equal("bar", result.Headers["foo"]);
@@ -331,7 +347,8 @@ namespace magic.endpoint.tests
                 "modules/foo-1",
                 null,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -368,7 +385,8 @@ input5
                 null,
                 input,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -418,7 +436,8 @@ input5
                 null,
                 input,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -455,7 +474,8 @@ input2:int:5").Lambda();
                 null,
                 input,
                 new List<(string, string)>(),
-                new List<(string, string)>());
+                new List<(string, string)>(),
+                "localhost");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);

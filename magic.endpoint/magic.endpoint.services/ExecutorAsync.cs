@@ -39,9 +39,10 @@ namespace magic.endpoint.services
             string url,
             IEnumerable<(string Name, string Value)> query,
             IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies)
+            IEnumerable<(string Name, string Value)> cookies,
+            string host)
         {
-            return await ExecuteUrl(url, "get", query, headers, cookies);
+            return await ExecuteUrl(url, "get", query, headers, cookies, host);
         }
 
         /// <inheritdoc/>
@@ -49,9 +50,10 @@ namespace magic.endpoint.services
             string url, 
             IEnumerable<(string Name, string Value)> query,
             IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies)
+            IEnumerable<(string Name, string Value)> cookies,
+            string host)
         {
-            return await ExecuteUrl(url, "delete", query, headers, cookies);
+            return await ExecuteUrl(url, "delete", query, headers, cookies, host);
         }
 
         /// <inheritdoc/>
@@ -60,9 +62,10 @@ namespace magic.endpoint.services
             IEnumerable<(string Name, string Value)> query,
             Node payload,
             IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies)
+            IEnumerable<(string Name, string Value)> cookies,
+            string host)
         {
-            return await ExecuteUrl(url, "post", query, headers, cookies, payload);
+            return await ExecuteUrl(url, "post", query, headers, cookies, host, payload);
         }
 
         /// <inheritdoc/>
@@ -71,9 +74,10 @@ namespace magic.endpoint.services
             IEnumerable<(string Name, string Value)> query,
             Node payload,
             IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies)
+            IEnumerable<(string Name, string Value)> cookies,
+            string host)
         {
-            return await ExecuteUrl(url, "put", query, headers, cookies, payload);
+            return await ExecuteUrl(url, "put", query, headers, cookies, host, payload);
         }
 
         /// <inheritdoc/>
@@ -82,9 +86,10 @@ namespace magic.endpoint.services
             IEnumerable<(string Name, string Value)> query,
             Node payload,
             IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies)
+            IEnumerable<(string Name, string Value)> cookies,
+            string host)
         {
-            return await ExecuteUrl(url, "patch", query, headers, cookies, payload);
+            return await ExecuteUrl(url, "patch", query, headers, cookies, host, payload);
         }
 
         #region [ -- Private helper methods -- ]
@@ -98,6 +103,7 @@ namespace magic.endpoint.services
             IEnumerable<(string Name, string Value)> query,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies,
+            string host,
             Node payload = null)
         {
             // Making sure we never resolve to anything outside of "/modules/" folder.
@@ -123,6 +129,7 @@ namespace magic.endpoint.services
                 {
                     Cookies = cookies.ToDictionary(x => x.Name, x => x.Value),
                     Headers = headers.ToDictionary(x => x.Name, x => x.Value),
+                    Host = host,
                 };
                 try
                 {

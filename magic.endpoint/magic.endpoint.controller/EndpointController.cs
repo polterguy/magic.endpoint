@@ -59,7 +59,8 @@ namespace magic.endpoint.controller
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Cookies.Select(x => (x.Key, x.Value))));
+                    Request.Cookies.Select(x => (x.Key, x.Value)),
+                    HttpContext.Request.Host.Value));
         }
 
         /// <summary>
@@ -75,7 +76,8 @@ namespace magic.endpoint.controller
                     WebUtility.UrlDecode(url), 
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Cookies.Select(x => (x.Key, x.Value))));
+                    Request.Cookies.Select(x => (x.Key, x.Value)),
+                    HttpContext.Request.Host.Value));
         }
 
         /// <summary>
@@ -93,7 +95,8 @@ namespace magic.endpoint.controller
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
                     await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Cookies.Select(x => (x.Key, x.Value))));
+                    Request.Cookies.Select(x => (x.Key, x.Value)),
+                    HttpContext.Request.Host.Value));
         }
 
         /// <summary>
@@ -111,7 +114,8 @@ namespace magic.endpoint.controller
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
                     await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Cookies.Select(x => (x.Key, x.Value))));
+                    Request.Cookies.Select(x => (x.Key, x.Value)),
+                    HttpContext.Request.Host.Value));
         }
 
         /// <summary>
@@ -129,7 +133,8 @@ namespace magic.endpoint.controller
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
                     await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Cookies.Select(x => (x.Key, x.Value))));
+                    Request.Cookies.Select(x => (x.Key, x.Value)),
+                    HttpContext.Request.Host.Value));
         }
 
         #region [ -- Private helper methods -- ]

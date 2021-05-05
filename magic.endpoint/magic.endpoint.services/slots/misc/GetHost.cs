@@ -8,10 +8,10 @@ using magic.node.extensions;
 using magic.signals.contracts;
 using magic.endpoint.contracts;
 
-namespace magic.endpoint.services.slots
+namespace magic.endpoint.services.slots.misc
 {
     /// <summary>
-    /// [response.status-code] slot for modifying the HTTP status code of the response.
+    /// [response.status.set] slot for modifying the HTTP status code of the response.
     /// </summary>
     [Slot(Name = "response.status.set")]
     public class SetStatusCode : ISlot

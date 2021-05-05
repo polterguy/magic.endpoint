@@ -21,5 +21,10 @@ namespace magic.endpoint.contracts
         /// Cookies provided by client.
         /// </summary>
         public Dictionary<string, string> Cookies { get; set; } = new Dictionary<string, string>();
+
+        /// <summary>
+        /// Host value of request.
+        /// </summary>
+        public string Host { get; set; }
     }
 }
