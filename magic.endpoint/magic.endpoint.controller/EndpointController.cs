@@ -220,7 +220,7 @@ namespace magic.endpoint.controller
                     Secure = idx.Secure,
                     Expires = idx.Expires,
                     HttpOnly = idx.HttpOnly,
-                    Domain = idx.Domain,
+                    Domain = idx.Domain,    
                     Path = idx.Path,
                 };
                 if (!string.IsNullOrEmpty(idx.SameSite))
