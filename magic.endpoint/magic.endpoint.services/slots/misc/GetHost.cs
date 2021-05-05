@@ -4,17 +4,16 @@
  */
 
 using magic.node;
-using magic.node.extensions;
 using magic.signals.contracts;
 using magic.endpoint.contracts;
 
 namespace magic.endpoint.services.slots.misc
 {
     /// <summary>
-    /// [response.status.set] slot for modifying the HTTP status code of the response.
+    /// [request.host] slot for returning the host the request was decorated with.
     /// </summary>
-    [Slot(Name = "response.status.set")]
-    public class SetStatusCode : ISlot
+    [Slot(Name = "request.host")]
+    public class GetHost : ISlot
     {
         /// <summary>
         /// Implementation of your slot.
@@ -23,8 +22,8 @@ namespace magic.endpoint.services.slots.misc
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            var response = signaler.Peek<HttpResponse>("http.response");
-            response.Result = input.GetEx<int>();
+            var request = signaler.Peek<HttpRequest>("http.request");
+            input.Value = request.Host;
         }
     }
 }

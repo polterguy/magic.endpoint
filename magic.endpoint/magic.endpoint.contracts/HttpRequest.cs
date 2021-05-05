@@ -26,5 +26,10 @@ namespace magic.endpoint.contracts
         /// Host value of request.
         /// </summary>
         public string Host { get; set; }
+
+        /// <summary>
+        /// Scheme of request, e.g. 'http' or 'https'.
+        /// </summary>
+        public string Scheme { get; set; }
     }
 }

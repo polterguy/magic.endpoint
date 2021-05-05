@@ -23,13 +23,15 @@ namespace magic.endpoint.contracts
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <param name="host">Hostname for request.</param>
+        /// <param name="scheme">Scheme of request.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecuteGetAsync(
             string url, 
             IEnumerable<(string Name, string Value)> query,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies,
-            string host);
+            string host,
+            string scheme);
 
         /// <summary>
         /// Executes an HTTP DELETE endpoint with the specified URL and the
@@ -40,13 +42,15 @@ namespace magic.endpoint.contracts
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <param name="host">Hostname for request.</param>
+        /// <param name="scheme">Scheme of request.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecuteDeleteAsync(
             string url, 
             IEnumerable<(string Name, string Value)> query,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies,
-            string host);
+            string host,
+            string scheme);
 
         /// <summary>
         /// Executes an HTTP POST endpoint with the specified URL and the
@@ -58,6 +62,7 @@ namespace magic.endpoint.contracts
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <param name="host">Hostname for request.</param>
+        /// <param name="scheme">Scheme of request.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePostAsync(
             string url, 
@@ -65,7 +70,8 @@ namespace magic.endpoint.contracts
             Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies,
-            string host);
+            string host,
+            string scheme);
 
         /// <summary>
         /// Executes an HTTP PUT endpoint with the specified URL and the
@@ -77,6 +83,7 @@ namespace magic.endpoint.contracts
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <param name="host">Hostname for request.</param>
+        /// <param name="scheme">Scheme of request.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePutAsync(
             string url, 
@@ -84,7 +91,8 @@ namespace magic.endpoint.contracts
             Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies,
-            string host);
+            string host,
+            string scheme);
 
         /// <summary>
         /// Executes an HTTP PATCH endpoint with the specified URL and the
@@ -96,6 +104,7 @@ namespace magic.endpoint.contracts
         /// <param name="headers">HTTP request headers.</param>
         /// <param name="cookies">Cookies passed in by client.</param>
         /// <param name="host">Hostname for request.</param>
+        /// <param name="scheme">Scheme of request.</param>
         /// <returns>The result of the evaluation.</returns>
         Task<HttpResponse> ExecutePatchAsync(
             string url, 
@@ -103,6 +112,7 @@ namespace magic.endpoint.contracts
             Node payload,
             IEnumerable<(string Name, string Value)> headers,
             IEnumerable<(string Name, string Value)> cookies,
-            string host);
+            string host,
+            string scheme);
     }
 }

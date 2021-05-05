@@ -60,7 +60,8 @@ namespace magic.endpoint.controller
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
-                    HttpContext.Request.Host.Value));
+                    HttpContext.Request.Host.Value,
+                    HttpContext.Request.Scheme));
         }
 
         /// <summary>
@@ -77,7 +78,8 @@ namespace magic.endpoint.controller
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
-                    HttpContext.Request.Host.Value));
+                    HttpContext.Request.Host.Value,
+                    HttpContext.Request.Scheme));
         }
 
         /// <summary>
@@ -96,7 +98,8 @@ namespace magic.endpoint.controller
                     await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
-                    HttpContext.Request.Host.Value));
+                    HttpContext.Request.Host.Value,
+                    HttpContext.Request.Scheme));
         }
 
         /// <summary>
@@ -115,7 +118,8 @@ namespace magic.endpoint.controller
                     await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
-                    HttpContext.Request.Host.Value));
+                    HttpContext.Request.Host.Value,
+                    HttpContext.Request.Scheme));
         }
 
         /// <summary>
@@ -134,7 +138,8 @@ namespace magic.endpoint.controller
                     await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
-                    HttpContext.Request.Host.Value));
+                    HttpContext.Request.Host.Value,
+                    HttpContext.Request.Scheme));
         }
 
         #region [ -- Private helper methods -- ]

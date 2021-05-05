@@ -28,7 +28,8 @@ namespace magic.endpoint.tests
                 null,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -48,7 +49,8 @@ namespace magic.endpoint.tests
                 null,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(404, result.Result);
         }
@@ -65,7 +67,8 @@ namespace magic.endpoint.tests
                     null,
                     new List<(string Name, string Value)>(),
                     new List<(string, string)>(),
-                    "localhost"));
+                    "localhost",
+                    "http"));
         }
 
         [Fact]
@@ -82,7 +85,8 @@ namespace magic.endpoint.tests
                 null,
                 headers,
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Equal("success", result.Content);
@@ -102,7 +106,8 @@ namespace magic.endpoint.tests
                 null,
                 new List<(string, string)>(),
                 cookies,
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Equal("success", result.Content);
@@ -123,7 +128,8 @@ namespace magic.endpoint.tests
                 null,
                 headers,
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             var content = result.Content as JContainer;
@@ -147,7 +153,8 @@ namespace magic.endpoint.tests
                 null,
                 new List<(string, string)>(),
                 cookies,
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             var content = result.Content as JContainer;
@@ -168,7 +175,8 @@ namespace magic.endpoint.tests
                     null,
                     new List<(string, string)>(),
                     new List<(string, string)>(),
-                    "localhost"));
+                    "localhost",
+                    "http"));
         }
 
         [Fact]
@@ -182,7 +190,8 @@ namespace magic.endpoint.tests
                 null,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -208,7 +217,8 @@ namespace magic.endpoint.tests
                 input,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -233,7 +243,8 @@ namespace magic.endpoint.tests
                 "modules/echo",
                 input, new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -258,7 +269,8 @@ namespace magic.endpoint.tests
                     "modules/echo",
                     input, new List<(string, string)>(),
                     new List<(string, string)>(),
-                    "localhost"));
+                    "localhost",
+                    "http"));
         }
 
         [Fact]
@@ -278,7 +290,8 @@ namespace magic.endpoint.tests
                     input,
                     new List<(string, string)>(),
                     new List<(string, string)>(),
-                    "localhost"));
+                    "localhost",
+                    "http"));
         }
 
         [Fact]
@@ -295,7 +308,8 @@ namespace magic.endpoint.tests
                 input,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -315,7 +329,8 @@ namespace magic.endpoint.tests
                 null,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(201, result.Result);
         }
@@ -331,7 +346,8 @@ namespace magic.endpoint.tests
                 null,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Single(result.Headers);
             Assert.Equal("bar", result.Headers["foo"]);
@@ -348,7 +364,8 @@ namespace magic.endpoint.tests
                 null,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -386,7 +403,8 @@ input5
                 input,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -437,7 +455,8 @@ input5
                 input,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -475,7 +494,8 @@ input2:int:5").Lambda();
                 input,
                 new List<(string, string)>(),
                 new List<(string, string)>(),
-                "localhost");
+                "localhost",
+                "http");
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
