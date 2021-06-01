@@ -33,8 +33,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="magic.node" Version="9.2.0" />
-    <PackageReference Include="magic.signals.contracts" Version="9.2.0" />
-    <ProjectReference Include="..\magic.endpoint.contracts\magic.endpoint.contracts.csproj" />
+    <PackageReference Include="magic.signals.contracts" Version="9.2.1" />
   </ItemGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
