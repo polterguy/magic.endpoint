@@ -23,9 +23,7 @@ namespace magic.endpoint.services
     /// </summary>
     public class ArgumentsHandler : IArgumentsHandler
     {
-        /// <summary>
         /// <inheritdoc />
-        /// </summary>
         public void Attach(
             Node lambda, 
             IEnumerable<(string Name, string Value)> query, 
