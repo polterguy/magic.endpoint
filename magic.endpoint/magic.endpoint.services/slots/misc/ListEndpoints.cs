@@ -127,6 +127,7 @@ namespace magic.endpoint.services.slots.misc
                         case "patch":
                         case "post":
                         case "get":
+                        case "socket":
                             yield return GetFileMetaData(entities[0], entities[1], idxFile);
                             break;
                     }
