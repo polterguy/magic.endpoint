@@ -133,7 +133,7 @@ namespace magic.endpoint.tests
 
             Assert.Equal(200, result.Result);
             var content = result.Content as JContainer;
-            Assert.Equal(2, content.Count());
+            Assert.Equal(2, content.Count);
             Assert.Equal("bar1", content["foo1"].Value<string>());
             Assert.Equal("bar2", content["foo2"].Value<string>());
         }
@@ -158,7 +158,7 @@ namespace magic.endpoint.tests
 
             Assert.Equal(200, result.Result);
             var content = result.Content as JContainer;
-            Assert.Equal(2, content.Count());
+            Assert.Equal(2, content.Count);
             Assert.Equal("bar1", content["foo1"].Value<string>());
             Assert.Equal("bar2", content["foo2"].Value<string>());
         }
