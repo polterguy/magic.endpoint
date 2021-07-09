@@ -149,22 +149,31 @@ namespace magic.endpoint.services.slots.misc
             result.Add(new Node("path", "magic/" + path.Replace("\\", "/"))); // Must add "Route" parts.
             result.Add(new Node("verb", verb));
 
-            /*
-             * We need to inspect content of file to retrieve meta information about it,
-              such as authorization, description, etc.
-             */
-            using (var stream = File.OpenRead(filename))
+            // Ensuring we don't crash the whole meta retrieval bugger if there is an error in one of our endpoints.
+            try
             {
-                var lambda = new Parser(stream).Lambda();
+                /*
+                 * We need to inspect content of file to retrieve meta information about it,
+                 * such as authorization, description, etc.
+                 */
+                using (var stream = File.OpenRead(filename))
+                {
+                    var lambda = new Parser(stream).Lambda();
 
-                // Extracting different existing components from file.
-                var args = GetInputArguments(lambda);
-                result.AddRange(new Node[] {
-                    args,
-                    GetAuthorization(lambda),
-                    GetDescription(lambda),
-                }.Where(x => x!= null));
-                result.AddRange(GetEndpointCustomInformation(lambda, verb, args));
+                    // Extracting different existing components from file.
+                    var args = GetInputArguments(lambda);
+                    result.AddRange(new Node[] {
+                        args,
+                        GetAuthorization(lambda),
+                        GetDescription(lambda),
+                    }.Where(x => x!= null));
+
+                    result.AddRange(GetEndpointCustomInformation(lambda, verb, args));
+                }
+            }
+            catch(Exception error)
+            {
+                result.Add(new Node("error", error.Message));
             }
 
             // Returning results to caller.
