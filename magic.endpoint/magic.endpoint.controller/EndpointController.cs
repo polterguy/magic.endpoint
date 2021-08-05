@@ -149,7 +149,9 @@ namespace magic.endpoint.controller
          */
         async Task<Node> GetPayload()
         {
-            switch (Request.ContentType)
+            var contentType = Request.ContentType;
+            contentType = contentType.Split(';')[0];
+            switch (contentType)
             {
                 case "application/json":
                 {
@@ -174,6 +176,26 @@ namespace magic.endpoint.controller
                     foreach (var idx in collection)
                     {
                         args.Add(new Node(idx.Key, idx.Value.ToString()));
+                    }
+                    return args;
+                }
+
+                case "multipart/form-data":
+                {
+                    // URL encoded transmission, reading arguments as such.
+                    var collection = await Request.ReadFormAsync();
+                    var args = new Node();
+                    foreach (var idx in collection)
+                    {
+                        args.Add(new Node(idx.Key, idx.Value.ToString()));
+                    }
+                    foreach (var idxFile in collection.Files)
+                    {
+                        var fileStream = idxFile.OpenReadStream();
+                        var tmp = new Node(idxFile.Name);
+                        tmp.Add(new Node("name", idxFile.FileName));
+                        tmp.Add(new Node("stream", fileStream));
+                        args.Add(tmp);
                     }
                     return args;
                 }
@@ -245,10 +267,17 @@ namespace magic.endpoint.controller
                     return new JsonResult(response.Content as JToken) { StatusCode = response.Result };
 
                 case "application/octet-stream":
-                    var bytes = response.Content is byte[] rawBytes ?
-                        rawBytes :
-                        Convert.FromBase64String(response.Content as string);
-                    return File(bytes, "application/octet-stream");
+                    if (response.Content is Stream streamResponse)
+                    {
+                        return new ObjectResult(response.Content) { StatusCode = response.Result };
+                    }
+                    else
+                    {
+                        var bytes = response.Content is byte[] rawBytes ?
+                            rawBytes :
+                            Convert.FromBase64String(response.Content as string);
+                        return File(bytes, "application/octet-stream");
+                    }
 
                 case "application/x-hyperlambda":
                     return Content(response.Content as string);
