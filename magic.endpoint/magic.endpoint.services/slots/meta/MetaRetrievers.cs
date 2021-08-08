@@ -179,7 +179,7 @@ namespace magic.endpoint.services.slots.meta
                         .SelectMany(x => x.Children)
                         .Where(x => x.Name == "name" && x.Get<string>() == idx.Name + ".eq"))
                     {
-                        node.Add(new Node("type", idxType.Children.FirstOrDefault(x => x.Name == "type")?.Value));
+                        node.Add(new Node("type", idxType.Parent.Children.FirstOrDefault(x => x.Name == "type")?.Value));
                     }
                 }
                 resultNode.Add(node);
