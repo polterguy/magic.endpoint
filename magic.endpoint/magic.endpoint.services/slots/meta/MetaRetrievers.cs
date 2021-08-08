@@ -137,7 +137,7 @@ namespace magic.endpoint.services.slots.meta
         {
             return lambda
                 .Children
-                .FirstOrDefault(x => x.Name == ".type" && x.Get<string>().StartsWith("crud-"))?.Get<string>() ?? "custom";
+                .FirstOrDefault(x => x.Name == ".type")?.Get<string>() ?? "custom";
         }
 
         /*
