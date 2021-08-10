@@ -171,8 +171,11 @@ namespace magic.endpoint.services.slots.meta
                 .FirstOrDefault(x => x.Name == "columns")?.Children ?? new Node[0];
             foreach (var idx in enumerator)
             {
+                // Buffer node
                 var node = new Node(".");
                 node.Add(new Node("name", idx.Name));
+
+                // Figuring out type of argument, if possible.
                 if (arguments != null)
                 {
                     foreach (var idxType in arguments.Children
@@ -182,6 +185,21 @@ namespace magic.endpoint.services.slots.meta
                         node.Add(new Node("type", idxType.Parent.Children.FirstOrDefault(x => x.Name == "type")?.Value));
                     }
                 }
+
+                // Checking for foreign keys.
+                foreach (var idxFk in lambda.Children.FirstOrDefault(x => x.Name == ".foreign-keys")?.Children ?? new Node[0])
+                {
+                    if (idxFk.Children.Any(x => x.Name == "column" && x.GetEx<string>() == idx.Name))
+                    {
+                        var fkNode = new Node("lookup");
+                        fkNode.Add(new Node("table", idxFk.Children.FirstOrDefault(x => x.Name == "table")?.GetEx<string>()));
+                        fkNode.Add(new Node("key", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_column")?.GetEx<string>()));
+                        fkNode.Add(new Node("name", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_name")?.GetEx<string>()));
+                        node.Add(fkNode);
+                    }
+                }
+
+                // Returning result to caller.
                 resultNode.Add(node);
             }
             yield return resultNode;

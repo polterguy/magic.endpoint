@@ -161,7 +161,7 @@ namespace magic.endpoint.services.slots.misc
                     var lambda = new Parser(stream).Lambda();
 
                     // Extracting different existing components from file.
-                    var args = GetInputArguments(lambda);
+                    var args = GetInputArguments(lambda, verb);
                     result.AddRange(new Node[] {
                         args,
                         GetAuthorization(lambda),
@@ -183,7 +183,7 @@ namespace magic.endpoint.services.slots.misc
         /*
          * Extracts arguments, if existing.
          */
-        static Node GetInputArguments(Node lambda)
+        static Node GetInputArguments(Node lambda, string verb)
         {
             var result = new Node("input");
             var args = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
@@ -194,6 +194,25 @@ namespace magic.endpoint.services.slots.misc
                     var node = new Node(".");
                     node.Add(new Node("name", idx.Name));
                     node.Add(new Node("type", idx.Value));
+                    if (verb == "post" || verb == "put")
+                    {
+                        // Attaching foreign key information if possible.
+                        var fkNodes = lambda.Children.FirstOrDefault(x => x.Name == ".foreign-keys");
+                        if (fkNodes != null)
+                        {
+                            foreach (var idxFk in fkNodes.Children)
+                            {
+                                if (idxFk.Children.Any(x => x.Name == "column" && x.GetEx<string>() == idx.Name))
+                                {
+                                    var fkNode = new Node("lookup");
+                                    fkNode.Add(new Node("table", idxFk.Children.FirstOrDefault(x => x.Name == "table")?.GetEx<string>()));
+                                    fkNode.Add(new Node("key", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_column")?.GetEx<string>()));
+                                    fkNode.Add(new Node("name", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_name")?.GetEx<string>()));
+                                    node.Add(fkNode);
+                                }
+                            }
+                        }
+                    }
                     result.Add(node);
                 }
             }
