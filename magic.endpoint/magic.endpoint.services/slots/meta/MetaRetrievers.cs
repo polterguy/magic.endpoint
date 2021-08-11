@@ -195,6 +195,7 @@ namespace magic.endpoint.services.slots.meta
                         fkNode.Add(new Node("table", idxFk.Children.FirstOrDefault(x => x.Name == "table")?.GetEx<string>()));
                         fkNode.Add(new Node("key", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_column")?.GetEx<string>()));
                         fkNode.Add(new Node("name", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_name")?.GetEx<string>()));
+                        fkNode.Add(new Node("long", idxFk.Children.FirstOrDefault(x => x.Name == "long")?.GetEx<bool>()));
                         node.Add(fkNode);
                     }
                 }
