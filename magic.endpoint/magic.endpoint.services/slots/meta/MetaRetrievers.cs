@@ -173,7 +173,10 @@ namespace magic.endpoint.services.slots.meta
             {
                 // Buffer node
                 var node = new Node(".");
-                node.Add(new Node("name", idx.Name));
+                var colName = idx.Children
+                    .FirstOrDefault(x => x.Name == "as")?.Get<string>() ??
+                    idx.Name?.Split('.')?.LastOrDefault();
+                node.Add(new Node("name", colName));
 
                 // Figuring out type of argument, if possible.
                 if (arguments != null)
