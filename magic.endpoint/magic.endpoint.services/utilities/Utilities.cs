@@ -5,6 +5,7 @@
  */
 
 using System;
+using System.Linq;
 
 namespace magic.endpoint.services.utilities
 {
@@ -38,7 +39,16 @@ namespace magic.endpoint.services.utilities
                     default:
                         if ((idx < 'a' || idx > 'z') &&
                             (idx < '0' || idx > '9'))
+                        {
+                            // Supporting "xxx/.well-known" URLs and other types of "hidden" URLs.
+                            var splits = requestUrl.Split('/');
+                            var last = splits[splits.Length - 1];
+                            if (last.StartsWith(".") &&
+                                !last.Substring(1).StartsWith(".") &&
+                                IsLegalHttpName(last.Substring(1)))
+                                return IsLegalHttpName(string.Join("/", splits.Take(splits.Length - 1)));
                             return false;
+                        }
                         break;
                 }
             }
