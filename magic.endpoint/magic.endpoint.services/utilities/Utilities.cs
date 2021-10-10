@@ -28,28 +28,32 @@ namespace magic.endpoint.services.utilities
          */
         internal static bool IsLegalHttpName(string requestUrl)
         {
-            foreach (var idx in requestUrl)
+            var entities = requestUrl.Split('/');
+            foreach (var idxEntity in entities)
             {
-                switch (idx)
+                /*
+                 * We need to keep track of character index in name of folder/file
+                 * to allow for "hidden" files and folders.
+                 */
+                var idxNo = 0;
+                foreach (var idxChar in idxEntity)
                 {
-                    case '-':
-                    case '_':
-                    case '/':
-                        break;
-                    default:
-                        if ((idx < 'a' || idx > 'z') &&
-                            (idx < '0' || idx > '9'))
-                        {
-                            // Supporting "xxx/.well-known" URLs and other types of "hidden" URLs.
-                            var splits = requestUrl.Split('/');
-                            var last = splits[splits.Length - 1];
-                            if (last.StartsWith(".") &&
-                                !last.Substring(1).StartsWith(".") &&
-                                IsLegalHttpName(last.Substring(1)))
-                                return IsLegalHttpName(string.Join("/", splits.Take(splits.Length - 1)));
-                            return false;
-                        }
-                        break;
+                    switch (idxChar)
+                    {
+                        case '-':
+                        case '_':
+                            break;
+                        case '.':
+                            if (idxNo > 0)
+                                return false; // Support for "hidden" files and folders.
+                            break;
+                        default:
+                            if ((idxChar < 'a' || idxChar > 'z') &&
+                                (idxChar < '0' || idxChar > '9'))
+                                return false;
+                            break;
+                    }
+                    ++idxNo;
                 }
             }
             return true;
