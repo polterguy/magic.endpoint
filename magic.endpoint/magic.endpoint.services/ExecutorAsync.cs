@@ -203,7 +203,7 @@ namespace magic.endpoint.services
         }
 
         /*
-         * Loads the specified Hyperlambda file, braids in any specified interceptors,
+         * Loads the specified Hyperlambda file, braiding in any existing interceptors,
          * and returns the resulting Node to caller.
          */
         Node LoadHyperlambdaFile(string url, string path)
