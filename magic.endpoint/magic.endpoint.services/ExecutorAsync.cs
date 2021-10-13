@@ -124,46 +124,42 @@ namespace magic.endpoint.services
             if (!File.Exists(path))
                 return new HttpResponse { Result = 404 };
 
-            // Reading and parsing file as Hyperlambda.
-            using (var stream = File.OpenRead(path))
-            {
-                // Creating our lambda object and attaching arguments specified as query parameters, and/or payload.
-                var lambda = new Parser(stream).Lambda();
-                _argumentsHandler.Attach(lambda, query, payload);
+            // Creating our lambda object and attaching arguments specified as query parameters, and/or payload.
+            var lambda = LoadHyperlambdaFile(url, path);
+            _argumentsHandler.Attach(lambda, query, payload);
 
-                // Creating our result wrapper, wrapping whatever the endpoint wants to return to the client.
-                var evalResult = new Node();
-                var httpResponse = new HttpResponse();
-                var httpRequest = new HttpRequest
+            // Creating our result wrapper, wrapping whatever the endpoint wants to return to the client.
+            var evalResult = new Node();
+            var httpResponse = new HttpResponse();
+            var httpRequest = new HttpRequest
+            {
+                Cookies = cookies.ToDictionary(x => x.Name, x => x.Value),
+                Headers = headers.ToDictionary(x => x.Name, x => x.Value),
+                Host = host,
+                Scheme = scheme,
+            };
+            try
+            {
+                await _signaler.ScopeAsync("http.request", httpRequest, async () =>
                 {
-                    Cookies = cookies.ToDictionary(x => x.Name, x => x.Value),
-                    Headers = headers.ToDictionary(x => x.Name, x => x.Value),
-                    Host = host,
-                    Scheme = scheme,
-                };
-                try
-                {
-                    await _signaler.ScopeAsync("http.request", httpRequest, async () =>
+                    await _signaler.ScopeAsync("http.response", httpResponse, async () =>
                     {
-                        await _signaler.ScopeAsync("http.response", httpResponse, async () =>
+                        await _signaler.ScopeAsync("slots.result", evalResult, async () =>
                         {
-                            await _signaler.ScopeAsync("slots.result", evalResult, async () =>
-                            {
-                                await _signaler.SignalAsync("eval", lambda);
-                            });
+                            await _signaler.SignalAsync("eval", lambda);
                         });
                     });
-                    httpResponse.Content = GetReturnValue(httpResponse, evalResult);
-                    return httpResponse;
-                }
-                catch
-                {
-                    if (evalResult.Value is IDisposable disposable)
-                        disposable.Dispose();
-                    if (httpResponse.Content is IDisposable disposable2 && !object.ReferenceEquals(httpResponse.Content, evalResult.Value))
-                        disposable2.Dispose();
-                    throw;
-                }
+                });
+                httpResponse.Content = GetReturnValue(httpResponse, evalResult);
+                return httpResponse;
+            }
+            catch
+            {
+                if (evalResult.Value is IDisposable disposable)
+                    disposable.Dispose();
+                if (httpResponse.Content is IDisposable disposable2 && !object.ReferenceEquals(httpResponse.Content, evalResult.Value))
+                    disposable2.Dispose();
+                throw;
             }
         }
 
@@ -203,6 +199,67 @@ namespace magic.endpoint.services
                     result = convert.Value;
                 }
             }
+            return result;
+        }
+
+        /*
+         * Loads the specified Hyperlambda file, braids in any specified interceptors,
+         * and returns the resulting Node to caller.
+         */
+        Node LoadHyperlambdaFile(string url, string path)
+        {
+            // Loading endpoint file and parsing as lambda into result node.
+            Node result;
+            using (var stream = File.OpenRead(path))
+            {
+                result = new Parser(stream).Lambda();
+            }
+
+            // Checking to see if interceptors exists recursively upwards in folder hierarchy.
+            var splits = url.Split(new char [] {'/'}, StringSplitOptions.RemoveEmptyEntries);
+            var folders = splits.Take(splits.Length - 1);
+            while (true)
+            {
+                var current = Utilities.RootFolder + string.Join("/", folders) + "/interceptor.hl";
+                if (File.Exists(current))
+                {
+                    using (var interceptStream = File.OpenRead(current))
+                    {
+                        // Getting interceptor lambda.
+                        var interceptNode = new Parser(interceptStream).Lambda();
+
+                        // Moving [.arguments] from endpoint lambda to the top of interceptor lambda if existing.
+                        var args = result.Children.SingleOrDefault(x => x.Name == ".arguments");
+                        if (args != null)
+                            interceptNode.Insert(0, args);
+
+                        // Moving endpoint lambda to position before any [.lambda] node found in interceptor lambda.
+                        foreach (var idxLambda in new Expression("**/.lambda").Evaluate(interceptNode).ToList())
+                        {
+                            // Iterating through each node in current result and injecting before currently iterated [.lambda] node.
+                            foreach (var idx in result.Children)
+                            {
+                                idxLambda.InsertBefore(idx.Clone()); // This logic ensures we keep existing order without any fuzz.
+                            }
+
+                            // Removing currently iterated [.lambda] node in interceptor lambda object.
+                            idxLambda.Parent.Remove(idxLambda);
+                        }
+
+                        // Updating result to point to interceptor root node which contains the combined result at this point.
+                        result = interceptNode;
+                    }
+                }
+
+                // Checking if we're at root.
+                if (folders.Count() == 0)
+                    break;
+
+                // Traversing upwards in hierarchy to be able to nest interceptors upwards in hierarchy.
+                folders = folders.Take(folders.Count() - 1);
+            }
+
+            // Returning result to caller.
             return result;
         }
 
