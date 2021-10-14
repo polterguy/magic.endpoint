@@ -252,7 +252,7 @@ namespace magic.endpoint.services
                 }
 
                 // Checking if we're at root.
-                if (folders.Count() == 0)
+                if (folders.Any())
                     break;
 
                 // Traversing upwards in hierarchy to be able to nest interceptors upwards in hierarchy.
