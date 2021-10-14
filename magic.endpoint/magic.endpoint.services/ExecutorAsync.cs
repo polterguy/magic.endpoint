@@ -229,12 +229,21 @@ namespace magic.endpoint.services
                         var interceptNode = new Parser(interceptStream).Lambda();
 
                         // Moving [.arguments] from endpoint lambda to the top of interceptor lambda if existing.
-                        var args = result.Children.SingleOrDefault(x => x.Name == ".arguments");
-                        if (args != null)
-                            interceptNode.Insert(0, args);
+                        var args = result
+                            .Children
+                            .Where(x =>
+                                x.Name == ".arguments" ||
+                                x.Name == ".description" ||
+                                x.Name == ".type" ||
+                                x.Name == "auth.ticket.verify" ||
+                                x.Name.StartsWith("validators."));
+                        foreach (var idx in args.Reverse().ToList())
+                        {
+                            interceptNode.Insert(0, idx);
+                        }
 
-                        // Moving endpoint lambda to position before any [.lambda] node found in interceptor lambda.
-                        foreach (var idxLambda in new Expression("**/.lambda").Evaluate(interceptNode).ToList())
+                        // Moving endpoint lambda to position before any [.interceptor] node found in interceptor lambda.
+                        foreach (var idxLambda in new Expression("**/.interceptor").Evaluate(interceptNode).ToList())
                         {
                             // Iterating through each node in current result and injecting before currently iterated [.lambda] node.
                             foreach (var idx in result.Children)

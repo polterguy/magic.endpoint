@@ -38,8 +38,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="magic.node.extensions" Version="9.2.0" />
-    <PackageReference Include="magic.signals.contracts" Version="9.2.0" />
+    <PackageReference Include="magic.node.extensions" Version="9.7.0" />
+    <PackageReference Include="magic.signals.contracts" Version="9.7.0" />
   </ItemGroup>
 
   <ItemGroup>
