@@ -10,7 +10,7 @@
     <Description>Contracts for magic.endpoint that allows you to dynamically execute Magic endpoints, resolving to some executable piece of code. To use package go to https://polterguy.github.io</Description>
     <PackageProjectUrl>https://github.com/polterguy/magic.endpoint</PackageProjectUrl>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>9.7.0</PackageVersion>
+    <PackageVersion>9.7.2</PackageVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/polterguy/magic.endpoint.git</RepositoryUrl>
