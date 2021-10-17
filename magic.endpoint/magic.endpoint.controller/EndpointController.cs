@@ -88,7 +88,6 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         [HttpPost]
         [Route("{*url}")]
-        [RequestSizeLimit(8000000)] // Maximum 8MB payloads are accepted
         public async Task<IActionResult> Post(string url)
         {
             return TransformToActionResult(
@@ -108,7 +107,6 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         [HttpPut]
         [Route("{*url}")]
-        [RequestSizeLimit(8000000)] // Maximum 8MB payloads are accepted
         public async Task<IActionResult> Put(string url)
         {
             return TransformToActionResult(
@@ -128,7 +126,6 @@ namespace magic.endpoint.controller
         /// <param name="url">The requested URL.</param>
         [HttpPatch]
         [Route("{*url}")]
-        [RequestSizeLimit(8000000)] // Maximum 8MB payloads are accepted
         public async Task<IActionResult> Patch(string url)
         {
             return TransformToActionResult(
