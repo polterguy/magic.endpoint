@@ -6,7 +6,9 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using magic.node;
 using magic.signals.services;
 using magic.signals.contracts;
@@ -14,8 +16,6 @@ using magic.endpoint.services;
 using magic.endpoint.contracts;
 using magic.node.extensions.hyperlambda;
 using magic.endpoint.services.utilities;
-using Microsoft.Extensions.Configuration;
-using Moq;
 
 namespace magic.endpoint.tests
 {
@@ -39,6 +39,7 @@ namespace magic.endpoint.tests
             mockConfiguration.SetupGet(x => x[It.IsAny<string>()]).Returns("60");
             services.AddTransient((svc) => mockConfiguration.Object);
             services.AddTransient<ISignaler, Signaler>();
+            services.AddTransient<IArgumentsHandler, ArgumentsHandler>();
             var types = new SignalsProvider(InstantiateAllTypes<ISlot>(services));
             services.AddTransient<ISignalsProvider>((svc) => types);
             services.AddTransient<IExecutorAsync, ExecutorAsync>();
