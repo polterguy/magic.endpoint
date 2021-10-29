@@ -47,6 +47,9 @@ namespace magic.endpoint.services.slots.misc
         {
             input.AddRange(HandleFolder(
                 Utilities.RootFolder,
+                Utilities.RootFolder + "system/").ToList());
+            input.AddRange(HandleFolder(
+                Utilities.RootFolder,
                 Utilities.RootFolder + "modules/").ToList());
         }
 

@@ -115,8 +115,8 @@ namespace magic.endpoint.services
             string scheme,
             Node payload = null)
         {
-            // Making sure we never resolve to anything outside of "/modules/" folder.
-            if (url == null || !url.StartsWith("modules/"))
+            // Making sure we never resolve to anything outside of "/modules/" and "/system" folder.
+            if (url == null || (!url.StartsWith("modules/") && !url.StartsWith("system/")))
                 return new HttpResponse { Result = 401 };
 
             // Figuring out file to execute, and doing some basic sanity check.

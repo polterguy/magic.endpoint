@@ -160,7 +160,7 @@ using this module is very easy. The project has one slot called **[endpoints.lis
 meta information about _all_ your endpoints. This slot again can be invoked using the following URL.
 
 ```
-http://localhost:5000/magic/modules/system/endpoints/endpoints
+http://localhost:5000/magic/system/endpoints/endpoints
 ```
 
 This endpoint/slot will semantically traverse your endpoints, recursively loading up all Hyperlambda
