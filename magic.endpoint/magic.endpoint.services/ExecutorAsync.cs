@@ -185,7 +185,7 @@ namespace magic.endpoint.services
                     {
                         case "application/hyperlambda":
                         case "application/x-hyperlambda":
-                            var hyper = Generator.GetHyper(lambda.Children);
+                            var hyper = HyperlambdaGenerator.GetHyperlambda(lambda.Children);
                             result = hyper;
                             isJson = false;
                             break;
@@ -212,7 +212,7 @@ namespace magic.endpoint.services
             Node result;
             using (var stream = File.OpenRead(path))
             {
-                result = new Parser(stream).Lambda();
+                result = HyperlambdaParser.Parse(stream);
             }
 
             // Checking to see if interceptors exists recursively upwards in folder hierarchy.
@@ -226,7 +226,7 @@ namespace magic.endpoint.services
                     using (var interceptStream = File.OpenRead(current))
                     {
                         // Getting interceptor lambda.
-                        var interceptNode = new Parser(interceptStream).Lambda();
+                        var interceptNode = HyperlambdaParser.Parse(interceptStream);
 
                         // Moving [.arguments] from endpoint lambda to the top of interceptor lambda if existing.
                         var args = result

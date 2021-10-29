@@ -158,7 +158,7 @@ namespace magic.endpoint.services.slots.misc
                  */
                 using (var stream = File.OpenRead(filename))
                 {
-                    var lambda = new Parser(stream).Lambda();
+                    var lambda = HyperlambdaParser.Parse(stream);
 
                     // Extracting different existing components from file.
                     var args = GetInputArguments(lambda, verb);
