@@ -58,7 +58,7 @@ return
 Then invoke the endpoint using the following URL.
 
 ```
-http://localhost:55247/magic/modules/magic/foo1
+http://localhost:5000/magic/modules/magic/foo1
 ```
 
 ## Arguments
@@ -88,10 +88,10 @@ If you save this file on disc as `/files/modules/magic/foo2.get.hl`, you can inv
 the HTTP GET verb.
 
 ```
-http://localhost:55247/magic/modules/magic/foo2?arg1=howdy&arg2=5
+http://localhost:5000/magic/modules/magic/foo2?arg1=howdy&arg2=5
 ```
 
-Assuming your backend is running on localhost, at port 55247 of course.
+Assuming your backend is running on localhost, at port 5000 of course.
 
 JSON payloads and form URL encoded payloads are automatically converted to lambda/nodes -
 And query parameters are treated indiscriminately the same way as JSON payloads -
@@ -160,7 +160,7 @@ using this module is very easy. The project has one slot called **[endpoints.lis
 meta information about _all_ your endpoints. This slot again can be invoked using the following URL.
 
 ```
-http://localhost:55247/magic/modules/system/endpoints/endpoints
+http://localhost:5000/magic/modules/system/endpoints/endpoints
 ```
 
 This endpoint/slot will semantically traverse your endpoints, recursively loading up all Hyperlambda
