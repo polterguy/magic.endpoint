@@ -146,23 +146,29 @@ namespace magic.endpoint.controller
          */
         async Task<Node> GetPayload()
         {
-            var contentType = Request.ContentType;
-            contentType = contentType.Split(';')[0];
-            switch (contentType)
+            // Figuring out Content-Type of request.
+            var contentType = Request.ContentType ?? "application/json; char-set=utf8";
+            var splits = contentType
+                .Split(';')
+                .Select(x => x.Trim());
+
+            switch (splits.FirstOrDefault())
             {
                 case "application/json":
                 {
-                    // Reading body as JSON from request.
-                    using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
-                    {  
-                        var payload = await reader.ReadToEndAsync();
-                        var args = new Node("", payload);
+                    // Retrieving the correct correct encoding.
+                    var encoding = splits
+                        .FirstOrDefault(x => x.ToLowerInvariant().StartsWith("char-set"))?
+                        .Split('=')
+                        .Skip(1)
+                        .FirstOrDefault()?
+                        .Trim('"') ?? "utf-8";
 
-                        // NOTE: Requires this slot to be declared somewhere.
-                        // magic.lambda.json declares this slot by default.
-                        _signaler.Signal("json2lambda", args);
-                        return args;
-                    }
+                    // Reading body as JSON from request, now with correctly applied encoding.
+                    var args = new Node("", Request.Body);
+                    args.Add(new Node("encoding", encoding));
+                    await _signaler.SignalAsync("json2lambda-stream", args);
+                    return args;
                 }
 
                 case "application/x-www-form-urlencoded":
@@ -179,13 +185,15 @@ namespace magic.endpoint.controller
 
                 case "multipart/form-data":
                 {
-                    // URL encoded transmission, reading arguments as such.
+                    // MIME content, reading arguments as such.
                     var collection = await Request.ReadFormAsync();
                     var args = new Node();
                     foreach (var idx in collection)
                     {
                         args.Add(new Node(idx.Key, idx.Value.ToString()));
                     }
+
+                    // Notice, we don't read files into memory, but simply transfer these as Stream objects to Hyperlambda.
                     foreach (var idxFile in collection.Files)
                     {
                         var fileStream = idxFile.OpenReadStream();
