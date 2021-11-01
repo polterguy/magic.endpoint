@@ -160,7 +160,7 @@ namespace magic.endpoint.controller
 
                         // NOTE: Requires this slot to be declared somewhere.
                         // magic.lambda.json declares this slot by default.
-                        _signaler.Signal(".json2lambda-raw", args);
+                        _signaler.Signal("json2lambda", args);
                         return args;
                     }
                 }
