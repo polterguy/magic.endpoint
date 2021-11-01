@@ -380,7 +380,7 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var input = new Parser(@"
+            var input = HyperlambdaParser.Parse(@"
 input1:foo
 input2:int:5
 input3:bool:true
@@ -395,7 +395,7 @@ input4
       arr3:guid:4c248403-23a7-4808-988c-1be59a4a90af
 input5
    obj1:foo
-   obj2:true").Lambda();
+   obj2:true");
 
             var result = await executor.ExecutePostAsync(
                 "modules/echo",
@@ -432,7 +432,7 @@ input5
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var input = new Parser(@"
+            var input = HyperlambdaParser.Parse(@"
 input1:foo
 input2:int:5
 input3:bool:true
@@ -447,7 +447,7 @@ input4
       arr3:guid:4c248403-23a7-4808-988c-1be59a4a90af
 input5
    obj1:foo
-   obj2:true").Lambda();
+   obj2:true");
 
             var result = await executor.ExecutePutAsync(
                 "modules/echo",
@@ -484,9 +484,9 @@ input5
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var input = new Parser(@"
+            var input = HyperlambdaParser.Parse(@"
 input1:foo
-input2:int:5").Lambda();
+input2:int:5");
 
             var result = await executor.ExecutePostAsync(
                 "modules/echo",
