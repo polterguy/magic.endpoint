@@ -264,7 +264,7 @@ The source code for this repository can be found at [github.com/polterguy/magic.
 - [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=polterguy_magic.endpoint&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=polterguy_magic.endpoint)
 - [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=polterguy_magic.endpoint&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=polterguy_magic.endpoint)
 - [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=polterguy_magic.endpoint&metric=security_rating)](https://sonarcloud.io/dashboard?id=polterguy_magic.endpoint)
-- [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=polterguy_magic.http&metric=sqale_index)](https://sonarcloud.io/dashboard?id=polterguy_magic.endpoint)
+- [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=polterguy_magic.endpoint&metric=sqale_index)](https://sonarcloud.io/dashboard?id=polterguy_magic.endpoint)
 - [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=polterguy_magic.endpoint&metric=vulnerabilities)](https://sonarcloud.io/dashboard?id=polterguy_magic.endpoint)
 
 ## License
