@@ -76,7 +76,7 @@ namespace magic.endpoint.controller
             foreach (var idxFile in collection.Files)
             {
                 var fileStream = idxFile.OpenReadStream();
-                var tmp = new Node(idxFile.Name);
+                var tmp = new Node("file");
                 tmp.Add(new Node("name", idxFile.FileName));
                 tmp.Add(new Node("stream", fileStream));
                 args.Add(tmp);
