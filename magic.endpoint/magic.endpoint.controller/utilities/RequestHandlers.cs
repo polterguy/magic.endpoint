@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Http;
 using magic.node;
 using magic.signals.contracts;
 
-namespace magic.endpoint.controller
+namespace magic.endpoint.controller.utilities
 {
     /*
      * Default Content-Type request handlers responsible for parametrising IExecutorAsync invocation according

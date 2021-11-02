@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using magic.endpoint.contracts;
 
-namespace magic.endpoint.controller
+namespace magic.endpoint.controller.utilities
 {
     /*
      * Default Content-Type response handlers responsible for creating the response according to
@@ -24,6 +24,7 @@ namespace magic.endpoint.controller
         {
             if (response.Content is string strContent)
                 return new ContentResult() { Content = strContent, StatusCode = response.Result };
+
             return new JsonResult(response.Content as JToken) { StatusCode = response.Result };
         }
 
@@ -33,16 +34,12 @@ namespace magic.endpoint.controller
         internal static IActionResult OctetStreamHandler(HttpResponse response)
         {
             if (response.Content is Stream streamResponse)
-            {
                 return new ObjectResult(response.Content) { StatusCode = response.Result };
-            }
-            else
-            {
-                var bytes = response.Content is byte[] rawBytes ?
-                    rawBytes :
-                    Convert.FromBase64String(response.Content as string);
-                return new FileContentResult(bytes, "application/octet-stream");
-            }
+
+            var bytes = response.Content is byte[] rawBytes ?
+                rawBytes :
+                Convert.FromBase64String(response.Content as string); // TODO: What is this ...?
+            return new FileContentResult(bytes, "application/octet-stream");
         }
 
         /*
@@ -51,16 +48,12 @@ namespace magic.endpoint.controller
         internal static IActionResult HyperlambdaHandler(HttpResponse response)
         {
             if (response.Content is Stream streamResponse)
-            {
                 return new ObjectResult(response.Content) { StatusCode = response.Result };
-            }
-            else
-            {
-                var bytes = response.Content is byte[] rawBytes ?
-                    rawBytes :
-                    Convert.FromBase64String(response.Content as string);
-                return new FileContentResult(bytes, "application/octet-stream");
-            }
+
+            var bytes = response.Content is byte[] rawBytes ?
+                rawBytes :
+                Convert.FromBase64String(response.Content as string); // TODO: What is this ...?
+            return new FileContentResult(bytes, "application/octet-stream");
         }
     }
 }
