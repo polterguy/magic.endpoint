@@ -212,7 +212,7 @@ http://localhost:5000/magic/system/endpoints/endpoints
 ```
 
 This endpoint/slot will semantically traverse your endpoints, recursively loading up all Hyperlambda
-files from disc, that are resolved from a valid URL, and return meta information about the file/endpoint
+files from disc that are resolved from a valid URL, and return meta information about the file/endpoint
 back to the caller. This allows the system to easily figure out things such as the following about
 your endpoints.
 
@@ -272,13 +272,13 @@ return:Hello from Magic Backend
 ```
 
 **Notice** - If you intend to return anything but JSON, you _must_ set the `Content-Type` header, because
-the resolver will by default try to serialize your content as JSON, and obviously fail unless it's
+the resolver will by default try to serialize your content as JSON, and obviously fail unless it is
 valid JSON.
 
 You can also return stream objects using for instance the **[return-value]** slot, at which point
 ASP.NET Core will automatically stream your content back over the response object, and `Dispose`
-your stream automatically for you afterwards. This allows you to return large files back to
-the client, without loading them into memory first, etc. If you do this, you'll have to change
+your stream automatically for you afterwards. This allows you to for instance return large files back
+to the client without loading them into memory first. If you do this, you'll have to change
 your `Content-Type` accordingly.
 
 ### Cookies

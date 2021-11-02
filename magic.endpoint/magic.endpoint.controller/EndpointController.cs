@@ -4,14 +4,11 @@
  */
 
 using System;
-using System.IO;
 using System.Net;
-using System.Text;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using ms = Microsoft.AspNetCore.Http;
-using Newtonsoft.Json.Linq;
 using magic.node;
 using magic.signals.contracts;
 using magic.endpoint.contracts;
@@ -60,6 +57,24 @@ namespace magic.endpoint.controller
                 "application/x-hyperlambda", (signaler, request) => RequestHandlers.HyperlambdaHandler(signaler, request)
             }
         };
+
+        /*
+         * Registered Content-Type handlers, responsible for handling response and returning an IActionResult
+         * according to the Content-Type of the response.
+         */
+        readonly static Dictionary<string, Func<HttpResponse, IActionResult>> _responseHandlers =
+            new Dictionary<string, Func<HttpResponse, IActionResult>>
+            {
+                {
+                    "application/json", (response) => ResponseHandlers.JsonHandler(response)
+                },
+                {
+                    "application/octet-stream", (response) => ResponseHandlers.OctetStreamHandler(response)
+                },
+                {
+                    "application/x-hyperlambda", (response) => ResponseHandlers.HyperlambdaHandler(response)
+                }
+            };
 
         /// <summary>
         /// Creates a new instance of your controller.
@@ -167,7 +182,7 @@ namespace magic.endpoint.controller
 
         /// <summary>
         /// Registers a Content-Type handler for specified Content-Type, allowing you to
-        /// have a custom handler for specified Content-Type, that will be used to parametrise
+        /// have a custom HTTP request handler for specified Content-Type, that will be used to parametrise
         /// your invocations to your executor.
         /// 
         /// Notice, this method is not thread safe, and should be invoked during startup of your
@@ -178,6 +193,21 @@ namespace magic.endpoint.controller
         public static void RegisterContentType(string contentType, Func<ISignaler, ms.HttpRequest, Task<Node>> functor)
         {
             _requestHandlers[contentType] = functor;
+        }
+
+        /// <summary>
+        /// Registers a Content-Type handler for specified Content-Type, allowing you to
+        /// have a custom HTTP response handler for specified Content-Type, that will be used to
+        /// return an IActionResult to the core.
+        /// 
+        /// Notice, this method is not thread safe, and should be invoked during startup of your
+        /// application, for then to later be left alone and not tampered with.
+        /// </summary>
+        /// <param name="contentType">Content-Type to register</param>
+        /// <param name="functor">Function to be invoked once specified Content-Type is returned from your endpoint</param>
+        public static void RegisterContentType(string contentType, Func<HttpResponse, IActionResult> functor)
+        {
+            _responseHandlers[contentType] = functor;
         }
 
         #region [ -- Private helper methods -- ]
@@ -231,41 +261,22 @@ namespace magic.endpoint.controller
                 Response.Cookies.Append(idx.Name, idx.Value, options);
             }
 
+            // Unless explicitly overridden by service, we default Content-Type to JSON/UTF8.
+            if (!response.Headers.ContainsKey("Content-Type") || string.IsNullOrEmpty(response.Headers["Content-Type"]))
+                Response.ContentType = "application/json";
+
             // If empty result, we return nothing.
             if (response.Content == null)
                 return new StatusCodeResult(response.Result);
 
-            // Unless explicitly overridden by service, we default Content-Type to JSON.
-            if (!response.Headers.ContainsKey("Content-Type"))
-                Response.ContentType = "application/json";
-
-            // Making sure we return the correct ActionResult according to Content-Type.
-            switch (Response.ContentType.Split(';')[0])
-            {
-                case "application/json":
-                    if (response.Content is string strContent)
-                        return new ContentResult() { Content = strContent, StatusCode = response.Result };
-                    return new JsonResult(response.Content as JToken) { StatusCode = response.Result };
-
-                case "application/octet-stream":
-                    if (response.Content is Stream streamResponse)
-                    {
-                        return new ObjectResult(response.Content) { StatusCode = response.Result };
-                    }
-                    else
-                    {
-                        var bytes = response.Content is byte[] rawBytes ?
-                            rawBytes :
-                            Convert.FromBase64String(response.Content as string);
-                        return File(bytes, "application/octet-stream");
-                    }
-
-                case "application/x-hyperlambda":
-                    return Content(response.Content as string);
-
-                default:
-                    return new ObjectResult(response.Content) { StatusCode = response.Result };
-            }
+            /*
+             * Figuring out how to return response, which depends upon its Content-Type, and
+             * whether or not we have a registered handler for specified Content-Type or not.
+             */
+            if (_responseHandlers.ContainsKey(Response.ContentType))
+                return _responseHandlers[Response.ContentType](response);
+            else
+                return new ObjectResult(response.Content) { StatusCode = response.Result };
         }
 
         #endregion
