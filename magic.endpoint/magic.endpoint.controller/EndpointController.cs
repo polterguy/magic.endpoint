@@ -95,7 +95,7 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<IActionResult> Get(string url)
         {
-            return TransformToActionResult(
+            return HandleResponse(
                 await _executor.ExecuteGetAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
@@ -113,7 +113,7 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<IActionResult> Delete(string url)
         {
-            return TransformToActionResult(
+            return HandleResponse(
                 await _executor.ExecuteDeleteAsync(
                     WebUtility.UrlDecode(url), 
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
@@ -131,11 +131,11 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<IActionResult> Post(string url)
         {
-            return TransformToActionResult(
+            return HandleResponse(
                 await _executor.ExecutePostAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    await GetPayload(),
+                    await HandleRequest(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
                     HttpContext.Request.Host.Value,
@@ -150,11 +150,11 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<IActionResult> Put(string url)
         {
-            return TransformToActionResult(
+            return HandleResponse(
                 await _executor.ExecutePutAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    await GetPayload(),
+                    await HandleRequest(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
                     HttpContext.Request.Host.Value,
@@ -169,11 +169,11 @@ namespace magic.endpoint.controller
         [Route("{*url}")]
         public async Task<IActionResult> Patch(string url)
         {
-            return TransformToActionResult(
+            return HandleResponse(
                 await _executor.ExecutePatchAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    await GetPayload(),
+                    await HandleRequest(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
                     HttpContext.Request.Host.Value,
@@ -215,7 +215,7 @@ namespace magic.endpoint.controller
         /*
          * Helper method to create arguments from body payload.
          */
-        async Task<Node> GetPayload()
+        async Task<Node> HandleRequest()
         {
             // Figuring out Content-Type of request.
             var contentType = Request.ContentType?
@@ -237,7 +237,7 @@ namespace magic.endpoint.controller
         /*
          * Transforms from our internal HttpResponse wrapper to an ActionResult
          */
-        IActionResult TransformToActionResult(HttpResponse response)
+        IActionResult HandleResponse(HttpResponse response)
         {
             // Making sure we attach any explicitly added HTTP headers to the response.
             foreach (var idx in response.Headers)

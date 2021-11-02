@@ -176,7 +176,7 @@ ways, allowing you to intercept reading with things such as authentication, auth
 where to persist content, etc. To see how you can handle these streams, check out the _"magic.lambda.io"_
 project's documentation, and specifically the **[io.stream.xxx]** slots.
 
-### Extending the Content-Type resolver
+### Extending the Content-Type request and response resolver
 
 The Content-Type resolver/parser is extendible, allowing you to change its behaviour by providing
 your own callback that will be invoked for some specific Content-Type value provided. This is useful
@@ -200,6 +200,18 @@ your Content-Type handler and the **[.arguments]** declaration in your Hyperlamb
 needs to agree upon the arguments, and if a non-valid argument is specified to a Hyperlambda file,
 an exception will be thrown. Also notice that registering a custom Content-Type is _not_ thread
 safe, and should be done as you start your application, and not during its life time.
+
+You can also provide your own HTTP response resolver that will be invoked given some specified
+Content-Type from your Hyperlambda file. This is done in a similar manner using something resembling
+the following.
+
+```
+EndpointController.RegisterContentType("foo/bar", (response) =>
+{
+   /* ... Return some sort of IActionResult here ... */
+   return new ObjectResult(response.Content) { StatusCode = response.Result };
+});
+```
 
 ## Meta information
 
