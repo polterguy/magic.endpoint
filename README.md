@@ -213,6 +213,10 @@ EndpointController.RegisterContentType("foo/bar", (response) =>
 });
 ```
 
+**Notice** - The above method should also exclusively be used during startup, and not later,
+since it is _not_ thread safe, and assuming you register your Content-Type handlers as your application
+is starting.
+
 ## Meta information
 
 Due to the semantic structure of Hyperlambda, retrieving meta information from your HTTP endpoints

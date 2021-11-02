@@ -135,7 +135,7 @@ namespace magic.endpoint.controller
                 await _executor.ExecutePostAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    await HandleRequest(),
+                    await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
                     HttpContext.Request.Host.Value,
@@ -154,7 +154,7 @@ namespace magic.endpoint.controller
                 await _executor.ExecutePutAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    await HandleRequest(),
+                    await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
                     HttpContext.Request.Host.Value,
@@ -173,7 +173,7 @@ namespace magic.endpoint.controller
                 await _executor.ExecutePatchAsync(
                     WebUtility.UrlDecode(url),
                     Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    await HandleRequest(),
+                    await GetPayload(),
                     Request.Headers.Select(x => (x.Key, x.Value.ToString())),
                     Request.Cookies.Select(x => (x.Key, x.Value)),
                     HttpContext.Request.Host.Value,
@@ -215,13 +215,14 @@ namespace magic.endpoint.controller
         /*
          * Helper method to create arguments from body payload.
          */
-        async Task<Node> HandleRequest()
+        async Task<Node> GetPayload()
         {
             // Figuring out Content-Type of request.
             var contentType = Request.ContentType?
                 .Split(';')
                 .Select(x => x.Trim())
-                .FirstOrDefault() ??
+                .FirstOrDefault()?
+                .ToLowerInvariant() ??
                 "application/json";
 
             /*
@@ -231,7 +232,7 @@ namespace magic.endpoint.controller
             if (_requestHandlers.ContainsKey(contentType))
                 return await _requestHandlers[contentType](_signaler, Request); // Specialised handler
             else
-                return new Node("", null, new Node[] { new Node("body", Request.Body) }); // Default handler
+                return new Node("", null, new Node[] { new Node("body", Request.Body) }); // Default handler, simply adding raw Stream as [body].
         }
 
         /*
@@ -248,7 +249,7 @@ namespace magic.endpoint.controller
             // Making sure we attach all cookies.
             foreach (var idx in response.Cookies)
             {
-                var options = new Microsoft.AspNetCore.Http.CookieOptions
+                var options = new ms.CookieOptions
                 {
                     Secure = idx.Secure,
                     Expires = idx.Expires,
@@ -257,13 +258,20 @@ namespace magic.endpoint.controller
                     Path = idx.Path,
                 };
                 if (!string.IsNullOrEmpty(idx.SameSite))
-                    options.SameSite = (Microsoft.AspNetCore.Http.SameSiteMode)Enum.Parse(typeof(Microsoft.AspNetCore.Http.SameSiteMode), idx.SameSite, true);
+                    options.SameSite = (ms.SameSiteMode)Enum.Parse(typeof(ms.SameSiteMode), idx.SameSite, true);
                 Response.Cookies.Append(idx.Name, idx.Value, options);
             }
 
-            // Unless explicitly overridden by service, we default Content-Type to JSON/UTF8.
+            // Unless explicitly overridden by service, we default Content-Type to JSON / UTF8.
             if (!response.Headers.ContainsKey("Content-Type") || string.IsNullOrEmpty(response.Headers["Content-Type"]))
-                Response.ContentType = "application/json";
+                Response.ContentType = "application/json; char-set=utf-8";
+
+            // Figuring out Content-Type (minus arguments).
+            var contentType = Response.ContentType
+                .Split(';')
+                .Select(x => x.Trim())
+                .FirstOrDefault()
+                .ToLowerInvariant();
 
             // If empty result, we return nothing.
             if (response.Content == null)
@@ -273,8 +281,8 @@ namespace magic.endpoint.controller
              * Figuring out how to return response, which depends upon its Content-Type, and
              * whether or not we have a registered handler for specified Content-Type or not.
              */
-            if (_responseHandlers.ContainsKey(Response.ContentType))
-                return _responseHandlers[Response.ContentType](response);
+            if (_responseHandlers.ContainsKey(contentType))
+                return _responseHandlers[contentType](response);
             else
                 return new ObjectResult(response.Content) { StatusCode = response.Result };
         }
