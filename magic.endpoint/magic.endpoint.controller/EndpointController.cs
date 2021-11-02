@@ -48,73 +48,16 @@ namespace magic.endpoint.controller
             new Dictionary<string, Func<ISignaler, ms.HttpRequest, Task<Node>>>
         {
             {
-                "application/json", async (signaler, request) =>
-                {
-                    // Figuring out Content-Type of request.
-                    var encoding = request.ContentType?
-                        .Split(';')
-                        .Select(x => x.Trim())
-                        .FirstOrDefault(x => x.StartsWith("char-set"))?
-                        .Split('=')
-                        .Skip(1)
-                        .FirstOrDefault()?
-                        .Trim('"') ?? "utf-8";
-
-                    // Reading body as JSON from request, now with correctly applied encoding.
-                    var args = new Node("", request.Body);
-                    args.Add(new Node("encoding", encoding));
-                    await signaler.SignalAsync("json2lambda-stream", args);
-                    return args;
-                }
+                "application/json", (signaler, request) => RequestHandlers.JsonHandler(signaler, request)
             },
             {
-                "application/x-www-form-urlencoded", async (signaler, request) =>
-                {
-                    // URL encoded transmission, reading arguments as such.
-                    var collection = await request.ReadFormAsync();
-                    var args = new Node();
-                    foreach (var idx in collection)
-                    {
-                        args.Add(new Node(idx.Key, idx.Value.ToString()));
-                    }
-                    return args;
-                }
+                "application/x-www-form-urlencoded", (signaler, request) => RequestHandlers.UrlEncodedHandler(signaler, request)
             },
             {
-                "multipart/form-data", async (signaler, request) =>
-                {
-                    // MIME content, reading arguments as such.
-                    var collection = await request.ReadFormAsync();
-                    var args = new Node();
-                    foreach (var idx in collection)
-                    {
-                        args.Add(new Node(idx.Key, idx.Value.ToString()));
-                    }
-
-                    // Notice, we don't read files into memory, but simply transfer these as Stream objects to Hyperlambda.
-                    foreach (var idxFile in collection.Files)
-                    {
-                        var fileStream = idxFile.OpenReadStream();
-                        var tmp = new Node(idxFile.Name);
-                        tmp.Add(new Node("name", idxFile.FileName));
-                        tmp.Add(new Node("stream", fileStream));
-                        args.Add(tmp);
-                    }
-                    return args;
-                }
+                "multipart/form-data", (signaler, request) => RequestHandlers.FormDataHandler(signaler, request)
             },
             {
-                "application/x-hyperlambda", async (signaler, request) =>
-                {
-                    // Reading content as plain UTF8 text, and passing in as [.arguments]/[body] argument.
-                    var args = new Node();
-                    using (var reader = new StreamReader(request.Body, Encoding.UTF8))
-                    {  
-                        var payload = await reader.ReadToEndAsync();
-                        args.Add(new Node("body", payload));
-                    }
-                    return args;
-                }
+                "application/x-hyperlambda", (signaler, request) => RequestHandlers.HyperlambdaHandler(signaler, request)
             }
         };
 
@@ -238,7 +181,7 @@ namespace magic.endpoint.controller
 
             /*
              * Figuring out how to read request, which depends upon its Content-Type, and
-             * whether or not we have a registered handler for specified Content-Type.
+             * whether or not we have a registered handler for specified Content-Type or not.
              */
             if (_requestHandlers.ContainsKey(contentType))
                 return await _requestHandlers[contentType](_signaler, Request); // Specialised handler
