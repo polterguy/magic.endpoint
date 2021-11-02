@@ -10,10 +10,12 @@ using System.Text;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using ms = Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 using magic.node;
 using magic.signals.contracts;
 using magic.endpoint.contracts;
+using System.Collections.Generic;
 
 namespace magic.endpoint.controller
 {
@@ -32,8 +34,89 @@ namespace magic.endpoint.controller
     [Route("magic")]
     public class EndpointController : ControllerBase
     {
+        // Signal implementation needed to invoke slots.
         readonly ISignaler _signaler;
+
+        // Service implementation responsible for executing the request.
         readonly IExecutorAsync _executor;
+
+        /*
+         * Registered Content-Type handlers, responsible for handling requests and parametrising invocation
+         * according to Content-Type specified by caller.
+         */
+        static readonly Dictionary<string, Func<ISignaler, ms.HttpRequest, Task<Node>>> _requestHandlers =
+            new Dictionary<string, Func<ISignaler, ms.HttpRequest, Task<Node>>>
+        {
+            {
+                "application/json", async (signaler, request) =>
+                {
+                    // Figuring out Content-Type of request.
+                    var encoding = request.ContentType?
+                        .Split(';')
+                        .Select(x => x.Trim())
+                        .FirstOrDefault(x => x.StartsWith("char-set"))?
+                        .Split('=')
+                        .Skip(1)
+                        .FirstOrDefault()?
+                        .Trim('"') ?? "utf-8";
+
+                    // Reading body as JSON from request, now with correctly applied encoding.
+                    var args = new Node("", request.Body);
+                    args.Add(new Node("encoding", encoding));
+                    await signaler.SignalAsync("json2lambda-stream", args);
+                    return args;
+                }
+            },
+            {
+                "application/x-www-form-urlencoded", async (signaler, request) =>
+                {
+                    // URL encoded transmission, reading arguments as such.
+                    var collection = await request.ReadFormAsync();
+                    var args = new Node();
+                    foreach (var idx in collection)
+                    {
+                        args.Add(new Node(idx.Key, idx.Value.ToString()));
+                    }
+                    return args;
+                }
+            },
+            {
+                "multipart/form-data", async (signaler, request) =>
+                {
+                    // MIME content, reading arguments as such.
+                    var collection = await request.ReadFormAsync();
+                    var args = new Node();
+                    foreach (var idx in collection)
+                    {
+                        args.Add(new Node(idx.Key, idx.Value.ToString()));
+                    }
+
+                    // Notice, we don't read files into memory, but simply transfer these as Stream objects to Hyperlambda.
+                    foreach (var idxFile in collection.Files)
+                    {
+                        var fileStream = idxFile.OpenReadStream();
+                        var tmp = new Node(idxFile.Name);
+                        tmp.Add(new Node("name", idxFile.FileName));
+                        tmp.Add(new Node("stream", fileStream));
+                        args.Add(tmp);
+                    }
+                    return args;
+                }
+            },
+            {
+                "application/x-hyperlambda", async (signaler, request) =>
+                {
+                    // Reading content as plain UTF8 text, and passing in as [.arguments]/[body] argument.
+                    var args = new Node();
+                    using (var reader = new StreamReader(request.Body, Encoding.UTF8))
+                    {  
+                        var payload = await reader.ReadToEndAsync();
+                        args.Add(new Node("body", payload));
+                    }
+                    return args;
+                }
+            }
+        };
 
         /// <summary>
         /// Creates a new instance of your controller.
@@ -147,89 +230,20 @@ namespace magic.endpoint.controller
         async Task<Node> GetPayload()
         {
             // Figuring out Content-Type of request.
-            var contentType = Request.ContentType ?? "application/json; char-set=utf8";
-            var splits = contentType
+            var contentType = Request.ContentType?
                 .Split(';')
-                .Select(x => x.Trim());
+                .Select(x => x.Trim())
+                .FirstOrDefault() ??
+                "application/json";
 
             /*
-             * Figuring out how to read request, and IF we should read request,
-             * or just pass it in raw as a stream to Hyperlambda file.
+             * Figuring out how to read request, which depends upon its Content-Type, and
+             * whether or not we have a registered handler for specified Content-Type.
              */
-            switch (splits.FirstOrDefault())
-            {
-                case "application/json":
-                {
-                    // Retrieving the correct correct encoding.
-                    var encoding = splits
-                        .FirstOrDefault(x => x.ToLowerInvariant().StartsWith("char-set"))?
-                        .Split('=')
-                        .Skip(1)
-                        .FirstOrDefault()?
-                        .Trim('"') ?? "utf-8";
-
-                    // Reading body as JSON from request, now with correctly applied encoding.
-                    var args = new Node("", Request.Body);
-                    args.Add(new Node("encoding", encoding));
-                    await _signaler.SignalAsync("json2lambda-stream", args);
-                    return args;
-                }
-
-                case "application/x-www-form-urlencoded":
-                {
-                    // URL encoded transmission, reading arguments as such.
-                    var collection = await Request.ReadFormAsync();
-                    var args = new Node();
-                    foreach (var idx in collection)
-                    {
-                        args.Add(new Node(idx.Key, idx.Value.ToString()));
-                    }
-                    return args;
-                }
-
-                case "multipart/form-data":
-                {
-                    // MIME content, reading arguments as such.
-                    var collection = await Request.ReadFormAsync();
-                    var args = new Node();
-                    foreach (var idx in collection)
-                    {
-                        args.Add(new Node(idx.Key, idx.Value.ToString()));
-                    }
-
-                    // Notice, we don't read files into memory, but simply transfer these as Stream objects to Hyperlambda.
-                    foreach (var idxFile in collection.Files)
-                    {
-                        var fileStream = idxFile.OpenReadStream();
-                        var tmp = new Node(idxFile.Name);
-                        tmp.Add(new Node("name", idxFile.FileName));
-                        tmp.Add(new Node("stream", fileStream));
-                        args.Add(tmp);
-                    }
-                    return args;
-                }
-
-                case "application/x-hyperlambda":
-                {
-                    // Reading content as plain UTF8 text, and passing in as [.arguments]/[body] argument.
-                    var args = new Node();
-                    using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
-                    {  
-                        var payload = await reader.ReadToEndAsync();
-                        args.Add(new Node("body", payload));
-                    }
-                    return args;
-                }
-
-                default:
-                {
-                    // Binary content of some sort, e.g. image upload, or some other unhandled MIME type.
-                    // Simply passing in stream raw to resolver, allowing resolver to do whatever it wish with it.
-                    var args = new Node();
-                    args.Add(new Node("body", Request.Body));
-                    return args;
-                }
-            }
+            if (_requestHandlers.ContainsKey(contentType))
+                return await _requestHandlers[contentType](_signaler, Request); // Specialised handler
+            else
+                return new Node("", null, new Node[] { new Node("body", Request.Body) }); // Default handler
         }
 
         /*
