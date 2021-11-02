@@ -196,7 +196,7 @@ EndpointController.RegisterContentType("foo/bar", async (signaler, request) =>
 ```
 
 **Notice** - The argument sanity checking will still be invoked with a custom handler, implying
-your Content-Type handler, and the **[.arguments]** declaration in your Hyperlambda file, still
+your Content-Type handler and the **[.arguments]** declaration in your Hyperlambda file still
 needs to agree upon the arguments, and if a non-valid argument is specified to a Hyperlambda file,
 an exception will be thrown. Also notice that registering a custom Content-Type is _not_ thread
 safe, and should be done as you start your application, and not during its life time.
