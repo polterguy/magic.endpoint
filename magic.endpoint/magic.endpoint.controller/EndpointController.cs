@@ -152,6 +152,10 @@ namespace magic.endpoint.controller
                 .Split(';')
                 .Select(x => x.Trim());
 
+            /*
+             * Figuring out how to read request, and IF we should read request,
+             * or just pass it in raw as a stream to Hyperlambda file.
+             */
             switch (splits.FirstOrDefault())
             {
                 case "application/json":
