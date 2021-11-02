@@ -165,6 +165,21 @@ namespace magic.endpoint.controller
                     HttpContext.Request.Scheme));
         }
 
+        /// <summary>
+        /// Registers a Content-Type handler for specified Content-Type, allowing you to
+        /// have a custom handler for specified Content-Type, that will be used to parametrise
+        /// your invocations to your executor.
+        /// 
+        /// Notice, this method is not thread safe, and should be invoked during startup of your
+        /// application, for then to later be left alone and not tampered with.
+        /// </summary>
+        /// <param name="contentType">Content-Type to register</param>
+        /// <param name="functor">Function to be invoked once specified Content-Type is provided to your endpoints</param>
+        public static void RegisterContentType(string contentType, Func<ISignaler, ms.HttpRequest, Task<Node>> functor)
+        {
+            _requestHandlers[contentType] = functor;
+        }
+
         #region [ -- Private helper methods -- ]
 
         /*
