@@ -2,12 +2,12 @@
 # Magic Endpoint
 
 Magic Endpoint is a dynamic endpoint URL controller, allowing you to declare endpoints that are dynamically
-resolved using your `IExecutorAsync` service implementation. The default implementation of this interface, is the
-class called `ExecutorAsync`, and the rest of this file will be focused on documenting this implementation,
-since it's the default service implementation for Magic Endpoint - Although, technically, you could exchange
-this with your own implementation if you wish, completely changing the behaviour of the library, if you wish
-to for instance resolve endpoints to Python, Ruby, or any other dynamic programming language implementation,
-and you have some means to execute such code from within a .Net 5 environment.
+resolved using your `IHttpExecutorAsync` service implementation. The default implementation of this interface,
+is the class called `HttpExecutorAsync`, and the rest of this file will be focused on documenting this
+implementation, since it is the default service implementation for Magic Endpoint - Although, technically, you
+could exchange this with your own implementation if you wish, completely changing the behaviour of the library
+if you wish to for instance resolve endpoints to Python, Ruby, or any other dynamic programming language
+implementation, and you have some means to execute such code from within a .Net 5 environment.
 
 The resolver will be invoked for all relative URLs starting with _"magic/"_, for the following verbs.
 
@@ -20,7 +20,7 @@ The resolver will be invoked for all relative URLs starting with _"magic/"_, for
 The default service implementation will resolve everything after the _"magic/"_ parts in the
 given URL, to a Hyperlambda file that can be found relatively beneath your _"/files/"_ folder.
 Although, technically, exactly where you physically put your files on disc, can be configured
-through your _"appsettings.json"_ file. The HTTP VERB is assumed to be the last parts of your
+through your _"appsettings.json"_ file. The HTTP verb is assumed to be the last parts of your
 filename, before its extension, implying an HTTP request such as the following.
 
 ```
@@ -33,7 +33,7 @@ Will resolve to the following physical file on disc.
 files/modules/foo/bar.get.hl
 ```
 
-**Notice** - Only the _"magic"_ part of your URL is rewritten, before the verb is appended to the URL, and
+**Notice** - Only the _"magic"_ part of your URL is rewritten before the verb is appended to the URL, and
 finally the extension _".hl"_ appended. Then the file is loaded and parsed as Hyperlambda, and whatever
 arguments you pass in, either as query parameters, or as your JSON payload, URL encoded form arguments, etc,
 is appended into your resulting lambda node's **[.arguments]** node as arguments to your Hyperlambda file
@@ -41,7 +41,7 @@ invocation. The resolver will never return files directly, but is only able to e
 so by default there is no way to get static files, unless you create a Hyperlambda endpoint that returns
 a file somehow.
 
-The default resolver will only allow the client to resolve files inside your _"/files/modules/"_
+**Notice** - The default resolver will only allow the client to resolve files inside your _"/files/modules/"_
 folder and _"/files/system/"_ folder. This allows you to safely keep files that other parts of your system
 relies upon inside your dynamic _"/files/"_ folder, without accidentally creating endpoints, clients can
 resolve, resulting in breaches in your security. Only characters a-z, 0-9 and '-', '\_' and '/' are legal
@@ -68,11 +68,12 @@ http://localhost:5000/magic/modules/magic/foo1
 
 ## Arguments
 
-The default implementation can explicitly declare what arguments the file can legally accept, and
-if an argument is given during invocation that the file doesn't allow for, an exception will be
-thrown, and the file will never be executed. This allows you to declare what arguments your
-Hyperlambda file can accept, and avoid having anything _but_ arguments explicitly declared in your
-Hyperlambda file from being sent into your endpoint during invocation of your HTTP endpoint.
+The default `IHttpExecutorAsync` implementation can explicitly declare what arguments the file can
+legally accept, and if an argument is given during invocation that the file doesn't allow for, an
+exception will be thrown and the file will never be executed. This allows you to declare what
+arguments your Hyperlambda file can accept, and avoid having anything _but_ arguments explicitly
+declared in your Hyperlambda file from being sent into your endpoint during invocation of your
+HTTP endpoint.
 
 An example Hyperlambda file taking two arguments can be found below.
 
@@ -173,19 +174,19 @@ endpoint file as such. File attachments will be passed into your endpoint as fol
 
 All other types of payloads will be passed in as the raw stream, not trying to read from it in any
 ways, allowing you to intercept reading with things such as authentication, authorisation, logic of
-where to persist content, etc. To see how you can handle these streams, check out the _"magic.lambda.io"_
-project's documentation, and specifically the **[io.stream.xxx]** slots.
+where to persist content, etc. To understand how you can handle these streams, check out
+the _"magic.lambda.io"_ project's documentation, and specifically the **[io.stream.xxx]** slots.
 
 ### Extending the Content-Type request and response resolver
 
 The Content-Type resolver/parser is extendible, allowing you to change its behaviour by providing
 your own callback that will be invoked for some specific Content-Type value provided. This is useful
-if you want to be able to for instance handle _"text/xml"_ or _"text/csv"_ types of content, and
-intelligently and automatically create an argument collection from it. Below is example code to
-illustrate this.
+if you want to be able to for instance handle _"text/xml"_ or _"text/csv"_ types of request/response
+objects, and intelligently and automatically create an argument collection from it. Below is example
+code illustrating how to create your own HTTP request resolver for the MIME type of _"application/x-foo"_.
 
 ```csharp
-EndpointController.RegisterContentType("foo/bar", async (signaler, request) =>
+EndpointController.RegisterContentType("application/x-foo", async (signaler, request) =>
 {
    var args = new Node();
 
@@ -206,7 +207,7 @@ Content-Type from your Hyperlambda file. This is done in a similar manner using 
 the following.
 
 ```
-EndpointController.RegisterContentType("foo/bar", (response) =>
+EndpointController.RegisterContentType("application/x-foo", (response) =>
 {
    /* ... Return some sort of IActionResult here ... */
    return new ObjectResult(response.Content) { StatusCode = response.Result };
@@ -214,8 +215,8 @@ EndpointController.RegisterContentType("foo/bar", (response) =>
 ```
 
 **Notice** - The above method should also exclusively be used during startup, and not later,
-since it is _not_ thread safe, and assuming you register your Content-Type handlers as your application
-is starting.
+since it is _not_ thread safe, and assuming you register your Content-Type handlers as your
+application is starting.
 
 ## Meta information
 
@@ -276,7 +277,7 @@ slots.
 ## Misc
 
 Unless you explicitly change the `Content-Type` of your response object, by using
-the **[response.headers.add]** slot, a Content-Type of `application/json` will be assumed,
+the **[response.headers.set]** slot, a Content-Type of `application/json` will be assumed,
 and this header will be added to the resulting HTTP response object. If you wish to override
 this behavious and return plain text for instance, you could create an endpoint containing
 the following.
