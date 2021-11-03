@@ -205,9 +205,9 @@ namespace magic.endpoint.controller
              * Figuring out how to return response, which depends upon its Content-Type, and
              * whether or not we have a registered handler for specified Content-Type or not.
              */
-            if (_responseHandlers.ContainsKey(contentType))
+            if (_responseHandlers.TryGetValue(contentType, out var functor))
             {
-                return _responseHandlers[contentType](response);
+                return functor(response);
             }
             else
             {
@@ -221,7 +221,7 @@ namespace magic.endpoint.controller
                 if (response.Content is Stream streamResponse)
                     return new ObjectResult(response.Content) { StatusCode = response.Result };
 
-                throw new ArgumentException("Unsupported return value from Hyperlambda");
+                throw new ArgumentException($"Unsupported return value from Hyperlambda, returning objects of type '{response.Content.GetType().FullName}' is not supported");
             }
         }
 
