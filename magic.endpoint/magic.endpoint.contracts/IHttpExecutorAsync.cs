@@ -6,7 +6,7 @@
 using System.Threading.Tasks;
 using magic.endpoint.contracts.poco;
 
-namespace magic.endpoint.contracts.contracts
+namespace magic.endpoint.contracts
 {
     /// <summary>
     /// Service interface for executing a dynamically resolved Magic URLs.

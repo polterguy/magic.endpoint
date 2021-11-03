@@ -8,7 +8,7 @@ using System.Linq;
 using System.Collections.Generic;
 using magic.node;
 using magic.node.extensions;
-using magic.endpoint.contracts.contracts;
+using magic.endpoint.contracts;
 
 namespace magic.endpoint.services
 {

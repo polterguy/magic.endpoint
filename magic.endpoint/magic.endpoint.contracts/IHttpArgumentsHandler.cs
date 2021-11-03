@@ -6,7 +6,7 @@
 using System.Collections.Generic;
 using magic.node;
 
-namespace magic.endpoint.contracts.contracts
+namespace magic.endpoint.contracts
 {
     /// <summary>
     /// Service interface for handling arguments.

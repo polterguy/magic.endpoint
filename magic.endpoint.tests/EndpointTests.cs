@@ -4,14 +4,15 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Xunit;
 using Newtonsoft.Json.Linq;
 using magic.lambda.exceptions;
+using magic.endpoint.contracts;
 using magic.endpoint.contracts.poco;
 using magic.node.extensions.hyperlambda;
-using magic.endpoint.contracts.contracts;
 
 namespace magic.endpoint.tests
 {
@@ -512,5 +513,33 @@ input2:int:5");
             Assert.Equal("foo", j["input1"].Value<string>());
             Assert.Equal(5, j["input2"].Value<int>());
         }
+
+        [Fact]
+        public async Task Interceptors()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
+
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/interceptors/foo",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
+
+            Assert.Equal(200, result.Result);
+            Assert.Single(result.Headers);
+            var hl = result.Content as string;
+            Assert.NotNull(hl);
+            var lambda = HyperlambdaParser.Parse(hl);
+            Assert.Equal(".foo", lambda.Children.First().Name);
+            Assert.Equal("howdy", lambda.Children.First().Value);
+        }
+
     }
 }

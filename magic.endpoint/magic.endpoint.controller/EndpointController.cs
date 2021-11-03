@@ -12,8 +12,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using magic.node;
 using magic.signals.contracts;
+using magic.endpoint.contracts;
 using magic.endpoint.contracts.poco;
-using magic.endpoint.contracts.contracts;
 using magic.endpoint.controller.utilities;
 
 namespace magic.endpoint.controller

@@ -1,0 +1,10 @@
+﻿
+.arguments
+   input1:string
+   input2:int
+   input3:bool
+response.headers.set
+   Content-Type:application/x-hyperlambda
+add:x:../*/return
+   get-nodes:x:../*
+return

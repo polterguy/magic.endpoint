@@ -13,9 +13,9 @@ using magic.node;
 using magic.signals.services;
 using magic.signals.contracts;
 using magic.endpoint.services;
+using magic.endpoint.contracts;
 using magic.node.extensions.hyperlambda;
 using magic.endpoint.services.utilities;
-using magic.endpoint.contracts.contracts;
 
 namespace magic.endpoint.tests
 {
