@@ -50,7 +50,7 @@ namespace magic.endpoint.services
                 return new MagicResponse { Result = 404 };
 
             // Creating our lambda object by loading Hyperlambda file.
-            var lambda = LoadHyperlambdaFile(request.URL, path);
+            var lambda = LoadHyperlambdaFile(path);
 
             // Applying interceptors.
             lambda = ApplyInterceptors(lambda, request.URL);
@@ -68,7 +68,7 @@ namespace magic.endpoint.services
          * Loads the specified Hyperlambda file, braiding in any existing interceptors,
          * and returns the resulting Node to caller.
          */
-        Node LoadHyperlambdaFile(string url, string path)
+        Node LoadHyperlambdaFile(string path)
         {
             // Loading endpoint file and parsing as lambda into result node.
             using (var stream = File.OpenRead(path))

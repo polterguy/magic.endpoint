@@ -515,7 +515,7 @@ input2:int:5");
         }
 
         [Fact]
-        public async Task Interceptors()
+        public async Task Interceptors_01()
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
@@ -537,9 +537,71 @@ input2:int:5");
             var hl = result.Content as string;
             Assert.NotNull(hl);
             var lambda = HyperlambdaParser.Parse(hl);
-            Assert.Equal(".foo", lambda.Children.First().Name);
+            Assert.Equal(".interceptor-value", lambda.Children.First().Name);
             Assert.Equal("howdy", lambda.Children.First().Value);
+            Assert.Equal(".endpoint-value", lambda.Children.Skip(1).First().Name);
+            Assert.Equal("world", lambda.Children.Skip(1).First().Value);
         }
 
+        [Fact]
+        public async Task Interceptors_02()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
+
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/interceptors/foo-args",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>{ { "foo", "howdy" } },
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
+
+            Assert.Equal(200, result.Result);
+            Assert.Single(result.Headers);
+            var hl = result.Content as string;
+            Assert.NotNull(hl);
+            var lambda = HyperlambdaParser.Parse(hl);
+            Assert.Equal(".arguments", lambda.Children.First().Name);
+            Assert.Equal(".interceptor-value", lambda.Children.Skip(1).First().Name);
+            Assert.Equal("howdy", lambda.Children.Skip(1).First().Value);
+            Assert.Equal(".endpoint-value", lambda.Children.Skip(2).First().Name);
+            Assert.Equal("world", lambda.Children.Skip(2).First().Value);
+        }
+
+        [Fact]
+        public async Task Interceptors_03()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
+
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/interceptors/foo-args",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
+
+            Assert.Equal(200, result.Result);
+            Assert.Single(result.Headers);
+            var hl = result.Content as string;
+            Assert.NotNull(hl);
+            var lambda = HyperlambdaParser.Parse(hl);
+
+            // Notice, no [.arguments] node since no arguments were supplied to endpoint file.
+            Assert.Equal(".interceptor-value", lambda.Children.First().Name);
+            Assert.Equal("howdy", lambda.Children.First().Value);
+            Assert.Equal(".endpoint-value", lambda.Children.Skip(1).First().Name);
+            Assert.Equal("world", lambda.Children.Skip(1).First().Value);
+        }
     }
 }

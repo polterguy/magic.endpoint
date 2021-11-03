@@ -1,4 +1,6 @@
-﻿.endpoint-value:world
+﻿.arguments
+   foo:string
+.endpoint-value:world
 response.headers.set
    Content-Type:application/x-hyperlambda
 add:x:../*/return
