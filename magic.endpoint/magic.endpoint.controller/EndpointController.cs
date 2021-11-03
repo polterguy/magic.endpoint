@@ -48,16 +48,16 @@ namespace magic.endpoint.controller
             new Dictionary<string, Func<ISignaler, HttpRequest, Task<Node>>>
         {
             {
-                "application/json", (signaler, request) => RequestHandlers.JsonHandler(signaler, request)
+                "application/json", RequestHandlers.JsonHandler
             },
             {
-                "application/x-www-form-urlencoded", (signaler, request) => RequestHandlers.UrlEncodedHandler(signaler, request)
+                "application/x-www-form-urlencoded", RequestHandlers.UrlEncodedHandler
             },
             {
-                "multipart/form-data", (signaler, request) => RequestHandlers.FormDataHandler(signaler, request)
+                "multipart/form-data", RequestHandlers.FormDataHandler
             },
             {
-                "application/x-hyperlambda", (signaler, request) => RequestHandlers.HyperlambdaHandler(signaler, request)
+                "application/x-hyperlambda", RequestHandlers.HyperlambdaHandler
             }
         };
 
@@ -69,7 +69,7 @@ namespace magic.endpoint.controller
             new Dictionary<string, Func<MagicResponse, IActionResult>>
             {
                 {
-                    "application/json", (response) => ResponseHandlers.JsonHandler(response)
+                    "application/json", ResponseHandlers.JsonHandler
                 }
             };
 
@@ -136,6 +136,7 @@ namespace magic.endpoint.controller
          */
         async Task<IActionResult> HandleRequest(string verb, string url)
         {
+            // Creating and decorating our request object.
             var request = new MagicRequest
             {
                 URL = WebUtility.UrlDecode(url),
@@ -163,6 +164,8 @@ namespace magic.endpoint.controller
                 default:
                     throw new ArgumentException($"Sorry, I don't know how to handle the {verb} HTTP verb");
             }
+
+            // Executing request and transforming to an IActionResult accordingly.
             return HandleResponse(await _executor.ExecuteAsync(request));
         }
 

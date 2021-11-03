@@ -26,14 +26,7 @@ namespace magic.endpoint.controller.utilities
         internal static async Task<Node> JsonHandler(ISignaler signaler, HttpRequest request)
         {
             // Figuring out encoding of request.
-            var encoding = request.ContentType?
-                .Split(';')
-                .Select(x => x.Trim())
-                .FirstOrDefault(x => x.StartsWith("char-set"))?
-                .Split('=')
-                .Skip(1)
-                .FirstOrDefault()?
-                .Trim('"') ?? "utf-8";
+            var encoding = GetEncoding(request);
 
             // Reading body as JSON from request, now with correctly applied encoding.
             var args = new Node("", request.Body);
@@ -91,14 +84,7 @@ namespace magic.endpoint.controller.utilities
         internal static async Task<Node> HyperlambdaHandler(ISignaler signaler, HttpRequest request)
         {
             // Figuring out encoding of request.
-            var encoding = request.ContentType?
-                .Split(';')
-                .Select(x => x.Trim())
-                .FirstOrDefault(x => x.StartsWith("char-set"))?
-                .Split('=')
-                .Skip(1)
-                .FirstOrDefault()?
-                .Trim('"') ?? "utf-8";
+            var encoding = GetEncoding(request);
 
             // Reading stream as Hyperlambda, using encoding provided by caller, defaulting to UTF8.
             var args = new Node();
@@ -109,5 +95,24 @@ namespace magic.endpoint.controller.utilities
             }
             return args;
         }
+
+        #region [ -- Private helper methods -- ]
+
+        /*
+         * Returns encoding of HTTP request to caller in string format.
+         */
+        static string GetEncoding(HttpRequest request)
+        {
+            return request.ContentType?
+                .Split(';')
+                .Select(x => x.Trim())
+                .FirstOrDefault(x => x.StartsWith("char-set"))?
+                .Split('=')
+                .Skip(1)
+                .FirstOrDefault()?
+                .Trim('"') ?? "utf-8";
+        }
+
+        #endregion
     }
 }
