@@ -10,8 +10,10 @@ namespace magic.endpoint.contracts.poco
     /// <summary>
     /// Class encapsulating a single cookie as created by Hyperlambda code to be returned to client.
     /// 
-    /// Notice, incoming cookies are NOT encpasulated by this class, but simply a string/string dictionary,
-    /// since this class is only used as we CREATE cookies to be returned to the client.
+    /// Notice, incoming cookies are NOT encpasulated by this class, but rather simply parsed
+    /// as a string/string dictionary, since this class is only used as we CREATE cookies to be
+    /// returned to the client, since this requires the Hyperlambda to be allowed to configure the
+    /// cookies - While with incoming cookies we're simply interested in their values.
     /// </summary>
     public class MagicCookie
     {

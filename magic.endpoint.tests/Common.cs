@@ -39,10 +39,10 @@ namespace magic.endpoint.tests
             mockConfiguration.SetupGet(x => x[It.IsAny<string>()]).Returns("60");
             services.AddTransient((svc) => mockConfiguration.Object);
             services.AddTransient<ISignaler, Signaler>();
-            services.AddTransient<IArgumentsHandler, ArgumentsHandler>();
+            services.AddTransient<IHttpArgumentsHandler, HttpArgumentsHandler>();
             var types = new SignalsProvider(InstantiateAllTypes<ISlot>(services));
             services.AddTransient<ISignalsProvider>((svc) => types);
-            services.AddTransient<IExecutorAsync, ExecutorAsync>();
+            services.AddTransient<IHttpExecutorAsync, HttpExecutorAsync>();
             var provider = services.BuildServiceProvider();
             Utilities.RootFolder = AppDomain.CurrentDomain.BaseDirectory;
             return provider;

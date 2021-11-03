@@ -11,7 +11,7 @@ namespace magic.endpoint.contracts.contracts
     /// <summary>
     /// Service interface for handling arguments.
     /// </summary>
-    public interface IArgumentsHandler
+    public interface IHttpArgumentsHandler
     {
         /// <summary>
         /// Responsible for attaching incoming arguments to invocation of endpoint,

@@ -11,7 +11,7 @@ namespace magic.endpoint.contracts.contracts
     /// <summary>
     /// Service interface for executing a dynamically resolved Magic URLs.
     /// </summary>
-    public interface IExecutorAsync
+    public interface IHttpExecutorAsync
     {
         /// <summary>
         /// Executes an HTTP endpoint with the specified request encpasulating the request's data.

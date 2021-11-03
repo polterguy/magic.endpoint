@@ -21,7 +21,7 @@ namespace magic.endpoint.tests
         public async Task SimpleGet()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -46,7 +46,7 @@ namespace magic.endpoint.tests
         public async Task Get404()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -67,7 +67,7 @@ namespace magic.endpoint.tests
         public async Task GetWithHeader()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -89,7 +89,7 @@ namespace magic.endpoint.tests
         public async Task GetWithCookie()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -111,7 +111,7 @@ namespace magic.endpoint.tests
         public async Task EchoHeaders()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -136,7 +136,7 @@ namespace magic.endpoint.tests
         public async Task EchoCookies()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -161,7 +161,7 @@ namespace magic.endpoint.tests
         public async Task Get_Throws()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             await Assert.ThrowsAsync<HyperlambdaException>(
                 async () => await executor.ExecuteAsync(
@@ -181,7 +181,7 @@ namespace magic.endpoint.tests
         public async Task SimpleGetStringValue()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -206,7 +206,7 @@ namespace magic.endpoint.tests
         public async Task GetEcho()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -233,7 +233,7 @@ namespace magic.endpoint.tests
         public async Task GetEchoPartialArgumentList()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -259,7 +259,7 @@ namespace magic.endpoint.tests
         public async Task GetBadInput_Throws()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             await Assert.ThrowsAsync<ArgumentException>(
                 async () => await executor.ExecuteAsync(
@@ -279,7 +279,7 @@ namespace magic.endpoint.tests
         public async Task GetArgumentNoDeclaration()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             // Notice, executor will convert arguments according to [.arguments] declaration.
             var result = await executor.ExecuteAsync(
@@ -305,7 +305,7 @@ namespace magic.endpoint.tests
         public async Task GetStatusResponse()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -326,7 +326,7 @@ namespace magic.endpoint.tests
         public async Task GetHttpHeader()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -348,7 +348,7 @@ namespace magic.endpoint.tests
         public async Task SimpleDelete()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var result = await executor.ExecuteAsync(
                 new MagicRequest
@@ -373,7 +373,7 @@ namespace magic.endpoint.tests
         public async Task PostEcho()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var input = HyperlambdaParser.Parse(@"
 input1:foo
@@ -429,7 +429,7 @@ input5
         public async Task PutEcho()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var input = HyperlambdaParser.Parse(@"
 input1:foo
@@ -485,7 +485,7 @@ input5
         public async Task PostEchoPartialArgumentList()
         {
             var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
             var input = HyperlambdaParser.Parse(@"
 input1:foo

@@ -37,7 +37,7 @@ namespace magic.endpoint.controller
         readonly ISignaler _signaler;
 
         // Service implementation responsible for executing the request.
-        readonly IExecutorAsync _executor;
+        readonly IHttpExecutorAsync _executor;
 
         /*
          * Registered Content-Type payload handlers, responsible for handling requests and parametrising invocation
@@ -83,7 +83,7 @@ namespace magic.endpoint.controller
         /// </summary>
         /// <param name="executor">Service implementation for executing URLs.</param>
         /// <param name="signaler">Super signals implementation, needed to convert from JSON to Node.</param>
-        public EndpointController(IExecutorAsync executor, ISignaler signaler)
+        public EndpointController(IHttpExecutorAsync executor, ISignaler signaler)
         {
             _executor = executor;
             _signaler = signaler;
@@ -151,6 +151,8 @@ namespace magic.endpoint.controller
                 Host = Request.Host.Value,
                 Scheme = Request.Scheme
             };
+
+            // Notice, we only attach payload arguments to PUT, POST and PATCH requests.
             switch (verb)
             {
                 case "put":
@@ -158,6 +160,13 @@ namespace magic.endpoint.controller
                 case "patch":
                     request.Payload = await GetPayload();
                     break;
+
+                case "get":
+                case "delete":
+                    break; // Request is accepted, even though we don't care about its payload.
+
+                default:
+                    throw new ArgumentException($"Sorry, I don't know how to handle the {verb} HTTP verb");
             }
             return HandleResponse(await _executor.ExecuteAsync(request));
         }

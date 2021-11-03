@@ -9,7 +9,7 @@ using magic.node;
 namespace magic.endpoint.contracts.poco
 {
     /// <summary>
-    /// Class wrapping content from the HTTP request in structured format.
+    /// Class wrapping content from the HTTP request in a structured format.
     /// </summary>
     public class MagicRequest
     {

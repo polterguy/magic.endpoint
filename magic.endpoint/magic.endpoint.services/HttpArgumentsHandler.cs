@@ -16,7 +16,7 @@ namespace magic.endpoint.services
     /// Implementation of IArgumentsHandler service contract, responsible for
     /// attaching arguments originating from client to lambda object being executed.
     /// </summary>
-    public class ArgumentsHandler : IArgumentsHandler
+    public class HttpArgumentsHandler : IHttpArgumentsHandler
     {
         /// <inheritdoc />
         public void Attach(
@@ -51,7 +51,7 @@ namespace magic.endpoint.services
          * query parameters to args node, sanity checking that the
          * query parameter is allowed in the process.
          */
-        IEnumerable<Node> GetQueryParameters(
+        static IEnumerable<Node> GetQueryParameters(
             Node declaration,
             Dictionary<string, string> query)
         {
@@ -85,7 +85,7 @@ namespace magic.endpoint.services
          * payload to args node, sanity checking that the
          * parameter is allowed in the process.
          */
-        IEnumerable<Node> GetPayloadParameters(Node declaration, Node payload)
+        static IEnumerable<Node> GetPayloadParameters(Node declaration, Node payload)
         {
             /*
              * Checking if file contains a declaration at all.
@@ -109,7 +109,7 @@ namespace magic.endpoint.services
          * declaration node. Making sure the argument is allowed for the
          * endpoint.
          */
-        void ConvertArgumentRecursively(Node arg, Node declaration)
+        static void ConvertArgumentRecursively(Node arg, Node declaration)
         {
             // If declaration node is null here, it means endpoint has no means to handle the argument.
             if (declaration == null)
