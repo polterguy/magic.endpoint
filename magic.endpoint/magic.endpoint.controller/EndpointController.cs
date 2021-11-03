@@ -219,7 +219,7 @@ namespace magic.endpoint.controller
                     return new FileContentResult(bytesResponse, Response.ContentType);
 
                 if (response.Content is Stream streamResponse)
-                    return new ObjectResult(response.Content) { StatusCode = response.Result };
+                    return new FileStreamResult(streamResponse, Response.ContentType);
 
                 throw new ArgumentException($"Unsupported return value from Hyperlambda, returning objects of type '{response.Content.GetType().FullName}' is not supported");
             }

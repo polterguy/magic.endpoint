@@ -24,7 +24,7 @@ namespace magic.endpoint.controller.utilities
         {
             // Checking if JSON is already converted into a string, at which point we return it as such.
             if (response.Content is string strContent)
-                return new ContentResult() { Content = strContent, StatusCode = response.Result };
+                return new ContentResult { Content = strContent, StatusCode = response.Result };
 
             // Strongly typed JSON object, hence returning as such.
             return new JsonResult(response.Content as JToken) { StatusCode = response.Result };
