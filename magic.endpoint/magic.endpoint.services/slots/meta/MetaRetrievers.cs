@@ -78,7 +78,7 @@ namespace magic.endpoint.services.slots.meta
             string verb,
             Node arguments)
         {
-            var x = new Expression("**/response.headers.add/*/Content-Type");
+            var x = new Expression("**/response.headers.set/*/Content-Type");
             var result = x.Evaluate(lambda);
 
             /*

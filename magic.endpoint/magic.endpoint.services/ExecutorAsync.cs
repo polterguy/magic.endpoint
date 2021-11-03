@@ -7,13 +7,13 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
-using magic.endpoint.contracts;
+using magic.endpoint.contracts.poco;
 using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
+using magic.endpoint.contracts.contracts;
 
 namespace magic.endpoint.services
 {
@@ -38,105 +38,30 @@ namespace magic.endpoint.services
         }
 
         /// <inheritdoc/>
-        public async Task<HttpResponse> ExecuteGetAsync(
-            string url,
-            IEnumerable<(string Name, string Value)> query,
-            IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies,
-            string host,
-            string scheme)
-        {
-            return await ExecuteUrl(url, "get", query, headers, cookies, host, scheme);
-        }
-
-        /// <inheritdoc/>
-        public async Task<HttpResponse> ExecuteDeleteAsync(
-            string url, 
-            IEnumerable<(string Name, string Value)> query,
-            IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies,
-            string host,
-            string scheme)
-        {
-            return await ExecuteUrl(url, "delete", query, headers, cookies, host, scheme);
-        }
-
-        /// <inheritdoc/>
-        public async Task<HttpResponse> ExecutePostAsync(
-            string url,
-            IEnumerable<(string Name, string Value)> query,
-            Node payload,
-            IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies,
-            string host,
-            string scheme)
-        {
-            return await ExecuteUrl(url, "post", query, headers, cookies, host, scheme, payload);
-        }
-
-        /// <inheritdoc/>
-        public async Task<HttpResponse> ExecutePutAsync(
-            string url,
-            IEnumerable<(string Name, string Value)> query,
-            Node payload,
-            IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies,
-            string host,
-            string scheme)
-        {
-            return await ExecuteUrl(url, "put", query, headers, cookies, host, scheme, payload);
-        }
-
-        /// <inheritdoc/>
-        public async Task<HttpResponse> ExecutePatchAsync(
-            string url,
-            IEnumerable<(string Name, string Value)> query,
-            Node payload,
-            IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies,
-            string host,
-            string scheme)
-        {
-            return await ExecuteUrl(url, "patch", query, headers, cookies, host, scheme, payload);
-        }
-
-        #region [ -- Private helper methods -- ]
-
-        /*
-         * Executes a URL that was given QUERY arguments.
-         */
-        async Task<HttpResponse> ExecuteUrl(
-            string url,
-            string verb,
-            IEnumerable<(string Name, string Value)> query,
-            IEnumerable<(string Name, string Value)> headers,
-            IEnumerable<(string Name, string Value)> cookies,
-            string host,
-            string scheme,
-            Node payload = null)
+        public async Task<MagicResponse> ExecuteAsync(MagicRequest request)
         {
             // Making sure we never resolve to anything outside of "/modules/" and "/system" folder.
-            if (url == null || (!url.StartsWith("modules/") && !url.StartsWith("system/")))
-                return new HttpResponse { Result = 401 };
+            if (request.URL == null || (!request.URL.StartsWith("modules/") && !request.URL.StartsWith("system/")))
+                return new MagicResponse { Result = 401 };
 
             // Figuring out file to execute, and doing some basic sanity check.
-            var path = Utilities.GetEndpointFile(url, verb);
+            var path = Utilities.GetEndpointFile(request.URL, request.Verb);
             if (!File.Exists(path))
-                return new HttpResponse { Result = 404 };
+                return new MagicResponse { Result = 404 };
 
             // Creating our lambda object and attaching arguments specified as query parameters, and/or payload.
-            var lambda = LoadHyperlambdaFile(url, path);
-            _argumentsHandler.Attach(lambda, query, payload);
+            var lambda = LoadHyperlambdaFile(request.URL, path);
+            _argumentsHandler.Attach(lambda, request.Query, request.Payload);
 
             // Creating our result wrapper, wrapping whatever the endpoint wants to return to the client.
             var evalResult = new Node();
-            var httpResponse = new HttpResponse();
-            var httpRequest = new HttpRequest
+            var httpResponse = new MagicResponse();
+            var httpRequest = new MagicRequest
             {
-                Cookies = cookies.ToDictionary(x => x.Name, x => x.Value),
-                Headers = headers.ToDictionary(x => x.Name, x => x.Value),
-                Host = host,
-                Scheme = scheme,
+                Cookies = request.Cookies,
+                Headers = request.Headers,
+                Host = request.Host,
+                Scheme = request.Scheme,
             };
             try
             {
@@ -163,10 +88,12 @@ namespace magic.endpoint.services
             }
         }
 
+        #region [ -- Private helper methods -- ]
+
         /*
          * Creates a returned payload of some sort and returning to caller.
          */
-        object GetReturnValue(HttpResponse httpResponse, Node lambda)
+        object GetReturnValue(MagicResponse httpResponse, Node lambda)
         {
             object result = null;
             if (lambda.Value != null)

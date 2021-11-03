@@ -5,12 +5,15 @@
 
 using System;
 
-namespace magic.endpoint.contracts
+namespace magic.endpoint.contracts.poco
 {
     /// <summary>
-    /// Class encapsulating a single cookie.
+    /// Class encapsulating a single cookie as created by Hyperlambda code to be returned to client.
+    /// 
+    /// Notice, incoming cookies are NOT encpasulated by this class, but simply a string/string dictionary,
+    /// since this class is only used as we CREATE cookies to be returned to the client.
     /// </summary>
-    public class Cookie
+    public class MagicCookie
     {
         /// <summary>
         /// Name of cookie.

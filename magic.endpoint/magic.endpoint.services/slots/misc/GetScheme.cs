@@ -5,7 +5,7 @@
 
 using magic.node;
 using magic.signals.contracts;
-using magic.endpoint.contracts;
+using magic.endpoint.contracts.poco;
 
 namespace magic.endpoint.services.slots.misc
 {
@@ -22,7 +22,7 @@ namespace magic.endpoint.services.slots.misc
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            var request = signaler.Peek<HttpRequest>("http.request");
+            var request = signaler.Peek<MagicRequest>("http.request");
             input.Value = request.Scheme;
         }
     }

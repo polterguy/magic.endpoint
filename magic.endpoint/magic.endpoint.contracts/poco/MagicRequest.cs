@@ -4,14 +4,30 @@
  */
 
 using System.Collections.Generic;
+using magic.node;
 
-namespace magic.endpoint.contracts
+namespace magic.endpoint.contracts.poco
 {
     /// <summary>
     /// Class wrapping content from the HTTP request in structured format.
     /// </summary>
-    public class HttpRequest
+    public class MagicRequest
     {
+        /// <summary>
+        /// URL of HTTP request.
+        /// </summary>
+        public string URL { get; set; }
+
+        /// <summary>
+        /// HTTP verb of request.
+        /// </summary>
+        public string Verb { get; set; }
+
+        /// <summary>
+        /// QUERY parameters of request.
+        /// </summary>
+        public Dictionary<string, string> Query { get; set; } = new Dictionary<string, string>();
+
         /// <summary>
         /// Request HTTP headers provided by client.
         /// </summary>
@@ -31,5 +47,10 @@ namespace magic.endpoint.contracts
         /// Scheme of request, e.g. 'http' or 'https'.
         /// </summary>
         public string Scheme { get; set; }
+
+        /// <summary>
+        /// Payload of request.
+        /// </summary>
+        public Node Payload { get; set; } = new Node();
     }
 }

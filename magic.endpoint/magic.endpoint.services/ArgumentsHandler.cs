@@ -8,7 +8,7 @@ using System.Linq;
 using System.Collections.Generic;
 using magic.node;
 using magic.node.extensions;
-using magic.endpoint.contracts;
+using magic.endpoint.contracts.contracts;
 
 namespace magic.endpoint.services
 {
@@ -21,7 +21,7 @@ namespace magic.endpoint.services
         /// <inheritdoc />
         public void Attach(
             Node lambda, 
-            IEnumerable<(string Name, string Value)> query, 
+            Dictionary<string, string> query,
             Node payload)
         {
             // Finding lambda object's [.arguments] declaration if existing, and making sure we remove it from lambda object.
@@ -53,9 +53,9 @@ namespace magic.endpoint.services
          */
         IEnumerable<Node> GetQueryParameters(
             Node declaration,
-            IEnumerable<(string Name, string Value)> queryParameters)
+            Dictionary<string, string> query)
         {
-            foreach (var idxArg in queryParameters)
+            foreach (var idxArg in query)
             {
                 // Retrieving string representation of argument.
                 object value = idxArg.Value;
@@ -69,14 +69,14 @@ namespace magic.endpoint.services
                 {
                     var declarationType = declaration?
                         .Children
-                        .FirstOrDefault(x => x.Name == idxArg.Name)?
+                        .FirstOrDefault(x => x.Name == idxArg.Key)?
                         .Get<string>() ??
-                        throw new ArgumentException($"I don't know how to handle the '{idxArg.Name}' query parameter");
+                        throw new ArgumentException($"I don't know how to handle the '{idxArg.Key}' query parameter");
 
                     // Converting argument to expected type.
                     value = Converter.ToObject(idxArg.Value, declarationType);
                 }
-                yield return new Node(idxArg.Name, value);
+                yield return new Node(idxArg.Key, value);
             }
         }
 

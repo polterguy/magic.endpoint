@@ -4,14 +4,14 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Xunit;
 using Newtonsoft.Json.Linq;
 using magic.lambda.exceptions;
-using magic.endpoint.contracts;
+using magic.endpoint.contracts.poco;
 using magic.node.extensions.hyperlambda;
+using magic.endpoint.contracts.contracts;
 
 namespace magic.endpoint.tests
 {
@@ -23,13 +23,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var result = await executor.ExecuteGetAsync(
-                "modules/foo-1",
-                null,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/foo-1",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -44,31 +48,19 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var result = await executor.ExecuteGetAsync(
-                "modules/not-existing",
-                null,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/not-existing",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(404, result.Result);
-        }
-
-        [Fact]
-        public async Task GetWithoutHeader_Throws()
-        {
-            var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-
-            await Assert.ThrowsAsync<HyperlambdaException>(
-                async () => await executor.ExecuteGetAsync(
-                    "modules/request-header",
-                    null,
-                    new List<(string Name, string Value)>(),
-                    new List<(string, string)>(),
-                    "localhost",
-                    "http"));
         }
 
         [Fact]
@@ -77,16 +69,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var headers = new List<(string Name, string Value)>();
-            headers.Add(("foo", "bar"));
-
-            var result = await executor.ExecuteGetAsync(
-                "modules/request-header",
-                null,
-                headers,
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/request-header",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>{ { "foo", "bar" } },
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Equal("success", result.Content);
@@ -98,16 +91,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var cookies = new List<(string Name, string Value)>();
-            cookies.Add(("foo", "bar"));
-
-            var result = await executor.ExecuteGetAsync(
-                "modules/request-cookie",
-                null,
-                new List<(string, string)>(),
-                cookies,
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/request-cookie",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>{ { "foo", "bar" } },
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Equal("success", result.Content);
@@ -119,17 +113,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var headers = new List<(string Name, string Value)>();
-            headers.Add(("foo1", "bar1"));
-            headers.Add(("foo2", "bar2"));
-
-            var result = await executor.ExecuteGetAsync(
-                "modules/echo-headers",
-                null,
-                headers,
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/echo-headers",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>{ { "foo1", "bar1" }, { "foo2", "bar2" } },
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(200, result.Result);
             var content = result.Content as JContainer;
@@ -144,17 +138,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var cookies = new List<(string Name, string Value)>();
-            cookies.Add(("foo1", "bar1"));
-            cookies.Add(("foo2", "bar2"));
-
-            var result = await executor.ExecuteGetAsync(
-                "modules/echo-cookies",
-                null,
-                new List<(string, string)>(),
-                cookies,
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/echo-cookies",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>{ { "foo1", "bar1" }, { "foo2", "bar2" } },
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(200, result.Result);
             var content = result.Content as JContainer;
@@ -170,13 +164,17 @@ namespace magic.endpoint.tests
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
             await Assert.ThrowsAsync<HyperlambdaException>(
-                async () => await executor.ExecuteGetAsync(
-                    "modules/throws",
-                    null,
-                    new List<(string, string)>(),
-                    new List<(string, string)>(),
-                    "localhost",
-                    "http"));
+                async () => await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/throws",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                }));
         }
 
         [Fact]
@@ -185,13 +183,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var result = await executor.ExecuteGetAsync(
-                "modules/foo-2",
-                null,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/foo-2",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -206,19 +208,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            // Notice, executor will convert arguments according to [.arguments] declaration.
-            var input = new List<(string, string)>();
-            input.Add(("input1", "foo"));
-            input.Add(("input2", "5"));
-            input.Add(("input3", "true"));
-
-            var result = await executor.ExecuteGetAsync(
-                "modules/echo",
-                input,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/echo",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>{ { "input1", "foo" }, { "input2", "5" }, { "input3", "true" } },
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -235,16 +235,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            // Notice, executor will convert arguments according to [.arguments] declaration.
-            var input = new List<(string, string)>();
-            input.Add(("input1", "foo"));
-
-            var result = await executor.ExecuteGetAsync(
-                "modules/echo",
-                input, new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/echo",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>{ { "input1", "foo" } },
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -260,38 +261,18 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            // Notice, executor will convert arguments according to [.arguments] declaration.
-            var input = new List<(string, string)>();
-            input.Add(("inputXXX", "foo"));
-
             await Assert.ThrowsAsync<ArgumentException>(
-                async () => await executor.ExecuteGetAsync(
-                    "modules/echo",
-                    input, new List<(string, string)>(),
-                    new List<(string, string)>(),
-                    "localhost",
-                    "http"));
-        }
-
-        [Fact]
-        public async Task GetBadInputSameArgumentTwice_Throws()
-        {
-            var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
-
-            // Notice, executor will convert arguments according to [.arguments] declaration.
-            var input = new List<(string, string)>();
-            input.Add(("input1", "foo1"));
-            input.Add(("input1", "foo2"));
-
-            await Assert.ThrowsAsync<ArgumentException>(
-                async () => await executor.ExecuteGetAsync(
-                    "modules/echo",
-                    input,
-                    new List<(string, string)>(),
-                    new List<(string, string)>(),
-                    "localhost",
-                    "http"));
+                async () => await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/echo",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>{ { "inputXXX", "foo" } },
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                }));
         }
 
         [Fact]
@@ -301,15 +282,17 @@ namespace magic.endpoint.tests
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
             // Notice, executor will convert arguments according to [.arguments] declaration.
-            var input = new List<(string, string)>();
-            input.Add(("inputXXX", "foo"));
-            var result = await executor.ExecuteGetAsync(
-                "modules/echo-no-declaration",
-                input,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/echo-no-declaration",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>{ { "inputXXX", "foo" } },
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -324,13 +307,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var result = await executor.ExecuteGetAsync(
-                "modules/status",
-                null,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/status",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>{ { "inputXXX", "foo" } },
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(201, result.Result);
         }
@@ -341,13 +328,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var result = await executor.ExecuteGetAsync(
-                "modules/header",
-                null,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/header",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>{ { "inputXXX", "foo" } },
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Single(result.Headers);
             Assert.Equal("bar", result.Headers["foo"]);
@@ -359,13 +350,17 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IExecutorAsync)) as IExecutorAsync;
 
-            var result = await executor.ExecuteDeleteAsync(
-                "modules/foo-1",
-                null,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/foo-1",
+                    Verb = "delete",
+                    Query = new Dictionary<string, string>{ { "inputXXX", "foo" } },
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -397,14 +392,18 @@ input5
    obj1:foo
    obj2:true");
 
-            var result = await executor.ExecutePostAsync(
-                "modules/echo",
-                null,
-                input,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/echo",
+                    Verb = "post",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http",
+                    Payload = input
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -449,14 +448,18 @@ input5
    obj1:foo
    obj2:true");
 
-            var result = await executor.ExecutePutAsync(
-                "modules/echo",
-                null,
-                input,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/echo",
+                    Verb = "put",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http",
+                    Payload = input
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);
@@ -488,14 +491,18 @@ input5
 input1:foo
 input2:int:5");
 
-            var result = await executor.ExecutePostAsync(
-                "modules/echo",
-                null,
-                input,
-                new List<(string, string)>(),
-                new List<(string, string)>(),
-                "localhost",
-                "http");
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/echo",
+                    Verb = "post",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http",
+                    Payload = input
+                });
 
             Assert.Equal(200, result.Result);
             Assert.Empty(result.Headers);

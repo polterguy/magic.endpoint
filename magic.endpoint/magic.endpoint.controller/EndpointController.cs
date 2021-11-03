@@ -9,10 +9,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
-using ms = Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using magic.node;
 using magic.signals.contracts;
-using magic.endpoint.contracts;
+using magic.endpoint.contracts.poco;
+using magic.endpoint.contracts.contracts;
 using magic.endpoint.controller.utilities;
 
 namespace magic.endpoint.controller
@@ -39,11 +40,11 @@ namespace magic.endpoint.controller
         readonly IExecutorAsync _executor;
 
         /*
-         * Registered Content-Type handlers, responsible for handling requests and parametrising invocation
+         * Registered Content-Type payload handlers, responsible for handling requests and parametrising invocation
          * according to Content-Type specified by caller.
          */
-        static readonly Dictionary<string, Func<ISignaler, ms.HttpRequest, Task<Node>>> _requestHandlers =
-            new Dictionary<string, Func<ISignaler, ms.HttpRequest, Task<Node>>>
+        static readonly Dictionary<string, Func<ISignaler, HttpRequest, Task<Node>>> _payloadHandlers =
+            new Dictionary<string, Func<ISignaler, HttpRequest, Task<Node>>>
         {
             {
                 "application/json", (signaler, request) => RequestHandlers.JsonHandler(signaler, request)
@@ -63,8 +64,8 @@ namespace magic.endpoint.controller
          * Registered Content-Type handlers, responsible for handling response and returning an IActionResult
          * according to the Content-Type of the response.
          */
-        readonly static Dictionary<string, Func<HttpResponse, IActionResult>> _responseHandlers =
-            new Dictionary<string, Func<HttpResponse, IActionResult>>
+        readonly static Dictionary<string, Func<MagicResponse, IActionResult>> _responseHandlers =
+            new Dictionary<string, Func<MagicResponse, IActionResult>>
             {
                 {
                     "application/json", (response) => ResponseHandlers.JsonHandler(response)
@@ -89,96 +90,18 @@ namespace magic.endpoint.controller
         }
 
         /// <summary>
-        /// Executes a dynamically resolved HTTP GET endpoint.
+        /// Executes a dynamically resolved HTTP endpoint.
         /// </summary>
         /// <param name="url">The requested URL.</param>
         [HttpGet]
-        [Route("{*url}")]
-        public async Task<IActionResult> Get(string url)
-        {
-            return HandleResponse(
-                await _executor.ExecuteGetAsync(
-                    WebUtility.UrlDecode(url),
-                    Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Cookies.Select(x => (x.Key, x.Value)),
-                    HttpContext.Request.Host.Value,
-                    HttpContext.Request.Scheme));
-        }
-
-        /// <summary>
-        /// Executes a dynamically registered Hyperlambda HTTP DELETE endpoint.
-        /// </summary>
-        /// <param name="url">The requested URL.</param>
+        [HttpPut]
+        [HttpPost]
+        [HttpPatch]
         [HttpDelete]
         [Route("{*url}")]
-        public async Task<IActionResult> Delete(string url)
+        public async Task<IActionResult> Execute(string url)
         {
-            return HandleResponse(
-                await _executor.ExecuteDeleteAsync(
-                    WebUtility.UrlDecode(url), 
-                    Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Cookies.Select(x => (x.Key, x.Value)),
-                    HttpContext.Request.Host.Value,
-                    HttpContext.Request.Scheme));
-        }
-
-        /// <summary>
-        /// Executes a dynamically registered Hyperlambda HTTP POST endpoint.
-        /// </summary>
-        /// <param name="url">The requested URL.</param>
-        [HttpPost]
-        [Route("{*url}")]
-        public async Task<IActionResult> Post(string url)
-        {
-            return HandleResponse(
-                await _executor.ExecutePostAsync(
-                    WebUtility.UrlDecode(url),
-                    Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    await GetPayload(),
-                    Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Cookies.Select(x => (x.Key, x.Value)),
-                    HttpContext.Request.Host.Value,
-                    HttpContext.Request.Scheme));
-        }
-
-        /// <summary>
-        /// Executes a dynamically registered Hyperlambda HTTP PUT endpoint.
-        /// </summary>
-        /// <param name="url">The requested URL.</param>
-        [HttpPut]
-        [Route("{*url}")]
-        public async Task<IActionResult> Put(string url)
-        {
-            return HandleResponse(
-                await _executor.ExecutePutAsync(
-                    WebUtility.UrlDecode(url),
-                    Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    await GetPayload(),
-                    Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Cookies.Select(x => (x.Key, x.Value)),
-                    HttpContext.Request.Host.Value,
-                    HttpContext.Request.Scheme));
-        }
-
-        /// <summary>
-        /// Executes a dynamically registered Hyperlambda HTTP PUT endpoint.
-        /// </summary>
-        /// <param name="url">The requested URL.</param>
-        [HttpPatch]
-        [Route("{*url}")]
-        public async Task<IActionResult> Patch(string url)
-        {
-            return HandleResponse(
-                await _executor.ExecutePatchAsync(
-                    WebUtility.UrlDecode(url),
-                    Request.Query.Select(x => (x.Key, x.Value.ToString())),
-                    await GetPayload(),
-                    Request.Headers.Select(x => (x.Key, x.Value.ToString())),
-                    Request.Cookies.Select(x => (x.Key, x.Value)),
-                    HttpContext.Request.Host.Value,
-                    HttpContext.Request.Scheme));
+            return await HandleRequest(Request.Method?.ToLowerInvariant(), url);
         }
 
         /// <summary>
@@ -191,9 +114,9 @@ namespace magic.endpoint.controller
         /// </summary>
         /// <param name="contentType">Content-Type to register</param>
         /// <param name="functor">Function to be invoked once specified Content-Type is provided to your endpoints</param>
-        public static void RegisterContentType(string contentType, Func<ISignaler, ms.HttpRequest, Task<Node>> functor)
+        public static void RegisterContentType(string contentType, Func<ISignaler, HttpRequest, Task<Node>> functor)
         {
-            _requestHandlers[contentType] = functor;
+            _payloadHandlers[contentType] = functor;
         }
 
         /// <summary>
@@ -206,12 +129,38 @@ namespace magic.endpoint.controller
         /// </summary>
         /// <param name="contentType">Content-Type to register</param>
         /// <param name="functor">Function to be invoked once specified Content-Type is returned from your endpoint</param>
-        public static void RegisterContentType(string contentType, Func<HttpResponse, IActionResult> functor)
+        public static void RegisterContentType(string contentType, Func<MagicResponse, IActionResult> functor)
         {
             _responseHandlers[contentType] = functor;
         }
 
         #region [ -- Private helper methods -- ]
+
+        /*
+         * Helper that handles the HTTP request with the specified verb and URL.
+         */
+        async Task<IActionResult> HandleRequest(string verb, string url)
+        {
+            var request = new MagicRequest
+            {
+                URL = WebUtility.UrlDecode(url),
+                Verb = verb,
+                Query = Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()),
+                Headers = Request.Headers.ToDictionary(x => x.Key, x => x.Value.ToString()),
+                Cookies = Request.Cookies.ToDictionary(x => x.Key, x => x.Value.ToString()),
+                Host = Request.Host.Value,
+                Scheme = Request.Scheme
+            };
+            switch (verb)
+            {
+                case "put":
+                case "post":
+                case "patch":
+                    request.Payload = await GetPayload();
+                    break;
+            }
+            return HandleResponse(await _executor.ExecuteAsync(request));
+        }
 
         /*
          * Helper method to create arguments from body payload.
@@ -230,8 +179,8 @@ namespace magic.endpoint.controller
              * Figuring out how to read request, which depends upon its Content-Type, and
              * whether or not we have a registered handler for specified Content-Type or not.
              */
-            if (_requestHandlers.ContainsKey(contentType))
-                return await _requestHandlers[contentType](_signaler, Request); // Specialised handler
+            if (_payloadHandlers.ContainsKey(contentType))
+                return await _payloadHandlers[contentType](_signaler, Request); // Specialised handler
             else
                 return new Node("", null, new Node[] { new Node("body", Request.Body) }); // Default handler, simply adding raw Stream as [body].
         }
@@ -239,7 +188,7 @@ namespace magic.endpoint.controller
         /*
          * Transforms from our internal HttpResponse wrapper to an ActionResult
          */
-        IActionResult HandleResponse(HttpResponse response)
+        IActionResult HandleResponse(MagicResponse response)
         {
             // Making sure we attach any explicitly added HTTP headers to the response.
             foreach (var idx in response.Headers)
@@ -250,7 +199,7 @@ namespace magic.endpoint.controller
             // Making sure we attach all cookies.
             foreach (var idx in response.Cookies)
             {
-                var options = new ms.CookieOptions
+                var options = new CookieOptions
                 {
                     Secure = idx.Secure,
                     Expires = idx.Expires,
@@ -259,7 +208,7 @@ namespace magic.endpoint.controller
                     Path = idx.Path,
                 };
                 if (!string.IsNullOrEmpty(idx.SameSite))
-                    options.SameSite = (ms.SameSiteMode)Enum.Parse(typeof(ms.SameSiteMode), idx.SameSite, true);
+                    options.SameSite = (SameSiteMode)Enum.Parse(typeof(SameSiteMode), idx.SameSite, true);
                 Response.Cookies.Append(idx.Name, idx.Value, options);
             }
 

@@ -7,7 +7,7 @@ using System;
 using System.IO;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
-using magic.endpoint.contracts;
+using magic.endpoint.contracts.poco;
 
 namespace magic.endpoint.controller.utilities
 {
@@ -20,7 +20,7 @@ namespace magic.endpoint.controller.utilities
         /*
          * Default JSON handler, simply returning a JsonResult to caller.
          */
-        internal static IActionResult JsonHandler(HttpResponse response)
+        internal static IActionResult JsonHandler(MagicResponse response)
         {
             if (response.Content is string strContent)
                 return new ContentResult() { Content = strContent, StatusCode = response.Result };
@@ -31,7 +31,7 @@ namespace magic.endpoint.controller.utilities
         /*
          * Default octet-stream handler, returning a stream or byte[] result to caller.
          */
-        internal static IActionResult OctetStreamHandler(HttpResponse response)
+        internal static IActionResult OctetStreamHandler(MagicResponse response)
         {
             if (response.Content is Stream streamResponse)
                 return new ObjectResult(response.Content) { StatusCode = response.Result };
@@ -45,7 +45,7 @@ namespace magic.endpoint.controller.utilities
         /*
          * Default Hyperlambda handler, returning Hyperlambda as string to caller.
          */
-        internal static IActionResult HyperlambdaHandler(HttpResponse response)
+        internal static IActionResult HyperlambdaHandler(MagicResponse response)
         {
             if (response.Content is Stream streamResponse)
                 return new ObjectResult(response.Content) { StatusCode = response.Result };

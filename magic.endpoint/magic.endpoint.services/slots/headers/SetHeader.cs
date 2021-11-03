@@ -6,7 +6,7 @@
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
-using magic.endpoint.contracts;
+using magic.endpoint.contracts.poco;
 
 namespace magic.endpoint.services.slots.headers
 {
@@ -14,7 +14,6 @@ namespace magic.endpoint.services.slots.headers
     /// [response.headers.set] slot for adding a Response HTTP header that will be
     /// returned back to the client as an HTTP header.
     /// </summary>
-    [Slot(Name = "response.headers.add")] // Obsolete! But needs to stay around for a while for backward compatibility reasons ... :/
     [Slot(Name = "response.headers.set")]
     public class SetHeader : ISlot
     {
@@ -25,7 +24,7 @@ namespace magic.endpoint.services.slots.headers
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            var response = signaler.Peek<HttpResponse>("http.response");
+            var response = signaler.Peek<MagicResponse>("http.response");
             foreach (var idx in input.Children)
             {
                 response.Headers[idx.Name] = idx.GetEx<string>();

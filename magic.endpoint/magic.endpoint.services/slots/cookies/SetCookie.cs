@@ -8,7 +8,7 @@ using System.Linq;
 using magic.node;
 using magic.node.extensions;
 using magic.signals.contracts;
-using magic.endpoint.contracts;
+using magic.endpoint.contracts.poco;
 
 namespace magic.endpoint.services.slots.cookies
 {
@@ -26,9 +26,9 @@ namespace magic.endpoint.services.slots.cookies
         public void Signal(ISignaler signaler, Node input)
         {
             signaler
-                .Peek<HttpResponse>("http.response")
+                .Peek<MagicResponse>("http.response")
                 .Cookies
-                .Add(new Cookie
+                .Add(new MagicCookie
                 {
                     Name = input.GetEx<string>(),
                     Value = input.Children.FirstOrDefault(x => x.Name == "value")?.GetEx<string>() ??
