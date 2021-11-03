@@ -28,6 +28,9 @@
     <Content Include="modules/header.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="modules/scheme.get.hl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="modules/status.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -81,6 +84,7 @@
   <ItemGroup>
     <ProjectReference Include="..\magic.endpoint\magic.endpoint.contracts\magic.endpoint.contracts.csproj" />
     <ProjectReference Include="..\magic.endpoint\magic.endpoint.services\magic.endpoint.services.csproj" />
+    <PackageReference Include="magic.lambda.strings" Version="9.9.0" />
   </ItemGroup>
 
 </Project>

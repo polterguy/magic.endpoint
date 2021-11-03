@@ -12,6 +12,9 @@
     <Content Include="modules/header.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="modules/scheme.get.hl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="modules/status.get.hl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -74,6 +77,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\magic.lambda.strings\magic.lambda.strings\dev_magic.lambda.strings.csproj" />
     <ProjectReference Include="..\..\magic.lambda.json\magic.lambda.json\dev_magic.lambda.json.csproj" />
     <ProjectReference Include="..\..\magic.lambda.slots\magic.lambda.slots\dev_magic.lambda.slots.csproj" />
     <ProjectReference Include="..\..\magic.lambda\magic.lambda\dev_magic.lambda.csproj" />

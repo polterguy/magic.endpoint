@@ -44,7 +44,7 @@ namespace magic.endpoint.tests
         }
 
         [Fact]
-        public async Task Get404()
+        public async Task Get404_01()
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
@@ -62,6 +62,48 @@ namespace magic.endpoint.tests
                 });
 
             Assert.Equal(404, result.Result);
+        }
+
+        [Fact]
+        public async Task Get404_02()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
+
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = null,
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
+
+            Assert.Equal(404, result.Result);
+        }
+
+        [Fact]
+        public async Task AccessDenied_01()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
+
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "foo",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
+
+            Assert.Equal(401, result.Result);
         }
 
         [Fact]
@@ -602,6 +644,31 @@ input2:int:5");
             Assert.Equal("howdy", lambda.Children.First().Value);
             Assert.Equal(".endpoint-value", lambda.Children.Skip(1).First().Name);
             Assert.Equal("world", lambda.Children.Skip(1).First().Value);
+        }
+
+        [Fact]
+        public async Task GetScheme()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
+
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/scheme",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
+
+            Assert.Equal(200, result.Result);
+            Assert.Single(result.Headers);
+            Assert.Equal("Content-Type", result.Headers.First().Key);
+            Assert.Equal("text/plain", result.Headers.First().Value);
+            Assert.Equal("http://localhost", result.Content);
         }
     }
 }

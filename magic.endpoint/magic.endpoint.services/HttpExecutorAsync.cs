@@ -40,8 +40,12 @@ namespace magic.endpoint.services
         /// <inheritdoc/>
         public async Task<MagicResponse> ExecuteAsync(MagicRequest request)
         {
+            // Sanity checking invocation
+            if (string.IsNullOrEmpty(request.URL))
+                return new MagicResponse { Result = 404 };
+
             // Making sure we never resolve to anything outside of "modules/" and "system/" folder.
-            if (request.URL == null || (!request.URL.StartsWith("modules/") && !request.URL.StartsWith("system/")))
+            if (!request.URL.StartsWith("modules/") && !request.URL.StartsWith("system/"))
                 return new MagicResponse { Result = 401 };
 
             // Figuring out file to execute, and doing some basic sanity checking.
