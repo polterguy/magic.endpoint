@@ -4,6 +4,7 @@
  */
 
 using System;
+using System.IO;
 using System.Net;
 using System.Linq;
 using System.Threading.Tasks;
@@ -69,12 +70,6 @@ namespace magic.endpoint.controller
             {
                 {
                     "application/json", (response) => ResponseHandlers.JsonHandler(response)
-                },
-                {
-                    "application/octet-stream", (response) => ResponseHandlers.OctetStreamHandler(response)
-                },
-                {
-                    "application/x-hyperlambda", (response) => ResponseHandlers.HyperlambdaHandler(response)
                 }
             };
 
@@ -241,9 +236,20 @@ namespace magic.endpoint.controller
              * whether or not we have a registered handler for specified Content-Type or not.
              */
             if (_responseHandlers.ContainsKey(contentType))
+            {
                 return _responseHandlers[contentType](response);
+            }
             else
-                return new ObjectResult(response.Content) { StatusCode = response.Result };
+            {
+                if (response.Content is string strResponse)
+                    return new ContentResult { Content = strResponse, StatusCode = response.Result };
+                if (response.Content is byte[] bytesResponse)
+                    return new FileContentResult(bytesResponse, "application/octet-stream");
+                if (response.Content is Stream streamResponse)
+                    return new ObjectResult(response.Content) { StatusCode = response.Result };
+
+                throw new ArgumentException("Unsupported return value from Hyperlambda");
+            }
         }
 
         #endregion

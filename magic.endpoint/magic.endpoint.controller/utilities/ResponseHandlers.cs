@@ -22,38 +22,12 @@ namespace magic.endpoint.controller.utilities
          */
         internal static IActionResult JsonHandler(MagicResponse response)
         {
+            // Checking if JSON is already converted into a string, at which point we return it as such.
             if (response.Content is string strContent)
                 return new ContentResult() { Content = strContent, StatusCode = response.Result };
 
+            // Strongly typed JSON object, hence returning as such.
             return new JsonResult(response.Content as JToken) { StatusCode = response.Result };
-        }
-
-        /*
-         * Default octet-stream handler, returning a stream or byte[] result to caller.
-         */
-        internal static IActionResult OctetStreamHandler(MagicResponse response)
-        {
-            if (response.Content is Stream streamResponse)
-                return new ObjectResult(response.Content) { StatusCode = response.Result };
-
-            var bytes = response.Content is byte[] rawBytes ?
-                rawBytes :
-                Convert.FromBase64String(response.Content as string); // TODO: What is this ...?
-            return new FileContentResult(bytes, "application/octet-stream");
-        }
-
-        /*
-         * Default Hyperlambda handler, returning Hyperlambda as string to caller.
-         */
-        internal static IActionResult HyperlambdaHandler(MagicResponse response)
-        {
-            if (response.Content is Stream streamResponse)
-                return new ObjectResult(response.Content) { StatusCode = response.Result };
-
-            var bytes = response.Content is byte[] rawBytes ?
-                rawBytes :
-                Convert.FromBase64String(response.Content as string); // TODO: What is this ...?
-            return new FileContentResult(bytes, "application/octet-stream");
         }
     }
 }
