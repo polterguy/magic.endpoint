@@ -151,19 +151,13 @@ The POST, PUT and PATCH endpoints can intelligently handle any of the following 
 * `application/json`
 * `application/x-www-form-urlencoded`
 * `multipart/form-data`
-* `application/x-hyperlambda`
 
 JSON types of payloads are fairly well described above, and URL encoded form payloads are handled
 the exact same way, except of course the **[.arguments]** node is built from URL encoded values instead
 of JSON - However, internally this is transparent for you, and JSON, query parameters, and URL encoded
-forms can be interchanged 100% transparently from your code's perspective. Hyperlambda content
-will be passed in as a **[body]** argument to your file as text, implying you'll have to explicitly
-convert Hyperlambda using e.g. **[hyper2lambda]** from within your endpoint to create a Node/Lambda
-structure out of it.
-
-Multipart (MIME) form data will be treated the same way as URL encoded arguments, except any file
-attachments will not be loaded into memory, but rather kept as raw streams, and passed into your
-endpoint file as such. File attachments will be passed into your endpoint as follows.
+forms, and _"multipart/form-data"_ can be interchanged 100% transparently from your code's perspective -
+Except _"multipart/form-data"_ might have **[file]** arguments wrapping streams that you need to
+handle separately as such. File attachments will be passed into your endpoint as follows.
 
 ```
 .arguments

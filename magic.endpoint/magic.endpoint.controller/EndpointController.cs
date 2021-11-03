@@ -56,9 +56,6 @@ namespace magic.endpoint.controller
             {
                 "multipart/form-data", RequestHandlers.FormDataHandler
             },
-            {
-                "application/x-hyperlambda", RequestHandlers.HyperlambdaHandler
-            }
         };
 
         /*
@@ -219,7 +216,7 @@ namespace magic.endpoint.controller
                     return new ContentResult { Content = strResponse, StatusCode = response.Result };
 
                 if (response.Content is byte[] bytesResponse)
-                    return new FileContentResult(bytesResponse, "application/octet-stream");
+                    return new FileContentResult(bytesResponse, Response.ContentType);
 
                 if (response.Content is Stream streamResponse)
                     return new ObjectResult(response.Content) { StatusCode = response.Result };

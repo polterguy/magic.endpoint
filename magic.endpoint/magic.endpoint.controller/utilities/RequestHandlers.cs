@@ -3,8 +3,6 @@
  * See the enclosed LICENSE file for details.
  */
 
-using System.IO;
-using System.Text;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -28,7 +26,7 @@ namespace magic.endpoint.controller.utilities
             // Figuring out encoding of request.
             var encoding = GetEncoding(request);
 
-            // Reading body as JSON from request, now with correctly applied encoding.
+            // Reading body as JSON from request as a Stream, with correctly applied encoding.
             var args = new Node("", request.Body);
             args.Add(new Node("encoding", encoding));
             await signaler.SignalAsync("json2lambda-stream", args);
@@ -42,13 +40,7 @@ namespace magic.endpoint.controller.utilities
         internal static async Task<Node> UrlEncodedHandler(ISignaler signaler, HttpRequest request)
         {
             // URL encoded transmission, reading arguments as such.
-            var collection = await request.ReadFormAsync();
-            var args = new Node();
-            foreach (var idx in collection)
-            {
-                args.Add(new Node(idx.Key, idx.Value.ToString()));
-            }
-            return args;
+            return (await ReadForm(request)).Args;
         }
 
         /*
@@ -57,43 +49,23 @@ namespace magic.endpoint.controller.utilities
          */
         internal static async Task<Node> FormDataHandler(ISignaler signaler, HttpRequest request)
         {
-            // MIME content, reading arguments as such.
-            var collection = await request.ReadFormAsync();
-            var args = new Node();
-            foreach (var idx in collection)
-            {
-                args.Add(new Node(idx.Key, idx.Value.ToString()));
-            }
+            // MIME content, reading arguments as such first.
+            var collection = await ReadForm(request);
 
-            // Notice, we don't read files into memory, but simply transfer these as Stream objects to Hyperlambda.
-            foreach (var idxFile in collection.Files)
+            /*
+             * Then reading files.
+             *
+             * Notice, we don't read files into memory, but simply transfer these as Stream
+             * objects to Hyperlambda.
+             */
+            foreach (var idxFile in collection.Collection.Files)
             {
-                var fileStream = idxFile.OpenReadStream();
                 var tmp = new Node("file");
                 tmp.Add(new Node("name", idxFile.FileName));
-                tmp.Add(new Node("stream", fileStream));
-                args.Add(tmp);
+                tmp.Add(new Node("stream", idxFile.OpenReadStream()));
+                collection.Args.Add(tmp);
             }
-            return args;
-        }
-
-        /*
-         * Hyperlambda handler, reading Hyperlambda as raw string, creating a Node/Lambda collection
-         * where the Hyperlambda is passed in as a [body] argument.
-         */
-        internal static async Task<Node> HyperlambdaHandler(ISignaler signaler, HttpRequest request)
-        {
-            // Figuring out encoding of request.
-            var encoding = GetEncoding(request);
-
-            // Reading stream as Hyperlambda, using encoding provided by caller, defaulting to UTF8.
-            var args = new Node();
-            using (var reader = new StreamReader(request.Body, Encoding.GetEncoding(encoding)))
-            {  
-                var payload = await reader.ReadToEndAsync();
-                args.Add(new Node("body", payload));
-            }
-            return args;
+            return collection.Args;
         }
 
         #region [ -- Private helper methods -- ]
@@ -111,6 +83,20 @@ namespace magic.endpoint.controller.utilities
                 .Skip(1)
                 .FirstOrDefault()?
                 .Trim('"') ?? "utf-8";
+        }
+
+        /*
+         * Helper method to read form and return as Node/Lambda object, in addition to IFormCollection.
+         */
+        static async Task<(IFormCollection Collection, Node Args)> ReadForm(HttpRequest request)
+        {
+            var collection = await request.ReadFormAsync();
+            var args = new Node();
+            foreach (var idx in collection)
+            {
+                args.Add(new Node(idx.Key, idx.Value.ToString()));
+            }
+            return (collection, args);
         }
 
         #endregion
