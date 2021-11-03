@@ -201,7 +201,7 @@ namespace magic.endpoint.tests
         }
 
         [Fact]
-        public async Task Get_Throws()
+        public async Task Get_Throws_01()
         {
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
@@ -211,6 +211,26 @@ namespace magic.endpoint.tests
                 new MagicRequest
                 {
                     URL = "modules/throws",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                }));
+        }
+
+        [Fact]
+        public async Task Get_Throws_02()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
+
+            await Assert.ThrowsAsync<ArgumentException>(
+                async () => await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/throws_XXX",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -669,6 +689,30 @@ input2:int:5");
             Assert.Equal("Content-Type", result.Headers.First().Key);
             Assert.Equal("text/plain", result.Headers.First().Value);
             Assert.Equal("http://localhost", result.Content);
+        }
+
+        [Fact]
+        public async Task SetCookie()
+        {
+            var svc = Common.Initialize();
+            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
+
+            var result = await executor.ExecuteAsync(
+                new MagicRequest
+                {
+                    URL = "modules/set-cookie",
+                    Verb = "get",
+                    Query = new Dictionary<string, string>(),
+                    Headers = new Dictionary<string, string>(),
+                    Cookies = new Dictionary<string, string>(),
+                    Host = "localhost",
+                    Scheme = "http"
+                });
+
+            Assert.Equal(200, result.Result);
+            Assert.Single(result.Cookies);
+            Assert.Equal("foo", result.Cookies.First().Value);
+            Assert.Equal("http://gokk.no", result.Cookies.First().Domain);
         }
     }
 }
