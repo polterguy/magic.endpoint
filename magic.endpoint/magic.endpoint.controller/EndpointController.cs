@@ -194,6 +194,42 @@ namespace magic.endpoint.controller
          */
         IActionResult HandleResponse(MagicResponse response)
         {
+            // Decorating envelope of response which returns Content-Type to us.
+            var contentType = DecorateResponseEnvelope(response);
+
+            // If empty result, we return nothing.
+            if (response.Content == null)
+                return new StatusCodeResult(response.Result);
+
+            /*
+             * Figuring out how to return response, which depends upon its Content-Type, and
+             * whether or not we have a registered handler for specified Content-Type or not.
+             */
+            if (_responseHandlers.ContainsKey(contentType))
+            {
+                return _responseHandlers[contentType](response);
+            }
+            else
+            {
+                // Generic handler for everything except specialised handlers registered for different content types.
+                if (response.Content is string strResponse)
+                    return new ContentResult { Content = strResponse, StatusCode = response.Result };
+
+                if (response.Content is byte[] bytesResponse)
+                    return new FileContentResult(bytesResponse, "application/octet-stream");
+
+                if (response.Content is Stream streamResponse)
+                    return new ObjectResult(response.Content) { StatusCode = response.Result };
+
+                throw new ArgumentException("Unsupported return value from Hyperlambda");
+            }
+        }
+
+        /*
+         * Responsible for decorating envlope of HTTP response.
+         */
+        string DecorateResponseEnvelope(MagicResponse response)
+        {
             // Making sure we attach any explicitly added HTTP headers to the response.
             foreach (var idx in response.Headers)
             {
@@ -218,37 +254,18 @@ namespace magic.endpoint.controller
 
             // Unless explicitly overridden by service, we default Content-Type to JSON / UTF8.
             if (!response.Headers.ContainsKey("Content-Type") || string.IsNullOrEmpty(response.Headers["Content-Type"]))
-                Response.ContentType = "application/json; char-set=utf-8";
-
-            // Figuring out Content-Type (minus arguments).
-            var contentType = Response.ContentType
-                .Split(';')
-                .Select(x => x.Trim())
-                .FirstOrDefault()
-                .ToLowerInvariant();
-
-            // If empty result, we return nothing.
-            if (response.Content == null)
-                return new StatusCodeResult(response.Result);
-
-            /*
-             * Figuring out how to return response, which depends upon its Content-Type, and
-             * whether or not we have a registered handler for specified Content-Type or not.
-             */
-            if (_responseHandlers.ContainsKey(contentType))
             {
-                return _responseHandlers[contentType](response);
+                Response.ContentType = "application/json; char-set=utf-8";
+                return "application/json";
             }
             else
             {
-                if (response.Content is string strResponse)
-                    return new ContentResult { Content = strResponse, StatusCode = response.Result };
-                if (response.Content is byte[] bytesResponse)
-                    return new FileContentResult(bytesResponse, "application/octet-stream");
-                if (response.Content is Stream streamResponse)
-                    return new ObjectResult(response.Content) { StatusCode = response.Result };
-
-                throw new ArgumentException("Unsupported return value from Hyperlambda");
+                // Figuring out Content-Type (minus arguments).
+                return Response.ContentType
+                    .Split(';')
+                    .Select(x => x.Trim())
+                    .FirstOrDefault()
+                    .ToLowerInvariant();
             }
         }
 
