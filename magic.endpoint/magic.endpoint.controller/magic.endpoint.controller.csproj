@@ -31,7 +31,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.0" PrivateAssets="All" />
     <PackageReference Include="magic.node" Version="9.9.2" />
     <PackageReference Include="magic.signals.contracts" Version="9.9.2" />
     <ProjectReference Include="..\magic.endpoint.contracts\magic.endpoint.contracts.csproj" />
