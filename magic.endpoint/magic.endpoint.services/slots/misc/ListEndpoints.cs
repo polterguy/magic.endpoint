@@ -1,6 +1,5 @@
 ﻿/*
- * Aista Cloud, copyright Aista, Ltd. See the attached LICENSE file for details.
- * See the enclosed LICENSE file for details.
+ * Magic Cloud, copyright Aista, Ltd. See the attached LICENSE file for details.
  */
 
 using System;
