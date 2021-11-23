@@ -107,8 +107,9 @@ supply a payload to a GET or DELETE endpoint, an exception will be thrown, and a
 returned to the caller.
 
 **Notice** - To allow for _any_ arguments to your files, simply _ommit_ the **[.arguments]** node
-in your Hyperlambda althogether. Alternatively, you can also partially ignore arguments sanity checking
-of individual nodes, by setting their values to `*`, such as the following illustrates.
+in your Hyperlambda althogether, or supply an **[.arguments]** node and set its value to `*`.
+Alternatively, you can also _partially_ ignore arguments sanity checking of individual nodes,
+by setting their values to `*`, such as the following illustrates.
 
 ```
 .arguments
@@ -127,7 +128,7 @@ was passed in as.
 All arguments declared are considered optional, and the file will still resolve if the argument is not given,
 except of course the argument won't exist in the **[.arguments]** node. However, no argument _not_ found
 in your **[.arguments]** declaration can be provided during invocations, assuming you choose to declare
-an **[.arguments]** collection in your Hyperlambda endpoint file.
+an **[.arguments]** collection in your Hyperlambda endpoint file, and you don't set its value to `*`.
 
 To declare what type your arguments can be, set the value of the argument declaration node to
 the Hyperlambda type value inside of your arguments declaration, such as illustrated above.

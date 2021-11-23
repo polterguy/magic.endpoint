@@ -54,17 +54,17 @@ namespace magic.endpoint.services
             Node declaration,
             Dictionary<string, string> query)
         {
+            // Verifying caller wants to perform type checking at all.
+            var typeCheck = declaration != null && declaration.Get<string>() != "*";
+
+            // Looping through all arguments.
             foreach (var idxArg in query)
             {
                 // Retrieving string representation of argument.
                 object value = idxArg.Value;
 
-                /*
-                 * Checking if file contains a declaration at all.
-                 * This is done since by default all endpoints accepts all arguments,
-                 * unless an explicit [.arguments] declaration node is declared in the file.
-                 */
-                if (declaration != null)
+                // Verifying caller wants to perform type checking.
+                if (typeCheck)
                 {
                     var declarationType = declaration?
                         .Children
@@ -91,7 +91,7 @@ namespace magic.endpoint.services
              * This is done since by default all endpoints accepts all arguments,
              * unless an explicit [.arguments] declaration node is found.
              */
-            if (declaration != null)
+            if (declaration != null && declaration.Get<string>() != "*")
             {
                 foreach (var idxArg in payload.Children)
                 {
