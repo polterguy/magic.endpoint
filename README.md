@@ -7,7 +7,7 @@ is the class called `HttpExecutorAsync`, and the rest of this file will be focus
 implementation, since it is the default service implementation for Magic Endpoint - Although, technically, you
 could exchange this with your own implementation if you wish, completely changing the behaviour of the library
 if you wish to for instance resolve endpoints to Python, Ruby, or any other dynamic programming language
-implementation, and you have some means to execute such code from within a .Net 5 environment.
+implementation, and you have some means to execute such code from within a .Net 6 environment.
 
 The resolver will be invoked for all relative URLs starting with _"magic/"_, for the following verbs.
 
@@ -39,7 +39,7 @@ arguments you pass in, either as query parameters, or as your JSON payload, URL 
 is appended into your resulting lambda node's **[.arguments]** node as arguments to your Hyperlambda file
 invocation. The resolver will never return files directly, but is only able to execute Hyperlambda files,
 so by default there is no way to get static files, unless you create a Hyperlambda endpoint that returns
-a file somehow.
+a static file somehow.
 
 **Notice** - The default resolver will only allow the client to resolve files inside your _"/files/modules/"_
 folder and _"/files/system/"_ folder. This allows you to safely keep files that other parts of your system
