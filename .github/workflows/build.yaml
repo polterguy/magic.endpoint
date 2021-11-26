@@ -19,7 +19,7 @@ jobs:
           sonarProjectKey: polterguy_${{ github.event.repository.name }}
           sonarProjectName:  ${{ github.event.repository.name }}
           sonarOrganization: polterguy
-          dotnetBuildArguments: ./${{ github.event.repository.name }}/${{ github.event.repository.name }}.services/${{ github.event.repository.name }}.csproj
+          dotnetBuildArguments: ./${{ github.event.repository.name }}/${{ github.event.repository.name }}.services/${{ github.event.repository.name }}.services.csproj
           dotnetTestArguments: ./${{ github.event.repository.name }}/${{ github.event.repository.name }}.tests/${{ github.event.repository.name }}.tests.csproj --logger trx --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
           sonarBeginArguments: /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" -d:sonar.cs.vstest.reportsPaths="**/*.trx"
         env:
