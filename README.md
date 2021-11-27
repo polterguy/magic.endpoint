@@ -315,6 +315,7 @@ The source code for this repository can be found at [github.com/polterguy/magic.
 
 ## Quality gates
 
+- ![Build status](https://github.com/polterguy/magic.endpoint/actions/workflows/build.yaml/badge.svg)
 - [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=polterguy_magic.endpoint&metric=alert_status)](https://sonarcloud.io/dashboard?id=polterguy_magic.endpoint)
 - [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=polterguy_magic.endpoint&metric=bugs)](https://sonarcloud.io/dashboard?id=polterguy_magic.endpoint)
 - [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=polterguy_magic.endpoint&metric=code_smells)](https://sonarcloud.io/dashboard?id=polterguy_magic.endpoint)
