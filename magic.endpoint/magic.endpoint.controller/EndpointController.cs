@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using magic.node;
+using magic.node.extensions;
 using magic.signals.contracts;
 using magic.endpoint.contracts;
 using magic.endpoint.contracts.poco;
@@ -164,7 +165,7 @@ namespace magic.endpoint.controller
                     break; // Request is accepted, even though we don't care about its payload.
 
                 default:
-                    throw new ArgumentException($"Sorry, I don't know how to handle the {verb} HTTP verb");
+                    throw new HyperlambdaException($"Sorry, I don't know how to handle the {verb} HTTP verb");
             }
 
             // Executing request and transforming to an IActionResult accordingly.
@@ -226,7 +227,7 @@ namespace magic.endpoint.controller
                 if (response.Content is Stream streamResponse)
                     return new FileStreamResult(streamResponse, Response.ContentType);
 
-                throw new ArgumentException($"Unsupported return value from Hyperlambda, returning objects of type '{response.Content.GetType().FullName}' is not supported");
+                throw new HyperlambdaException($"Unsupported return value from Hyperlambda, returning objects of type '{response.Content.GetType().FullName}' is not supported");
             }
         }
 

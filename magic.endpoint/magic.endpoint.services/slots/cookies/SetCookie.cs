@@ -31,7 +31,7 @@ namespace magic.endpoint.services.slots.cookies
                 {
                     Name = input.GetEx<string>(),
                     Value = input.Children.FirstOrDefault(x => x.Name == "value")?.GetEx<string>() ??
-                        throw new ArgumentException("No [value] provided to [response.cookies.set]"),
+                        throw new HyperlambdaException("No [value] provided to [response.cookies.set]"),
                     Expires = input.Children.FirstOrDefault(x => x.Name == "expires")?.GetEx<DateTime>(),
                     HttpOnly = input.Children.FirstOrDefault(x => x.Name == "http-only")?.GetEx<bool>() ?? false,
                     Secure = input.Children.FirstOrDefault(x => x.Name == "secure")?.GetEx<bool>() ?? false,

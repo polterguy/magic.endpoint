@@ -3,8 +3,7 @@
  * Magic Cloud, copyright Aista, Ltd. See the attached LICENSE file for details.
  */
 
-using System;
-using System.Linq;
+using magic.node.extensions;
 
 namespace magic.endpoint.services.utilities
 {
@@ -66,7 +65,7 @@ namespace magic.endpoint.services.utilities
         {
             // Sanity checking invocation.
             if (!IsLegalHttpName(url))
-                throw new ArgumentException($"The URL '{url}' is not a legal URL for Magic");
+                throw new HyperlambdaException($"The URL '{url}' is not a legal URL for Magic");
 
             // Making sure we resolve "magic/" folder files correctly.
             return RootFolder + url.TrimStart('/') + $".{verb}.hl";

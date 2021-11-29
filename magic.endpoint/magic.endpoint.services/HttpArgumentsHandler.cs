@@ -70,7 +70,7 @@ namespace magic.endpoint.services
                         .Children
                         .FirstOrDefault(x => x.Name == idxArg.Key)?
                         .Get<string>() ??
-                        throw new ArgumentException($"I don't know how to handle the '{idxArg.Key}' query parameter");
+                        throw new HyperlambdaException($"I don't know how to handle the '{idxArg.Key}' query parameter");
 
                     // Converting argument to expected type.
                     value = Converter.ToObject(idxArg.Value, declarationType);
@@ -112,7 +112,7 @@ namespace magic.endpoint.services
         {
             // If declaration node is null here, it means endpoint has no means to handle the argument.
             if (declaration == null)
-                throw new ArgumentException($"I don't know how to handle the '{arg.Name}' argument");
+                throw new HyperlambdaException($"I don't know how to handle the '{arg.Name}' argument");
 
             var type = declaration.Get<string>();
             if (type == "*")

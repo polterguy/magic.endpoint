@@ -225,7 +225,7 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
-            await Assert.ThrowsAsync<ArgumentException>(
+            await Assert.ThrowsAsync<HyperlambdaException>(
                 async () => await executor.ExecuteAsync(
                 new MagicRequest
                 {
@@ -323,7 +323,7 @@ namespace magic.endpoint.tests
             var svc = Common.Initialize();
             var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
 
-            await Assert.ThrowsAsync<ArgumentException>(
+            await Assert.ThrowsAsync<HyperlambdaException>(
                 async () => await executor.ExecuteAsync(
                 new MagicRequest
                 {
