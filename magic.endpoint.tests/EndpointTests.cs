@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Xunit;
 using Newtonsoft.Json.Linq;
-using magic.lambda.exceptions;
+using magic.node.extensions;
 using magic.endpoint.contracts;
 using magic.endpoint.contracts.poco;
 using magic.node.extensions.hyperlambda;
