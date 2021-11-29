@@ -50,7 +50,13 @@ namespace magic.endpoint.controller
                 "application/json", RequestHandlers.JsonHandler
             },
             {
+                "application/x-json", RequestHandlers.JsonHandler
+            },
+            {
                 "application/x-www-form-urlencoded", RequestHandlers.UrlEncodedHandler
+            },
+            {
+                "application/www-form-urlencoded", RequestHandlers.UrlEncodedHandler
             },
             {
                 "multipart/form-data", RequestHandlers.FormDataHandler

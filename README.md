@@ -150,6 +150,8 @@ and internally within your endpoint's Hyperlambda code, you might therefor expec
 The POST, PUT and PATCH endpoints can intelligently handle any of the following Content-Types.
 
 * `application/json`
+* `application/x-json`
+* `application/www-form-urlencoded`
 * `application/x-www-form-urlencoded`
 * `multipart/form-data`
 
