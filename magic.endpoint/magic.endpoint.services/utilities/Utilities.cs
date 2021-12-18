@@ -63,7 +63,7 @@ namespace magic.endpoint.services.utilities
             if (!IsLegalHttpName(url))
                 throw new HyperlambdaException($"The URL '{url}' is not a legal URL for Magic");
 
-            // Making sure we resolve "magic/" folder files correctly.
+            // Turning specified URL into a full path of file.
             return rootResolver.AbsolutePath(url + $".{verb}.hl");
         }
     }
