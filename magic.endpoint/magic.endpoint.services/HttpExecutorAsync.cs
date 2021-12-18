@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using magic.node;
+using magic.node.contracts;
 using magic.node.extensions;
 using magic.signals.contracts;
 using magic.endpoint.contracts;
@@ -23,16 +24,22 @@ namespace magic.endpoint.services
     public class HttpExecutorAsync : IHttpExecutorAsync
     {
         readonly ISignaler _signaler;
+        IFileService _fileService;
         readonly IHttpArgumentsHandler _argumentsHandler;
 
         /// <summary>
         /// Creates an instance of your type.
         /// </summary>
         /// <param name="signaler">Signaler necessary to execute endpoint.</param>
+        /// <param name="fileService">Needed to resolve endpoint files.</param>
         /// <param name="argumentsHandler">Needed to attach arguments to endpoint invocation.</param>
-        public HttpExecutorAsync(ISignaler signaler, IHttpArgumentsHandler argumentsHandler)
+        public HttpExecutorAsync(
+            ISignaler signaler,
+            IFileService fileService,
+            IHttpArgumentsHandler argumentsHandler)
         {
             _signaler = signaler;
+            _fileService = fileService;
             _argumentsHandler = argumentsHandler;
         }
 
@@ -49,11 +56,11 @@ namespace magic.endpoint.services
 
             // Figuring out file to execute, and doing some basic sanity checking.
             var path = Utilities.GetEndpointFile(request.URL, request.Verb);
-            if (!File.Exists(path))
+            if (!_fileService.Exists(path))
                 return new MagicResponse { Result = 404 };
 
             // Creating our lambda object by loading Hyperlambda file.
-            var lambda = LoadHyperlambdaFile(path);
+            var lambda = HyperlambdaParser.Parse(_fileService.Load(path));
 
             // Applying interceptors.
             lambda = ApplyInterceptors(lambda, request.URL);
@@ -66,19 +73,6 @@ namespace magic.endpoint.services
         }
 
         #region [ -- Private helper methods -- ]
-
-        /*
-         * Loads the specified Hyperlambda file, braiding in any existing interceptors,
-         * and returns the resulting Node to caller.
-         */
-        Node LoadHyperlambdaFile(string path)
-        {
-            // Loading endpoint file and parsing as lambda into result node.
-            using (var stream = File.OpenRead(path))
-            {
-                return HyperlambdaParser.Parse(stream);
-            }
-        }
 
         /*
          * Applies interceptors to specified Node/Lambda object.
