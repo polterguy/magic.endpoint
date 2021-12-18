@@ -32,6 +32,7 @@ namespace magic.endpoint.services
         /// </summary>
         /// <param name="signaler">Signaler necessary to execute endpoint.</param>
         /// <param name="fileService">Needed to resolve endpoint files.</param>
+        /// <param name="rootResolver">Needed to resolve root folder names.</param>
         /// <param name="argumentsHandler">Needed to attach arguments to endpoint invocation.</param>
         public HttpExecutorAsync(
             ISignaler signaler,
@@ -57,7 +58,7 @@ namespace magic.endpoint.services
                 return new MagicResponse { Result = 401 };
 
             // Figuring out file to execute, and doing some basic sanity checking.
-            var path = Utilities.GetEndpointFile(_rootResolver, request.URL, request.Verb);
+            var path = Utilities.GetEndpointFilePath(_rootResolver, request.URL, request.Verb);
             if (!_fileService.Exists(path))
                 return new MagicResponse { Result = 404 };
 

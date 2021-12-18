@@ -54,7 +54,7 @@ namespace magic.endpoint.services.utilities
          * Returns the path to the endpoints file matching the specified
          * URL and verb.
          */
-        internal static string GetEndpointFile(
+        internal static string GetEndpointFilePath(
             IRootResolver rootResolver,
             string url,
             string verb)
