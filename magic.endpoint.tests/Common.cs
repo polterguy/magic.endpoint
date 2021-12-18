@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using magic.node;
+using magic.node.services;
+using magic.node.contracts;
 using magic.signals.services;
 using magic.signals.contracts;
 using magic.endpoint.services;
@@ -31,20 +33,39 @@ namespace magic.endpoint.tests
 
         #region [ -- Private helper methods -- ]
 
+        private class RootResolver : IRootResolver
+        {
+            public string RootFolder => AppDomain.CurrentDomain.BaseDirectory;
+
+            public string AbsolutePath(string path)
+            {
+                return RootFolder + path.TrimStart(new char[] { '/', '\\' });
+            }
+
+            public string RelativePath(string path)
+            {
+                return path.Substring(RootFolder.Length - 1);
+            }
+        }
+
         public static IServiceProvider Initialize()
         {
             var services = new ServiceCollection();
+
             var mockConfiguration = new Mock<IConfiguration>();
             mockConfiguration.SetupGet(x => x[It.IsAny<string>()]).Returns("60");
             services.AddTransient((svc) => mockConfiguration.Object);
+
             services.AddTransient<ISignaler, Signaler>();
             services.AddTransient<IHttpArgumentsHandler, HttpArgumentsHandler>();
             var types = new SignalsProvider(InstantiateAllTypes<ISlot>(services));
             services.AddTransient<ISignalsProvider>((svc) => types);
             services.AddTransient<IHttpExecutorAsync, HttpExecutorAsync>();
-            var provider = services.BuildServiceProvider();
-            Utilities.RootFolder = AppDomain.CurrentDomain.BaseDirectory;
-            return provider;
+            services.AddTransient<IFileService, FileService>();
+            services.AddTransient<IFolderService, FolderService>();
+            services.AddTransient<IRootResolver, RootResolver>();
+
+            return services.BuildServiceProvider();
         }
 
         static IEnumerable<Type> InstantiateAllTypes<T>(ServiceCollection services) where T : class

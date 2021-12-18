@@ -23,8 +23,8 @@ namespace magic.endpoint.services
     public class HttpExecutorAsync : IHttpExecutorAsync
     {
         readonly ISignaler _signaler;
-        IFileService _fileService;
-        IRootResolver _rootResolver;
+        readonly IFileService _fileService;
+        readonly IRootResolver _rootResolver;
         readonly IHttpArgumentsHandler _argumentsHandler;
 
         /// <summary>
