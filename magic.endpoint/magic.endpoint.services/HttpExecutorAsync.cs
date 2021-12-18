@@ -3,7 +3,6 @@
  */
 
 using System;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using magic.node;
@@ -63,10 +62,10 @@ namespace magic.endpoint.services
                 return new MagicResponse { Result = 404 };
 
             // Creating our lambda object by loading Hyperlambda file.
-            var lambda = HyperlambdaParser.Parse(_fileService.Load(path));
+            var lambda = HyperlambdaParser.Parse(await _fileService.LoadAsync(path));
 
             // Applying interceptors.
-            lambda = ApplyInterceptors(lambda, request.URL);
+            lambda = await ApplyInterceptors(lambda, request.URL);
 
             // Attaching arguments.
             _argumentsHandler.Attach(lambda, request.Query, request.Payload);
@@ -80,7 +79,7 @@ namespace magic.endpoint.services
         /*
          * Applies interceptors to specified Node/Lambda object.
          */
-        Node ApplyInterceptors(Node result, string url)
+        async Task<Node> ApplyInterceptors(Node result, string url)
         {
             // Checking to see if interceptors exists recursively upwards in folder hierarchy.
             var splits = url.Split(new char [] {'/'}, StringSplitOptions.RemoveEmptyEntries);
@@ -93,8 +92,8 @@ namespace magic.endpoint.services
             {
                 // Checking if "current-folder/interceptor.hl" file exists.
                 var current = _rootResolver.RootFolder + string.Join("/", folders) + "/interceptor.hl";
-                if (File.Exists(current))
-                    result = ApplyInterceptor(result, current);
+                if (_fileService.Exists(current))
+                    result = await ApplyInterceptor(result, current);
                 else if (folders.Any())
                     break; // We're done, no more interceptors!
 
@@ -109,47 +108,44 @@ namespace magic.endpoint.services
         /*
          * Applies the specified interceptor and returns the transformed Node/Lambda result.
          */
-        Node ApplyInterceptor(Node lambda, string interceptorFile)
+        async Task<Node> ApplyInterceptor(Node lambda, string interceptorFile)
         {
-            using (var interceptStream = File.OpenRead(interceptorFile))
+            // Getting interceptor lambda.
+            var interceptNode = HyperlambdaParser.Parse(await _fileService.LoadAsync(interceptorFile));
+
+            // Moving [.arguments] from endpoint lambda to the top of interceptor lambda if existing.
+            var args = lambda
+                .Children
+                .Where(x =>
+                    x.Name == ".arguments" ||
+                    x.Name == ".description" ||
+                    x.Name == ".type" ||
+                    x.Name == "auth.ticket.verify" ||
+                    x.Name.StartsWith("validators."));
+
+            // Notice, reversing arguments nodes makes sure we apply arguments in order of appearance.
+            foreach (var idx in args.Reverse().ToList())
             {
-                // Getting interceptor lambda.
-                var interceptNode = HyperlambdaParser.Parse(interceptStream);
-
-                // Moving [.arguments] from endpoint lambda to the top of interceptor lambda if existing.
-                var args = lambda
-                    .Children
-                    .Where(x =>
-                        x.Name == ".arguments" ||
-                        x.Name == ".description" ||
-                        x.Name == ".type" ||
-                        x.Name == "auth.ticket.verify" ||
-                        x.Name.StartsWith("validators."));
-
-                // Notice, reversing arguments nodes makes sure we apply arguments in order of appearance.
-                foreach (var idx in args.Reverse().ToList())
-                {
-                    interceptNode.Insert(0, idx); // Notice, will detach the argument from its original position!
-                }
-
-                // Moving endpoint Lambda to position before any [.interceptor] node found in interceptor lambda.
-                foreach (var idxLambda in new Expression("**/.interceptor").Evaluate(interceptNode).ToList())
-                {
-                    // Iterating through each node in current result and injecting before currently iterated [.lambda] node.
-                    foreach (var idx in lambda.Children)
-                    {
-                        // This logic ensures we keep existing order without any fuzz.
-                        // By cloning node we also support having multiple [.interceptor] nodes.
-                        idxLambda.InsertBefore(idx.Clone());
-                    }
-
-                    // Removing currently iterated [.interceptor] node in interceptor lambda object.
-                    idxLambda.Parent.Remove(idxLambda);
-                }
-
-                // Returning interceptor Node/Lambda which is now the root of the execution Lambda object.
-                return interceptNode;
+                interceptNode.Insert(0, idx); // Notice, will detach the argument from its original position!
             }
+
+            // Moving endpoint Lambda to position before any [.interceptor] node found in interceptor lambda.
+            foreach (var idxLambda in new Expression("**/.interceptor").Evaluate(interceptNode).ToList())
+            {
+                // Iterating through each node in current result and injecting before currently iterated [.lambda] node.
+                foreach (var idx in lambda.Children)
+                {
+                    // This logic ensures we keep existing order without any fuzz.
+                    // By cloning node we also support having multiple [.interceptor] nodes.
+                    idxLambda.InsertBefore(idx.Clone());
+                }
+
+                // Removing currently iterated [.interceptor] node in interceptor lambda object.
+                idxLambda.Parent.Remove(idxLambda);
+            }
+
+            // Returning interceptor Node/Lambda which is now the root of the execution Lambda object.
+            return interceptNode;
         }
 
         /*
