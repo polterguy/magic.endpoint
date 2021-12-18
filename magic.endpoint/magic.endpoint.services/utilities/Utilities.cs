@@ -64,7 +64,7 @@ namespace magic.endpoint.services.utilities
                 throw new HyperlambdaException($"The URL '{url}' is not a legal URL for Magic");
 
             // Making sure we resolve "magic/" folder files correctly.
-            return rootResolver.RootFolder + url.TrimStart('/') + $".{verb}.hl";
+            return rootResolver.AbsolutePath(url + $".{verb}.hl");
         }
     }
 }

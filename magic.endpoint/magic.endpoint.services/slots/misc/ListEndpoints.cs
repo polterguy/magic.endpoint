@@ -69,11 +69,11 @@ namespace magic.endpoint.services.slots.misc
             input.AddRange(
                 await HandleFolder(
                     _rootResolver.RootFolder,
-                    _rootResolver.RootFolder + "system/"));
+                    _rootResolver.AbsolutePath("system/")));
             input.AddRange(
                 await HandleFolder(
                     _rootResolver.RootFolder,
-                    _rootResolver.RootFolder + "modules/"));
+                    _rootResolver.AbsolutePath("modules/")));
         }
 
         /// <summary>
@@ -87,11 +87,11 @@ namespace magic.endpoint.services.slots.misc
             input.AddRange(
                 HandleFolder(
                     _rootResolver.RootFolder,
-                    _rootResolver.RootFolder + "system/").GetAwaiter().GetResult());
+                    _rootResolver.AbsolutePath("system/")).GetAwaiter().GetResult());
             input.AddRange(
                 HandleFolder(
                     _rootResolver.RootFolder,
-                    _rootResolver.RootFolder + "modules/").GetAwaiter().GetResult());
+                    _rootResolver.AbsolutePath("modules/")).GetAwaiter().GetResult());
         }
 
         /// <summary>
@@ -194,7 +194,7 @@ namespace magic.endpoint.services.slots.misc
         {
             // Creating our result node, and making sure we return path and verb.
             var result = new Node("");
-            result.Add(new Node("path", "magic/" + path.Replace("\\", "/"))); // Must add "Route" parts.
+            result.Add(new Node("path", "magic/" + path)); // Must add "Route" parts.
             result.Add(new Node("verb", verb));
 
             // Ensuring we don't crash the whole meta retrieval bugger if there is an error in one of our endpoints.

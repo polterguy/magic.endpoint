@@ -92,7 +92,7 @@ namespace magic.endpoint.services
             while (true)
             {
                 // Checking if "current-folder/interceptor.hl" file exists.
-                var current = _rootResolver.RootFolder + string.Join("/", folders) + "/interceptor.hl";
+                var current = _rootResolver.AbsolutePath(string.Join("/", folders) + "/interceptor.hl");
                 if (_fileService.Exists(current))
                     result = await ApplyInterceptor(result, current);
                 else if (folders.Any())
