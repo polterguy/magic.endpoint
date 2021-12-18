@@ -3,6 +3,7 @@
  * Magic Cloud, copyright Aista, Ltd. See the attached LICENSE file for details.
  */
 
+using magic.node.contracts;
 using magic.node.extensions;
 
 namespace magic.endpoint.services.utilities
@@ -13,14 +14,6 @@ namespace magic.endpoint.services.utilities
     /// </summary>
     public static class Utilities
     {
-        /// <summary>
-        /// The root folder from where to resolve dynamic Hyperlambda files from.
-        /// 
-        /// Notice, this property needs to be set by client code before evaluating dynamic
-        /// Hyperlambda files.
-        /// </summary>
-        public static string RootFolder { get; set; }
-
         /*
          * Returns true if request URL contains only legal characters.
          */
@@ -61,14 +54,17 @@ namespace magic.endpoint.services.utilities
          * Returns the path to the endpoints file matching the specified
          * URL and verb.
          */
-        internal static string GetEndpointFile(string url, string verb)
+        internal static string GetEndpointFile(
+            IRootResolver rootResolver,
+            string url,
+            string verb)
         {
             // Sanity checking invocation.
             if (!IsLegalHttpName(url))
                 throw new HyperlambdaException($"The URL '{url}' is not a legal URL for Magic");
 
             // Making sure we resolve "magic/" folder files correctly.
-            return RootFolder + url.TrimStart('/') + $".{verb}.hl";
+            return rootResolver.RootFolder + url.TrimStart('/') + $".{verb}.hl";
         }
     }
 }

@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using magic.node;
+using magic.node.contracts;
 using magic.node.extensions;
 using magic.signals.contracts;
 using magic.endpoint.services.utilities;
@@ -37,6 +38,26 @@ namespace magic.endpoint.services.slots.misc
             (lambda, verb, args) => MetaRetrievers.Accepts(lambda, verb, args),
         };
 
+        readonly IRootResolver _rootResolver;
+        readonly IFolderService _folderService;
+        readonly IFileService _fileService;
+
+        /// <summary>
+        /// Creates an instance of your object
+        /// </summary>
+        /// <param name="rootResolver">Needed to resolve root folder path for files and folders.</param>
+        /// <param name="folderService">Needed to resolver folders in system.</param>
+        /// <param name="fileService">Needed to resolve files in system.</param>
+        public ListEndpoints(
+            IRootResolver rootResolver,
+            IFolderService folderService,
+            IFileService fileService)
+        {
+            _rootResolver = rootResolver;
+            _folderService = folderService;
+            _fileService = fileService;
+        }
+
         /// <summary>
         /// Implementation of your slot.
         /// </summary>
@@ -45,11 +66,11 @@ namespace magic.endpoint.services.slots.misc
         public void Signal(ISignaler signaler, Node input)
         {
             input.AddRange(HandleFolder(
-                Utilities.RootFolder,
-                Utilities.RootFolder + "system/").ToList());
+                _rootResolver.RootFolder,
+                _rootResolver.RootFolder + "system/").ToList());
             input.AddRange(HandleFolder(
-                Utilities.RootFolder,
-                Utilities.RootFolder + "modules/").ToList());
+                _rootResolver.RootFolder,
+                _rootResolver.RootFolder + "modules/").ToList());
         }
 
         /// <summary>
@@ -75,11 +96,10 @@ namespace magic.endpoint.services.slots.misc
         IEnumerable<Node> HandleFolder(string rootFolder, string currentFolder)
         {
             // Looping through each folder inside of "currentFolder".
-            var folders = Directory
-                .GetDirectories(currentFolder)
+            var folders = _folderService
+                .ListFolders(currentFolder)
                 .Select(x => x.Replace("\\", "/"))
                 .ToList();
-            folders.Sort();
             foreach (var idxFolder in folders)
             {
                 // Making sure files within this folder is legally resolved.
@@ -107,8 +127,9 @@ namespace magic.endpoint.services.slots.misc
         IEnumerable<Node> HandleFiles(string rootFolder, string folder)
         {
             // Looping through each file in current folder.
-            var files = Directory
-                .GetFiles(folder, "*.hl")
+            var files = _fileService
+                .ListFiles(folder)
+                .Where(x => Path.GetExtension(x) == ".hl")
                 .Select(x => x.Replace("\\", "/"))
                 .ToList();
             files.Sort();
@@ -158,20 +179,17 @@ namespace magic.endpoint.services.slots.misc
                  * We need to inspect content of file to retrieve meta information about it,
                  * such as authorization, description, etc.
                  */
-                using (var stream = File.OpenRead(filename))
-                {
-                    var lambda = HyperlambdaParser.Parse(stream);
+                var lambda = HyperlambdaParser.Parse(_fileService.Load(filename));
 
-                    // Extracting different existing components from file.
-                    var args = GetInputArguments(lambda, verb);
-                    result.AddRange(new Node[] {
-                        args,
-                        GetAuthorization(lambda),
-                        GetDescription(lambda),
-                    }.Where(x => x!= null));
+                // Extracting different existing components from file.
+                var args = GetInputArguments(lambda, verb);
+                result.AddRange(new Node[] {
+                    args,
+                    GetAuthorization(lambda),
+                    GetDescription(lambda),
+                }.Where(x => x!= null));
 
-                    result.AddRange(GetEndpointCustomInformation(lambda, verb, args));
-                }
+                result.AddRange(GetEndpointCustomInformation(lambda, verb, args));
             }
             catch(Exception error)
             {

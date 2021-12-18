@@ -25,6 +25,7 @@ namespace magic.endpoint.services
     {
         readonly ISignaler _signaler;
         IFileService _fileService;
+        IRootResolver _rootResolver;
         readonly IHttpArgumentsHandler _argumentsHandler;
 
         /// <summary>
@@ -36,10 +37,12 @@ namespace magic.endpoint.services
         public HttpExecutorAsync(
             ISignaler signaler,
             IFileService fileService,
+            IRootResolver rootResolver,
             IHttpArgumentsHandler argumentsHandler)
         {
             _signaler = signaler;
             _fileService = fileService;
+            _rootResolver = rootResolver;
             _argumentsHandler = argumentsHandler;
         }
 
@@ -55,7 +58,7 @@ namespace magic.endpoint.services
                 return new MagicResponse { Result = 401 };
 
             // Figuring out file to execute, and doing some basic sanity checking.
-            var path = Utilities.GetEndpointFile(request.URL, request.Verb);
+            var path = Utilities.GetEndpointFile(_rootResolver, request.URL, request.Verb);
             if (!_fileService.Exists(path))
                 return new MagicResponse { Result = 404 };
 
@@ -89,7 +92,7 @@ namespace magic.endpoint.services
             while (true)
             {
                 // Checking if "current-folder/interceptor.hl" file exists.
-                var current = Utilities.RootFolder + string.Join("/", folders) + "/interceptor.hl";
+                var current = _rootResolver.RootFolder + string.Join("/", folders) + "/interceptor.hl";
                 if (File.Exists(current))
                     result = ApplyInterceptor(result, current);
                 else if (folders.Any())
