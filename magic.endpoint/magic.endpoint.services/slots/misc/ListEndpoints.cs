@@ -3,8 +3,8 @@
  */
 
 using System;
-using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using magic.node;
 using magic.node.contracts;
@@ -21,7 +21,7 @@ namespace magic.endpoint.services.slots.misc
     /// for your application, in addition to their meta information.
     /// </summary>
     [Slot(Name = "endpoints.list")]
-    public class ListEndpoints : ISlot
+    public class ListEndpoints : ISlot, ISlotAsync
     {
         /*
          * Resolvers for meta data.
@@ -63,14 +63,35 @@ namespace magic.endpoint.services.slots.misc
         /// </summary>
         /// <param name="signaler">Signaler that invoked your slot.</param>
         /// <param name="input">Arguments to your slot.</param>
+        /// <returns>Awaitable task</returns>
+        public async Task SignalAsync(ISignaler signaler, Node input)
+        {
+            input.AddRange(
+                await HandleFolder(
+                    _rootResolver.RootFolder,
+                    _rootResolver.RootFolder + "system/"));
+            input.AddRange(
+                await HandleFolder(
+                    _rootResolver.RootFolder,
+                    _rootResolver.RootFolder + "modules/"));
+        }
+
+        /// <summary>
+        /// Implementation of your slot.
+        /// </summary>
+        /// <param name="signaler">Signaler that invoked your slot.</param>
+        /// <param name="input">Arguments to your slot.</param>
+        /// <returns>Awaitable task</returns>
         public void Signal(ISignaler signaler, Node input)
         {
-            input.AddRange(HandleFolder(
-                _rootResolver.RootFolder,
-                _rootResolver.RootFolder + "system/").ToList());
-            input.AddRange(HandleFolder(
-                _rootResolver.RootFolder,
-                _rootResolver.RootFolder + "modules/").ToList());
+            input.AddRange(
+                HandleFolder(
+                    _rootResolver.RootFolder,
+                    _rootResolver.RootFolder + "system/").GetAwaiter().GetResult());
+            input.AddRange(
+                HandleFolder(
+                    _rootResolver.RootFolder,
+                    _rootResolver.RootFolder + "modules/").GetAwaiter().GetResult());
         }
 
         /// <summary>
@@ -93,13 +114,13 @@ namespace magic.endpoint.services.slots.misc
          * Recursively traverses your folder for any dynamic Hyperlambda
          * endpoints, and returns the result to caller.
          */
-        IEnumerable<Node> HandleFolder(string rootFolder, string currentFolder)
+        async Task<List<Node>> HandleFolder(string rootFolder, string currentFolder)
         {
+            // Buffer to keep returned value.
+            var result = new List<Node>();
+
             // Looping through each folder inside of "currentFolder".
-            var folders = _folderService
-                .ListFolders(currentFolder)
-                .Select(x => x.Replace("\\", "/"))
-                .ToList();
+            var folders = await _folderService.ListFoldersAsync(currentFolder);
             foreach (var idxFolder in folders)
             {
                 // Making sure files within this folder is legally resolved.
@@ -107,32 +128,33 @@ namespace magic.endpoint.services.slots.misc
                 if (Utilities.IsLegalHttpName(folder))
                 {
                     // Retrieves all files inside of currently iterated folder.
-                    foreach (var idxFile in HandleFiles(rootFolder, idxFolder))
+                    foreach (var idxFile in await HandleFiles(rootFolder, idxFolder))
                     {
-                        yield return idxFile;
+                        result.Add(idxFile);
                     }
 
                     // Recursively retrieving inner folders of currently iterated folder.
-                    foreach (var idx in HandleFolder(rootFolder, idxFolder))
+                    foreach (var idxFile in await HandleFolder(rootFolder, idxFolder))
                     {
-                        yield return idx;
+                        result.Add(idxFile);
                     }
                 }
             }
+
+            // Returning result to caller.
+            return result;
         }
 
         /*
          * Returns all fildes from current folder that matches some HTTP verb.
          */
-        IEnumerable<Node> HandleFiles(string rootFolder, string folder)
+        async Task<List<Node>> HandleFiles(string rootFolder, string folder)
         {
+            // Buffer to hold result.
+            var result = new List<Node>();
+
             // Looping through each file in current folder.
-            var files = _fileService
-                .ListFiles(folder)
-                .Where(x => Path.GetExtension(x) == ".hl")
-                .Select(x => x.Replace("\\", "/"))
-                .ToList();
-            files.Sort();
+            var files = await _fileService.ListFilesAsync(folder, ".hl");
             foreach (var idxFile in files)
             {
                 // Removing the root folder, to return only relativ filename back to caller.
@@ -151,18 +173,21 @@ namespace magic.endpoint.services.slots.misc
                         case "post":
                         case "get":
                         case "socket":
-                            yield return GetFileMetaData(entities[0], entities[1], idxFile);
+                            result.Add(await GetFileMetaData(entities[0], entities[1], idxFile));
                             break;
                     }
                 }
             }
+
+            // Returning result to caller.
+            return result;
         }
 
         /*
          * Returns a single node, representing the endpoint given
          * as verb/filename/path, and its associated meta information.
          */
-        Node GetFileMetaData(
+        async Task<Node> GetFileMetaData(
             string path,
             string verb,
             string filename)
@@ -179,7 +204,7 @@ namespace magic.endpoint.services.slots.misc
                  * We need to inspect content of file to retrieve meta information about it,
                  * such as authorization, description, etc.
                  */
-                var lambda = HyperlambdaParser.Parse(_fileService.Load(filename));
+                var lambda = HyperlambdaParser.Parse(await _fileService.LoadAsync(filename));
 
                 // Extracting different existing components from file.
                 var args = GetInputArguments(lambda, verb);
@@ -264,7 +289,11 @@ namespace magic.endpoint.services.slots.misc
          */
         static Node GetDescription(Node lambda)
         {
-            var result = lambda.Children.FirstOrDefault(x => x.Name == ".description")?.Get<string>();
+            var result = lambda
+                .Children
+                .FirstOrDefault(x => x.Name == ".description")?
+                .Get<string>();
+
             if (!string.IsNullOrEmpty(result))
                 return new Node("description", result);
             return null;
