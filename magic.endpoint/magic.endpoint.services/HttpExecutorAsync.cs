@@ -95,7 +95,9 @@ namespace magic.endpoint.services
                 var current = _rootResolver.AbsolutePath(string.Join("/", folders) + "/interceptor.hl");
                 if (_fileService.Exists(current))
                     result = await ApplyInterceptor(result, current);
-                else if (folders.Any())
+
+                // Checking if we're done, and at root folder, at which point we break while loop.
+                if (!folders.Any())
                     break; // We're done, no more interceptors!
 
                 // Traversing upwards in hierarchy to be able to nest interceptors upwards in hierarchy.
