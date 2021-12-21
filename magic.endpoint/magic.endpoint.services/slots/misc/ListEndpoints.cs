@@ -68,11 +68,11 @@ namespace magic.endpoint.services.slots.misc
         {
             input.AddRange(
                 await HandleFolder(
-                    _rootResolver.RootFolder,
+                    _rootResolver.DynamicFiles,
                     _rootResolver.AbsolutePath("system/")));
             input.AddRange(
                 await HandleFolder(
-                    _rootResolver.RootFolder,
+                    _rootResolver.DynamicFiles,
                     _rootResolver.AbsolutePath("modules/")));
         }
 
@@ -86,11 +86,11 @@ namespace magic.endpoint.services.slots.misc
         {
             input.AddRange(
                 HandleFolder(
-                    _rootResolver.RootFolder,
+                    _rootResolver.DynamicFiles,
                     _rootResolver.AbsolutePath("system/")).GetAwaiter().GetResult());
             input.AddRange(
                 HandleFolder(
-                    _rootResolver.RootFolder,
+                    _rootResolver.DynamicFiles,
                     _rootResolver.AbsolutePath("modules/")).GetAwaiter().GetResult());
         }
 

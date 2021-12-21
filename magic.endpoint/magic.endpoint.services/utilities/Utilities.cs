@@ -9,7 +9,7 @@ using magic.node.extensions;
 namespace magic.endpoint.services.utilities
 {
     /// <summary>
-    /// Utility class, mostly here to retrieve and set the RootFolder of where
+    /// Utility class, mostly here to retrieve and set the DynamicFiles of where
     /// to resolve Hyperlambda files.
     /// </summary>
     public static class Utilities
