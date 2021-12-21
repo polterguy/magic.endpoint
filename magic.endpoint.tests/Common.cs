@@ -36,8 +36,14 @@ namespace magic.endpoint.tests
         private class RootResolver : IRootResolver
         {
             public string RootFolder => AppDomain.CurrentDomain.BaseDirectory;
+            public string AbsoluteRootFolder => AppDomain.CurrentDomain.BaseDirectory;
 
             public string AbsolutePath(string path)
+            {
+                return RootFolder + path.TrimStart(new char[] { '/', '\\' });
+            }
+
+            public string RootPath(string path)
             {
                 return RootFolder + path.TrimStart(new char[] { '/', '\\' });
             }
@@ -52,7 +58,7 @@ namespace magic.endpoint.tests
         {
             var services = new ServiceCollection();
 
-            var mockConfiguration = new Mock<IConfiguration>();
+            var mockConfiguration = new Mock<IMagicConfiguration>();
             mockConfiguration.SetupGet(x => x[It.IsAny<string>()]).Returns("60");
             services.AddTransient((svc) => mockConfiguration.Object);
 
