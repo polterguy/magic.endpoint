@@ -67,11 +67,11 @@ namespace magic.endpoint.services.slots.misc
         public async Task SignalAsync(ISignaler signaler, Node input)
         {
             input.AddRange(
-                await HandleFolder(
+                await HandleFolderAsync(
                     _rootResolver.DynamicFiles,
                     _rootResolver.AbsolutePath("system/")));
             input.AddRange(
-                await HandleFolder(
+                await HandleFolderAsync(
                     _rootResolver.DynamicFiles,
                     _rootResolver.AbsolutePath("modules/")));
         }
@@ -85,11 +85,11 @@ namespace magic.endpoint.services.slots.misc
         public void Signal(ISignaler signaler, Node input)
         {
             input.AddRange(
-                HandleFolder(
+                HandleFolderAsync(
                     _rootResolver.DynamicFiles,
                     _rootResolver.AbsolutePath("system/")).GetAwaiter().GetResult());
             input.AddRange(
-                HandleFolder(
+                HandleFolderAsync(
                     _rootResolver.DynamicFiles,
                     _rootResolver.AbsolutePath("modules/")).GetAwaiter().GetResult());
         }
@@ -114,7 +114,7 @@ namespace magic.endpoint.services.slots.misc
          * Recursively traverses your folder for any dynamic Hyperlambda
          * endpoints, and returns the result to caller.
          */
-        async Task<List<Node>> HandleFolder(string rootFolder, string currentFolder)
+        async Task<List<Node>> HandleFolderAsync(string rootFolder, string currentFolder)
         {
             // Buffer to keep returned value.
             var result = new List<Node>();
@@ -134,7 +134,7 @@ namespace magic.endpoint.services.slots.misc
                     }
 
                     // Recursively retrieving inner folders of currently iterated folder.
-                    foreach (var idxFile in await HandleFolder(rootFolder, idxFolder))
+                    foreach (var idxFile in await HandleFolderAsync(rootFolder, idxFolder))
                     {
                         result.Add(idxFile);
                     }
