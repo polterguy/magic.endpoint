@@ -194,16 +194,15 @@ namespace magic.endpoint.services.slots.meta
                     .Children
                     .FirstOrDefault(x => x.Name == ".foreign-keys")?
                     .Children
-                    .Where(x => x.Children.Any(x2 => x.Name == "column" && x2.GetEx<string>() == idx.Name)) ??
-                        Array.Empty<Node>();
+                    .Where(x => x.Children.Any(x2 => x.Name == "column" && x2.GetEx<string>() == idx.Name)) ?? Array.Empty<Node>();
 
-                foreach (var idxFk in foreignKeys)
+                foreach (var idxFk in foreignKeys.Select(x => x.Children))
                 {
                     var fkNode = new Node("lookup");
-                    fkNode.Add(new Node("table", idxFk.Children.FirstOrDefault(x => x.Name == "table")?.GetEx<string>()));
-                    fkNode.Add(new Node("key", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_column")?.GetEx<string>()));
-                    fkNode.Add(new Node("name", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_name")?.GetEx<string>()));
-                    fkNode.Add(new Node("long", idxFk.Children.FirstOrDefault(x => x.Name == "long")?.GetEx<bool>()));
+                    fkNode.Add(new Node("table", idxFk.FirstOrDefault(x => x.Name == "table")?.GetEx<string>()));
+                    fkNode.Add(new Node("key", idxFk.FirstOrDefault(x => x.Name == "foreign_column")?.GetEx<string>()));
+                    fkNode.Add(new Node("name", idxFk.FirstOrDefault(x => x.Name == "foreign_name")?.GetEx<string>()));
+                    fkNode.Add(new Node("long", idxFk.FirstOrDefault(x => x.Name == "long")?.GetEx<bool>()));
                     node.Add(fkNode);
                 }
 
