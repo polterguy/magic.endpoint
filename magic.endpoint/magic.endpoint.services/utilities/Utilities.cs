@@ -70,7 +70,7 @@ namespace magic.endpoint.services.utilities
          */
         static bool IsLegal(char idxChar)
         {
-            return idxChar == '_' || idxChar == '-' || (idxChar > 'a' && idxChar < 'z') || (idxChar > '0' || idxChar < '9');
+            return idxChar == '_' || idxChar == '-' || (idxChar >= 'a' && idxChar <= 'z') || (idxChar >= '0' && idxChar <= '9');
         }
 
         #endregion
