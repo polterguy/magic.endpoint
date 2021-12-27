@@ -242,21 +242,19 @@ namespace magic.endpoint.services.slots.misc
                     if (verb == "post" || verb == "put")
                     {
                         // Attaching foreign key information if possible.
-                        var fkNodes = lambda.Children.FirstOrDefault(x => x.Name == ".foreign-keys");
-                        if (fkNodes != null)
+                        var fkNodes = lambda
+                            .Children
+                            .FirstOrDefault(x => x.Name == ".foreign-keys")?
+                            .Children
+                            .Where(x => x.Children.Any(x2 => x2.Name == "column" && x2.GetEx<string>() == idx.Name)) ?? Array.Empty<Node>();
+                        foreach (var idxFk in fkNodes)
                         {
-                            foreach (var idxFk in fkNodes.Children)
-                            {
-                                if (idxFk.Children.Any(x => x.Name == "column" && x.GetEx<string>() == idx.Name))
-                                {
-                                    var fkNode = new Node("lookup");
-                                    fkNode.Add(new Node("table", idxFk.Children.FirstOrDefault(x => x.Name == "table")?.GetEx<string>()));
-                                    fkNode.Add(new Node("key", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_column")?.GetEx<string>()));
-                                    fkNode.Add(new Node("name", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_name")?.GetEx<string>()));
-                                    fkNode.Add(new Node("long", idxFk.Children.FirstOrDefault(x => x.Name == "long")?.GetEx<bool>()));
-                                    node.Add(fkNode);
-                                }
-                            }
+                            var fkNode = new Node("lookup");
+                            fkNode.Add(new Node("table", idxFk.Children.FirstOrDefault(x => x.Name == "table")?.GetEx<string>()));
+                            fkNode.Add(new Node("key", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_column")?.GetEx<string>()));
+                            fkNode.Add(new Node("name", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_name")?.GetEx<string>()));
+                            fkNode.Add(new Node("long", idxFk.Children.FirstOrDefault(x => x.Name == "long")?.GetEx<bool>()));
+                            node.Add(fkNode);
                         }
                     }
                     result.Add(node);
