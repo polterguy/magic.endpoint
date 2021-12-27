@@ -31,16 +31,12 @@ namespace magic.endpoint.services.utilities
                 {
                     switch (idxChar)
                     {
-                        case '-':
-                        case '_':
-                            break;
                         case '.':
                             if (idxNo > 0)
                                 return false; // Support for "hidden" files and folders.
                             break;
                         default:
-                            if ((idxChar < 'a' || idxChar > 'z') &&
-                                (idxChar < '0' || idxChar > '9'))
+                            if (!IsLegal(idxChar))
                                 return false;
                             break;
                     }
@@ -66,5 +62,17 @@ namespace magic.endpoint.services.utilities
             // Turning specified URL into a full path of file.
             return rootResolver.AbsolutePath(url + $".{verb}.hl");
         }
+
+        #region [ -- Private helper methods -- ]
+
+        /*
+         * Returns true if specified character is in general a legal character for an URL endpoint name.
+         */
+        static bool IsLegal(char idxChar)
+        {
+            return idxChar == '_' || idxChar == '-' || (idxChar > 'a' && idxChar < 'z') || (idxChar > '0' || idxChar < '9');
+        }
+
+        #endregion
     }
 }

@@ -2,6 +2,7 @@
  * Magic Cloud, copyright Aista, Ltd. See the attached LICENSE file for details.
  */
 
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using magic.node;
@@ -189,17 +190,21 @@ namespace magic.endpoint.services.slots.meta
                 }
 
                 // Checking for foreign keys.
-                foreach (var idxFk in lambda.Children.FirstOrDefault(x => x.Name == ".foreign-keys")?.Children ?? new Node[0])
+                var foreignKeys = lambda
+                    .Children
+                    .FirstOrDefault(x => x.Name == ".foreign-keys")?
+                    .Children
+                    .Where(x => x.Children.Any(x2 => x.Name == "column" && x2.GetEx<string>() == idx.Name)) ??
+                        Array.Empty<Node>();
+
+                foreach (var idxFk in foreignKeys)
                 {
-                    if (idxFk.Children.Any(x => x.Name == "column" && x.GetEx<string>() == idx.Name))
-                    {
-                        var fkNode = new Node("lookup");
-                        fkNode.Add(new Node("table", idxFk.Children.FirstOrDefault(x => x.Name == "table")?.GetEx<string>()));
-                        fkNode.Add(new Node("key", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_column")?.GetEx<string>()));
-                        fkNode.Add(new Node("name", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_name")?.GetEx<string>()));
-                        fkNode.Add(new Node("long", idxFk.Children.FirstOrDefault(x => x.Name == "long")?.GetEx<bool>()));
-                        node.Add(fkNode);
-                    }
+                    var fkNode = new Node("lookup");
+                    fkNode.Add(new Node("table", idxFk.Children.FirstOrDefault(x => x.Name == "table")?.GetEx<string>()));
+                    fkNode.Add(new Node("key", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_column")?.GetEx<string>()));
+                    fkNode.Add(new Node("name", idxFk.Children.FirstOrDefault(x => x.Name == "foreign_name")?.GetEx<string>()));
+                    fkNode.Add(new Node("long", idxFk.Children.FirstOrDefault(x => x.Name == "long")?.GetEx<bool>()));
+                    node.Add(fkNode);
                 }
 
                 // Returning result to caller.
