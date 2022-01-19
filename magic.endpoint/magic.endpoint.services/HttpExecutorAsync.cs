@@ -59,7 +59,7 @@ namespace magic.endpoint.services
 
             // Figuring out file to execute, and doing some basic sanity checking.
             var path = Utilities.GetEndpointFilePath(_rootResolver, request.URL, request.Verb);
-            if (!_fileService.Exists(path))
+            if (!await _fileService.ExistsAsync(path))
                 return new MagicResponse { Result = 404 };
 
             // Creating our lambda object by loading Hyperlambda file.
