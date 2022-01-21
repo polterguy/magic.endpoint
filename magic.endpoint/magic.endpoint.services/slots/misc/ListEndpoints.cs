@@ -42,7 +42,7 @@ namespace magic.endpoint.services.slots.misc
         readonly IFolderService _folderService;
         readonly IFileService _fileService;
         List<string> _folders;
-        List<string> _files;
+        IEnumerable<(string Filename, string Content)> _content;
 
         /// <summary>
         /// Creates an instance of your object
@@ -69,7 +69,7 @@ namespace magic.endpoint.services.slots.misc
         public async Task SignalAsync(ISignaler signaler, Node input)
         {
             _folders = await _folderService.ListFoldersRecursivelyAsync(_rootResolver.AbsolutePath("/"));
-            _files = await _fileService.ListFilesRecursivelyAsync(_rootResolver.AbsolutePath("/"), ".hl");
+            _content = await _fileService.LoadRecursivelyAsync(_rootResolver.AbsolutePath("/"), ".hl");
 
             input.AddRange(
                 await HandleFolderAsync(
@@ -90,7 +90,7 @@ namespace magic.endpoint.services.slots.misc
         public void Signal(ISignaler signaler, Node input)
         {
             _folders = _folderService.ListFoldersRecursively(_rootResolver.AbsolutePath("/"));
-            _files = _fileService.ListFilesRecursively(_rootResolver.AbsolutePath("/"), ".hl");
+            _content = _fileService.LoadRecursively(_rootResolver.AbsolutePath("/"), ".hl");
 
             input.AddRange(
                 HandleFolderAsync(
@@ -136,7 +136,7 @@ namespace magic.endpoint.services.slots.misc
                 if (Utilities.IsLegalHttpName(folder))
                 {
                     // Retrieves all files inside of currently iterated folder.
-                    foreach (var idxFile in await HandleFiles(rootFolder, idxFolder))
+                    foreach (var idxFile in HandleFiles(rootFolder, idxFolder))
                     {
                         result.Add(idxFile);
                     }
@@ -156,17 +156,17 @@ namespace magic.endpoint.services.slots.misc
         /*
          * Returns all fildes from current folder that matches some HTTP verb.
          */
-        async Task<List<Node>> HandleFiles(string rootFolder, string folder)
+        List<Node> HandleFiles(string rootFolder, string folder)
         {
             // Buffer to hold result.
             var result = new List<Node>();
 
             // Looping through each file in current folder.
-            var files = _files.Where(x => x.StartsWith(folder));
+            var files = _content.Where(x => x.Filename.StartsWith(folder));
             foreach (var idxFile in files)
             {
                 // Removing the root folder, to return only relativ filename back to caller.
-                var filename = idxFile.Substring(rootFolder.Length);
+                var filename = idxFile.Filename.Substring(rootFolder.Length);
 
                 // Making sure we only return files with format of "foo.xxx.hl", where xxx is some valid HTTP verb.
                 var entities = filename.Split('.');
@@ -181,7 +181,7 @@ namespace magic.endpoint.services.slots.misc
                         case "post":
                         case "get":
                         case "socket":
-                            result.Add(await GetFileMetaData(entities[0], entities[1], idxFile));
+                            result.Add(GetFileMetaData(entities[0], entities[1], idxFile.Filename));
                             break;
                     }
                 }
@@ -195,7 +195,7 @@ namespace magic.endpoint.services.slots.misc
          * Returns a single node, representing the endpoint given
          * as verb/filename/path, and its associated meta information.
          */
-        async Task<Node> GetFileMetaData(
+        Node GetFileMetaData(
             string path,
             string verb,
             string filename)
@@ -212,7 +212,7 @@ namespace magic.endpoint.services.slots.misc
                  * We need to inspect content of file to retrieve meta information about it,
                  * such as authorization, description, etc.
                  */
-                var lambda = HyperlambdaParser.Parse(await _fileService.LoadAsync(filename));
+                var lambda = HyperlambdaParser.Parse(_content.FirstOrDefault(x => x.Filename == filename).Content);
 
                 // Extracting different existing components from file.
                 var args = GetInputArguments(lambda, verb);
