@@ -41,6 +41,8 @@ namespace magic.endpoint.services.slots.misc
         readonly IRootResolver _rootResolver;
         readonly IFolderService _folderService;
         readonly IFileService _fileService;
+        List<string> _folders;
+        List<string> _files;
 
         /// <summary>
         /// Creates an instance of your object
@@ -66,6 +68,9 @@ namespace magic.endpoint.services.slots.misc
         /// <returns>Awaitable task</returns>
         public async Task SignalAsync(ISignaler signaler, Node input)
         {
+            _folders = await _folderService.ListFoldersRecursivelyAsync(_rootResolver.AbsolutePath("/"));
+            _files = await _fileService.ListFilesRecursivelyAsync(_rootResolver.AbsolutePath("/"), ".hl");
+
             input.AddRange(
                 await HandleFolderAsync(
                     _rootResolver.DynamicFiles,
@@ -84,6 +89,9 @@ namespace magic.endpoint.services.slots.misc
         /// <returns>Awaitable task</returns>
         public void Signal(ISignaler signaler, Node input)
         {
+            _folders = _folderService.ListFoldersRecursively(_rootResolver.AbsolutePath("/"));
+            _files = _fileService.ListFilesRecursively(_rootResolver.AbsolutePath("/"), ".hl");
+
             input.AddRange(
                 HandleFolderAsync(
                     _rootResolver.DynamicFiles,
@@ -120,7 +128,7 @@ namespace magic.endpoint.services.slots.misc
             var result = new List<Node>();
 
             // Looping through each folder inside of "currentFolder".
-            var folders = await _folderService.ListFoldersAsync(currentFolder);
+            var folders = _folders.Where(x => x.StartsWith(currentFolder) && x.Length > currentFolder.Length);
             foreach (var idxFolder in folders)
             {
                 // Making sure files within this folder is legally resolved.
@@ -154,7 +162,7 @@ namespace magic.endpoint.services.slots.misc
             var result = new List<Node>();
 
             // Looping through each file in current folder.
-            var files = await _fileService.ListFilesAsync(folder, ".hl");
+            var files = _files.Where(x => x.StartsWith(folder));
             foreach (var idxFile in files)
             {
                 // Removing the root folder, to return only relativ filename back to caller.
