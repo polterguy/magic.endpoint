@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using magic.node;
@@ -69,7 +70,9 @@ namespace magic.endpoint.services.slots.misc
         public async Task SignalAsync(ISignaler signaler, Node input)
         {
             _folders = await _folderService.ListFoldersRecursivelyAsync(_rootResolver.AbsolutePath("/"));
-            _content = await _fileService.LoadRecursivelyAsync(_rootResolver.AbsolutePath("/"), ".hl");
+            _content = (await _fileService
+                .LoadRecursivelyAsync(_rootResolver.AbsolutePath("/"), ".hl"))
+                .Select(x => (x.Filename, Encoding.UTF8.GetString(x.Content)));
 
             input.AddRange(
                 await HandleFolderAsync(
@@ -90,7 +93,9 @@ namespace magic.endpoint.services.slots.misc
         public void Signal(ISignaler signaler, Node input)
         {
             _folders = _folderService.ListFoldersRecursively(_rootResolver.AbsolutePath("/"));
-            _content = _fileService.LoadRecursively(_rootResolver.AbsolutePath("/"), ".hl");
+            _content = (_fileService
+                .LoadRecursively(_rootResolver.AbsolutePath("/"), ".hl"))
+                .Select(x => (x.Filename, Encoding.UTF8.GetString(x.Content)));
 
             input.AddRange(
                 HandleFolderAsync(
