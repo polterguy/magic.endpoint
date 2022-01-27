@@ -18,11 +18,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="magic.lambda.json" Version="10.0.19" />
-    <PackageReference Include="magic.lambda.slots" Version="10.0.19" />
-    <PackageReference Include="magic.lambda" Version="10.0.19" />
-    <PackageReference Include="magic.signals" Version="10.0.19" />
-    <PackageReference Include="magic.lambda.strings" Version="10.0.19" />
+    <PackageReference Include="magic.lambda.json" Version="10.0.20" />
+    <PackageReference Include="magic.lambda.slots" Version="10.0.20" />
+    <PackageReference Include="magic.lambda" Version="10.0.20" />
+    <PackageReference Include="magic.signals" Version="10.0.20" />
+    <PackageReference Include="magic.lambda.strings" Version="10.0.20" />
   </ItemGroup>
 
   <ItemGroup>
