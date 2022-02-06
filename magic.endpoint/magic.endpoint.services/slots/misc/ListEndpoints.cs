@@ -75,11 +75,11 @@ namespace magic.endpoint.services.slots.misc
                 .Select(x => (x.Filename, Encoding.UTF8.GetString(x.Content)));
 
             input.AddRange(
-                await HandleFolderAsync(
+                HandleFiles(
                     _rootResolver.DynamicFiles,
                     _rootResolver.AbsolutePath("system/")));
             input.AddRange(
-                await HandleFolderAsync(
+                HandleFiles(
                     _rootResolver.DynamicFiles,
                     _rootResolver.AbsolutePath("modules/")));
         }
@@ -98,13 +98,13 @@ namespace magic.endpoint.services.slots.misc
                 .Select(x => (x.Filename, Encoding.UTF8.GetString(x.Content)));
 
             input.AddRange(
-                HandleFolderAsync(
+                HandleFiles(
                     _rootResolver.DynamicFiles,
-                    _rootResolver.AbsolutePath("system/")).GetAwaiter().GetResult());
+                    _rootResolver.AbsolutePath("system/")));
             input.AddRange(
-                HandleFolderAsync(
+                HandleFiles(
                     _rootResolver.DynamicFiles,
-                    _rootResolver.AbsolutePath("modules/")).GetAwaiter().GetResult());
+                    _rootResolver.AbsolutePath("modules/")));
         }
 
         /// <summary>
@@ -122,41 +122,6 @@ namespace magic.endpoint.services.slots.misc
         }
 
         #region [ -- Private helper methods -- ]
-
-        /*
-         * Recursively traverses your folder for any dynamic Hyperlambda
-         * endpoints, and returns the result to caller.
-         */
-        async Task<List<Node>> HandleFolderAsync(string rootFolder, string currentFolder)
-        {
-            // Buffer to keep returned value.
-            var result = new List<Node>();
-
-            // Looping through each folder inside of "currentFolder".
-            var folders = _folders.Where(x => x.StartsWith(currentFolder) && x.Length > currentFolder.Length);
-            foreach (var idxFolder in folders)
-            {
-                // Making sure files within this folder is legally resolved.
-                var folder = idxFolder.Substring(rootFolder.Length);
-                if (Utilities.IsLegalHttpName(folder))
-                {
-                    // Retrieves all files inside of currently iterated folder.
-                    foreach (var idxFile in HandleFiles(rootFolder, idxFolder))
-                    {
-                        result.Add(idxFile);
-                    }
-
-                    // Recursively retrieving inner folders of currently iterated folder.
-                    foreach (var idxFile in await HandleFolderAsync(rootFolder, idxFolder))
-                    {
-                        result.Add(idxFile);
-                    }
-                }
-            }
-
-            // Returning result to caller.
-            return result;
-        }
 
         /*
          * Returns all fildes from current folder that matches some HTTP verb.
