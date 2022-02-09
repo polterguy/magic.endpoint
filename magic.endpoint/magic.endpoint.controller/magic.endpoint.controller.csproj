@@ -10,7 +10,7 @@
     <Description>Magic endpoint is a dynamic Hyperlambda endpoint evaluator, allowing you to create HTTP REST API endpoints dynamically, that will execute a Hyperlambda file when evaluated, where the URL is a reference to the physical path on disc to your Hyperlambda file. To use package go to https://polterguy.github.io</Description>
     <PackageProjectUrl>https://github.com/polterguy/magic.endpoint</PackageProjectUrl>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>11.0.2</PackageVersion>
+    <PackageVersion>11.0.3</PackageVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/polterguy/magic.endpoint.git</RepositoryUrl>
@@ -40,8 +40,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-    <PackageReference Include="magic.node.extensions" Version="11.0.2" />
-    <PackageReference Include="magic.signals.contracts" Version="11.0.2" />
+    <PackageReference Include="magic.node.extensions" Version="11.0.3" />
+    <PackageReference Include="magic.signals.contracts" Version="11.0.3" />
     <ProjectReference Include="..\magic.endpoint.contracts\magic.endpoint.contracts.csproj" />
   </ItemGroup>
 
