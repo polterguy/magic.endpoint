@@ -39,7 +39,6 @@ namespace magic.endpoint.services.slots.misc
         };
 
         readonly IRootResolver _rootResolver;
-        readonly IFolderService _folderService;
         readonly IFileService _fileService;
         IEnumerable<(string Filename, string Content)> _content;
 
@@ -47,15 +46,12 @@ namespace magic.endpoint.services.slots.misc
         /// Creates an instance of your object
         /// </summary>
         /// <param name="rootResolver">Needed to resolve root folder path for files and folders.</param>
-        /// <param name="folderService">Needed to resolver folders in system.</param>
         /// <param name="fileService">Needed to resolve files in system.</param>
         public ListEndpoints(
             IRootResolver rootResolver,
-            IFolderService folderService,
             IFileService fileService)
         {
             _rootResolver = rootResolver;
-            _folderService = folderService;
             _fileService = fileService;
         }
 
@@ -128,10 +124,10 @@ namespace magic.endpoint.services.slots.misc
             var result = new List<Node>();
 
             // Looping through each file in current folder.
-            foreach (var idxFile in _content.Where(x => x.Filename.StartsWith(folder)))
+            foreach (var idxFile in _content.Where(x => x.Filename.StartsWith(folder)).Select(x => x.Filename))
             {
                 // Removing the root folder, to return only relativ filename back to caller.
-                var filename = idxFile.Filename.Substring(rootFolder.Length);
+                var filename = idxFile.Substring(rootFolder.Length);
 
                 // Making sure we only return files with format of "foo.xxx.hl", where xxx is some valid HTTP verb.
                 var entities = filename.Split('.');
@@ -146,7 +142,7 @@ namespace magic.endpoint.services.slots.misc
                         case "post":
                         case "get":
                         case "socket":
-                            result.Add(GetFileMetaData(entities[0], entities[1], idxFile.Filename));
+                            result.Add(GetFileMetaData(entities[0], entities[1], idxFile));
                             break;
                     }
                 }
