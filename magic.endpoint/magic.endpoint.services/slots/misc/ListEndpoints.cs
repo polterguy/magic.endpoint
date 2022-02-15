@@ -11,7 +11,6 @@ using magic.node;
 using magic.node.contracts;
 using magic.node.extensions;
 using magic.signals.contracts;
-using magic.endpoint.services.utilities;
 using magic.node.extensions.hyperlambda;
 using magic.endpoint.services.slots.meta;
 
@@ -42,7 +41,6 @@ namespace magic.endpoint.services.slots.misc
         readonly IRootResolver _rootResolver;
         readonly IFolderService _folderService;
         readonly IFileService _fileService;
-        List<string> _folders;
         IEnumerable<(string Filename, string Content)> _content;
 
         /// <summary>
@@ -69,7 +67,6 @@ namespace magic.endpoint.services.slots.misc
         /// <returns>Awaitable task</returns>
         public async Task SignalAsync(ISignaler signaler, Node input)
         {
-            _folders = await _folderService.ListFoldersRecursivelyAsync(_rootResolver.AbsolutePath("/"));
             _content = (await _fileService
                 .LoadRecursivelyAsync(_rootResolver.AbsolutePath("/"), ".hl"))
                 .Select(x => (x.Filename, Encoding.UTF8.GetString(x.Content)));
@@ -92,7 +89,6 @@ namespace magic.endpoint.services.slots.misc
         /// <returns>Awaitable task</returns>
         public void Signal(ISignaler signaler, Node input)
         {
-            _folders = _folderService.ListFoldersRecursively(_rootResolver.AbsolutePath("/"));
             _content = (_fileService
                 .LoadRecursively(_rootResolver.AbsolutePath("/"), ".hl"))
                 .Select(x => (x.Filename, Encoding.UTF8.GetString(x.Content)));
@@ -132,8 +128,7 @@ namespace magic.endpoint.services.slots.misc
             var result = new List<Node>();
 
             // Looping through each file in current folder.
-            var files = _content.Where(x => x.Filename.StartsWith(folder));
-            foreach (var idxFile in files)
+            foreach (var idxFile in _content.Where(x => x.Filename.StartsWith(folder)))
             {
                 // Removing the root folder, to return only relativ filename back to caller.
                 var filename = idxFile.Filename.Substring(rootFolder.Length);
