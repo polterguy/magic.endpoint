@@ -52,10 +52,6 @@ namespace magic.endpoint.tests
         {
             var services = new ServiceCollection();
 
-            var mockConfiguration = new Mock<IMagicConfiguration>();
-            mockConfiguration.SetupGet(x => x[It.IsAny<string>()]).Returns("60");
-            services.AddTransient((svc) => mockConfiguration.Object);
-
             services.AddTransient<ISignaler, Signaler>();
             services.AddTransient<IHttpArgumentsHandler, HttpArgumentsHandler>();
             var types = new SignalsProvider(InstantiateAllTypes<ISlot>(services));
