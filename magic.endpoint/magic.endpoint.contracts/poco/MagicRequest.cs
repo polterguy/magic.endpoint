@@ -2,6 +2,7 @@
  * Magic Cloud, copyright Aista, Ltd. See the attached LICENSE file for details.
  */
 
+using System.Net;
 using System.Collections.Generic;
 using magic.node;
 
@@ -51,5 +52,10 @@ namespace magic.endpoint.contracts.poco
         /// Payload of request.
         /// </summary>
         public Node Payload { get; set; } = new Node();
+
+        /// <summary>
+        /// Originating IP address of request.
+        /// </summary>
+        public IPAddress Ip { get; set; }
     }
 }

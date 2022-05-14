@@ -148,7 +148,8 @@ namespace magic.endpoint.controller
                 Headers = Request.Headers.ToDictionary(x => x.Key, x => x.Value.ToString()),
                 Cookies = Request.Cookies.ToDictionary(x => x.Key, x => x.Value.ToString()),
                 Host = Request.Host.Value,
-                Scheme = Request.Scheme
+                Scheme = Request.Scheme,
+                Ip = Request.HttpContext.Connection.RemoteIpAddress,
             };
 
             // Notice, we only attach payload arguments to PUT, POST and PATCH requests.
