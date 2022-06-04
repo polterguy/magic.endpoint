@@ -255,6 +255,7 @@ amount of time, not clogging the server or HTTP endpoint meta generating process
 In addition to the meta retrieval endpoint described above, the module contains the following
 slots.
 
+* __[server.ip]__ - Returns the IP address of the server itself
 * __[response.status.set]__ - Sets the status code (e.g. 404) on the response object
 * __[request.cookies.list]__ - Lists all HTTP request cookies
 * __[request.cookies.get]__ - Returns the value of a cookie sent by the request
