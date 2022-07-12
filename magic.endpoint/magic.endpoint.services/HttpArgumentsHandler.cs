@@ -27,7 +27,7 @@ namespace magic.endpoint.services
             declaration?.UnTie();
 
             // [.arguments] not to insert into lambda if we have any arguments.
-            var args = new Node(".arguments");
+            var args = new Node("");
 
             // Checking if query parameters was supplied, and if so, attach them as arguments.
             if (query != null)
@@ -37,9 +37,25 @@ namespace magic.endpoint.services
             if (payload != null)
                 args.AddRange(GetPayloadParameters(declaration, payload));
 
-            // Only inserting [.arguments] node if there are any arguments.
+            // Making sure we sort arguments such that they're given in the same order they're found in [.arguments] declaration of file.
+            var argsSorted = new Node(".arguments");
+            if (declaration != null)
+            {
+                foreach (var idx in declaration.Children)
+                {
+                    var cur = args.Children.FirstOrDefault(x => x.Name == idx.Name);
+                    if (cur != null)
+                        argsSorted.Add(cur);
+                }
+            }
+
+            // Adding remaining arguments to ensure we'll throw exceptions later due to illegal arguments passed into Hyperlambda file.
             if (args.Children.Any())
-                lambda.Insert(0, args);
+                argsSorted.AddRange(args.Children);
+
+            // Only inserting [.arguments] node if there are any arguments.
+            if (argsSorted.Children.Any())
+                lambda.Insert(0, argsSorted);
         }
 
         #region [ -- Private helper methods -- ]
