@@ -229,7 +229,7 @@ namespace magic.endpoint.tests
                 async () => await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/throws_XXX",
+                    URL = "modules/throws_$",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
