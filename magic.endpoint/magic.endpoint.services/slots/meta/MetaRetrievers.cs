@@ -206,6 +206,19 @@ namespace magic.endpoint.services.slots.meta
                     node.Add(fkNode);
                 }
 
+                // Checking for handling.
+                var handling = lambda
+                    .Children
+                    .FirstOrDefault(x => x.Name == ".handling")?
+                    .Children
+                    .Where(x => x.Name == idx.Name) ?? Array.Empty<Node>();
+
+                foreach (var idxHa in handling)
+                {
+                    var haNode = new Node("handling", idxHa.Value);
+                    node.Add(haNode);
+                }
+
                 // Returning result to caller.
                 resultNode.Add(node);
             }
