@@ -227,6 +227,19 @@ namespace magic.endpoint.services.slots.misc
                         }
                     }
                     result.Add(node);
+
+                    // Checking for handling.
+                    var handling = lambda
+                        .Children
+                        .FirstOrDefault(x => x.Name == ".handling")?
+                        .Children
+                        .Where(x => x.Name == idx.Name) ?? Array.Empty<Node>();
+
+                    foreach (var idxHa in handling)
+                    {
+                        var haNode = new Node("handling", idxHa.Value);
+                        node.Add(haNode);
+                    }
                 }
             }
             return result.Children.Any() ? result : null;
