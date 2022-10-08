@@ -263,6 +263,7 @@ slots.
 * __[request.headers.list]__ - Lists all HTTP request headers sent by the request
 * __[request.headers.get]__ - Returns a single HTTP header associated with the request
 * __[request.ip]__ - Returns the IP address of the HTTP request
+* __[request.url]__ - Returns the relative URL associated with the request, without its magic/ prefix
 * __[request.host]__ - Returns the host name associated with the request
 * __[request.scheme]__ - Returns the scheme associated with the request
 * __[response.headers.set]__ - Adds an HTTP header to the response object
