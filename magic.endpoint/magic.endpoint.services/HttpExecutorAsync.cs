@@ -73,6 +73,17 @@ namespace magic.endpoint.services
             _mimeTypes[extension] = mimeType;
         }
 
+        /*
+         * Returns all file extensions to IME types associations in the system.
+         */
+        internal static IEnumerable<(string Ext, string Mime)> GetMimeTypes()
+        {
+            foreach (var idx in _mimeTypes)
+            {
+                yield return (idx.Key, idx.Value);
+            }
+        }
+
         /// <summary>
         /// Creates an instance of your type.
         /// </summary>
