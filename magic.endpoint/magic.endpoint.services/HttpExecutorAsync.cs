@@ -33,7 +33,7 @@ namespace magic.endpoint.services
          * Registered Content-Type payload handlers, responsible for handling requests and parametrising invocation
          * according to Content-Type specified by caller.
          */
-        static readonly Dictionary<string, string> _mimeTypes =
+        internal static readonly Dictionary<string, string> _mimeTypes =
             new Dictionary<string, string>
         {
             {
