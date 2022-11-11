@@ -33,7 +33,7 @@ namespace magic.endpoint.services
          * Registered Content-Type payload handlers, responsible for handling requests and parametrising invocation
          * according to Content-Type specified by caller.
          */
-        internal static readonly Dictionary<string, string> _mimeTypes =
+        static readonly Dictionary<string, string> _mimeTypes =
             new Dictionary<string, string>
         {
             {
@@ -64,6 +64,14 @@ namespace magic.endpoint.services
                 "md", "text/markdown"
             },
         };
+
+        /*
+         * Associates a file extension with a MIME type.
+         */
+        internal static void AddMimeType(string extension, string mimeType)
+        {
+            _mimeTypes[extension] = mimeType;
+        }
 
         /// <summary>
         /// Creates an instance of your type.
