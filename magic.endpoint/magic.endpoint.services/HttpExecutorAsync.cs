@@ -98,7 +98,7 @@ namespace magic.endpoint.services
             if (request.Verb != "get")
                 return new MagicResponse { Result = 404 };
 
-            // Checking if this is a mixin file.
+            // Checking if this is a mixin file. Mixin files cannot have "." in their URLs.
             if (!request.URL.Contains("."))
                 return await ServeMixinFileAsync(request); // Mixin file.
 
