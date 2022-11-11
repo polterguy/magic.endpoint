@@ -31,7 +31,6 @@ namespace magic.endpoint.controller
     /// Basically, anything starting with "magic" in its name, will be resolved using this
     /// controller, as long as it is a POST, PUT, GET, DELETE or PATCH request.
     /// </summary>
-    [Route("magic")]
     public class EndpointController : ControllerBase
     {
         // Signal implementation needed to invoke slots.
@@ -142,7 +141,7 @@ namespace magic.endpoint.controller
             // Creating and decorating our request object.
             var request = new MagicRequest
             {
-                URL = WebUtility.UrlDecode(url),
+                URL = WebUtility.UrlDecode(url ?? ""),
                 Verb = verb,
                 Query = Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()),
                 Headers = Request.Headers.ToDictionary(x => x.Key, x => x.Value.ToString()),

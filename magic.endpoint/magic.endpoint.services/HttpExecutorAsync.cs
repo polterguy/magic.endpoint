@@ -5,6 +5,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using magic.node;
 using magic.node.contracts;
 using magic.node.extensions;
@@ -24,24 +25,64 @@ namespace magic.endpoint.services
     {
         readonly ISignaler _signaler;
         readonly IFileService _fileService;
+        readonly IStreamService _streamService;
         readonly IRootResolver _rootResolver;
         readonly IHttpArgumentsHandler _argumentsHandler;
+
+        /*
+         * Registered Content-Type payload handlers, responsible for handling requests and parametrising invocation
+         * according to Content-Type specified by caller.
+         */
+        static readonly Dictionary<string, string> _mimeTypes =
+            new Dictionary<string, string>
+        {
+            {
+                "json", "application/json"
+            },
+            {
+                "css", "text/css"
+            },
+            {
+                "js", "application/javascript"
+            },
+            {
+                "jpeg", "image/jpeg"
+            },
+            {
+                "jpg", "image/jpeg"
+            },
+            {
+                "png", "image/png"
+            },
+            {
+                "giv", "image/giv"
+            },
+            {
+                "svg", "image/svg"
+            },
+            {
+                "md", "text/markdown"
+            },
+        };
 
         /// <summary>
         /// Creates an instance of your type.
         /// </summary>
         /// <param name="signaler">Signaler necessary to execute endpoint.</param>
         /// <param name="fileService">Needed to resolve endpoint files.</param>
+        /// <param name="streamService">Needed to resolve endpoint files.</param>
         /// <param name="rootResolver">Needed to resolve root folder names.</param>
         /// <param name="argumentsHandler">Needed to attach arguments to endpoint invocation.</param>
         public HttpExecutorAsync(
             ISignaler signaler,
             IFileService fileService,
+            IStreamService streamService,
             IRootResolver rootResolver,
             IHttpArgumentsHandler argumentsHandler)
         {
             _signaler = signaler;
             _fileService = fileService;
+            _streamService = streamService;
             _rootResolver = rootResolver;
             _argumentsHandler = argumentsHandler;
         }
@@ -49,16 +90,135 @@ namespace magic.endpoint.services
         /// <inheritdoc/>
         public async Task<MagicResponse> ExecuteAsync(MagicRequest request)
         {
-            // Sanity checking invocation
-            if (string.IsNullOrEmpty(request.URL))
+            // Checking if this is a Magic API type of URL.
+            if (request.URL.StartsWith("magic/"))
+                return await ExecuteEndpointAsync(request); // API invocation
+
+            // Request is either for a statica file or a mixin file.
+            if (request.Verb != "get")
                 return new MagicResponse { Result = 404 };
 
+            // Checking if this is a mixin file.
+            if (!request.URL.Contains("."))
+                return await ServeMixinFileAsync(request); // Mixin file.
+
+            // Statically served file.
+            return await ServeStaticFileAsync(request);
+        }
+
+        #region [ -- Private helper methods -- ]
+
+        /*
+         * Serves a mixin file.
+         */
+        async Task<MagicResponse> ServeMixinFileAsync(MagicRequest request)
+        {
+            // Getting mixin file and sanity checking request.
+            var file = await GetMixinFile(request.URL);
+            if (file == null)
+                return new MagicResponse { Content = "Not found", Result = 404 };
+
+            // Executing mixing file.
+            var lambda = new Node("mixin", file);
+            foreach (var idx in request.Query)
+            {
+                lambda.Add(new Node(idx.Key, idx.Value));
+            }
+
+            // Creating our result wrapper, wrapping whatever the endpoint wants to return to the client.
+            var response = new MagicResponse();
+            response.Headers["Content-Type"] = "text/html";
+            await _signaler.ScopeAsync("http.request", request, async () =>
+            {
+                await _signaler.ScopeAsync("http.response", response, async () =>
+                {
+                    await _signaler.SignalAsync("mixin", lambda);
+                });
+            });
+            response.Content = lambda.Value;
+            return response;
+        }
+
+        /*
+         * Returns the filename for the mixin file matching the specified URL, if any.
+         */
+        async Task<string> GetMixinFile(string url)
+        {
+            // Sanity checking invocation, eliminating dplicated requests.
+            if (url.EndsWith("index"))
+                return null; // Illegal request to avoid duplicated content.
+
+            // Trying to resolve to explicitly specified file first.
+            if (!string.IsNullOrEmpty(url) && await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/" + url + ".html")))
+                return "/etc/www/" + url + ".html";
+
+            // Trying to see if index.html file exists within folder, assuming last parts of URL is a folder.
+            if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/" + (url == "" ? url : url + "/") + "index.html")))
+                return "/etc/www/" + (url == "" ? url : url + "/") + "index.html";
+
+            // Trying to find an index file inside specified folder.
+            var splits = url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // Removing last entity such that we can check if index file exists.
+            splits = splits.Take(splits.Length - 1).ToArray();
+
+            // Creating the filepath to index file inside specified folder, and checking if it sxists.
+            var joins = string.Join("/", splits);
+            url = "/etc/www/" + (joins == "" ? joins : joins + "/") + "default.html";
+            if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath(url)))
+                return url;
+
+            // Returning result to caller
+            return null;
+        }
+
+        /*
+         * Serves a static file.
+         */
+        async Task<MagicResponse> ServeStaticFileAsync(MagicRequest request)
+        {
+            /*
+             * Sanity checking invocation to prevent caller from accessing private folder,
+             * implying folders with "." in their names. Only filenames are allowed to contain ".",
+             * implying the last entity once we split on "/".
+             */
+            var splits = request.URL.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var idx in splits.Take(Math.Max(0, splits.Length - 1)))
+            {
+                if (idx.Contains("."))
+                    return new MagicResponse { Result = 404, Content = "Not found" };
+            }
+
+            // Transforming to absolute path and verifying file exists.
+            var absPath = _rootResolver.AbsolutePath("/etc/www/" + request.URL);
+            if (!await _fileService.ExistsAsync(absPath))
+                return new MagicResponse { Result = 404, Content = "Not found" };
+
+            // Statically served file.
+            var result = new MagicResponse();
+            var ext = splits.Last().Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).Last();
+            result.Headers["Content-Type"] = _mimeTypes[ext];
+            result.Content = await _streamService.OpenFileAsync(_rootResolver.AbsolutePath("/etc/www/" + request.URL));
+            return result;
+        }
+
+        /*
+         * Executes an API endpoint type of URL
+         */
+        async Task<MagicResponse> ExecuteEndpointAsync(MagicRequest request)
+        {
+            // Normalising URL according to expectations.
+            var url = request.URL.Substring(6);
+
             // Making sure we never resolve to anything outside of "modules/" and "system/" folder.
-            if (!request.URL.StartsWith("modules/") && !request.URL.StartsWith("system/"))
+            if (!url.StartsWith("modules/") && !url.StartsWith("system/"))
                 return new MagicResponse { Result = 401 };
 
+            // Normalising URL property in request to make sure we're backwards compatible.
+            request.URL = url;
+
             // Figuring out file to execute, and doing some basic sanity checking.
-            var path = Utilities.GetEndpointFilePath(_rootResolver, request.URL, request.Verb);
+            var path = Utilities.GetEndpointFilePath(_rootResolver, url, request.Verb);
             if (!await _fileService.ExistsAsync(path))
                 return new MagicResponse { Result = 404 };
 
@@ -66,7 +226,7 @@ namespace magic.endpoint.services
             var lambda = HyperlambdaParser.Parse(await _fileService.LoadAsync(path));
 
             // Applying interceptors.
-            lambda = await ApplyInterceptors(lambda, request.URL);
+            lambda = await ApplyInterceptors(lambda, url);
 
             // Attaching arguments.
             _argumentsHandler.Attach(lambda, request.Query, request.Payload);
@@ -74,8 +234,6 @@ namespace magic.endpoint.services
             // Invoking method responsible for actually executing lambda object.
             return await ExecuteAsync(lambda, request);
         }
-
-        #region [ -- Private helper methods -- ]
 
         /*
          * Applies interceptors to specified Node/Lambda object.
