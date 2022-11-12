@@ -118,7 +118,7 @@ namespace magic.endpoint.services
                 return new MagicResponse { Result = 404 };
 
             // Checking if this is a mixin file. Mixin files cannot have "." in their URLs.
-            if (!request.URL.Contains("."))
+            if (IsMixinPageUrl(request.URL))
                 return await ServeMixinFileAsync(request); // Mixin file.
 
             // Statically served file.
@@ -126,6 +126,18 @@ namespace magic.endpoint.services
         }
 
         #region [ -- Private helper methods -- ]
+
+        /*
+         * Returns true if request URL is requesting a mixin page (server side rendered HTML page)
+         */
+        bool IsMixinPageUrl(string url)
+        {
+            if (!url.Contains(".")) // If URL does not contain "." at all, it's a mixin URL.
+                return true;
+            if (url.EndsWith(".html")) // If URL ends with ".html", it's a mixin URL.
+                return true;
+            return false; // Defaulting to statically served content.
+        }
 
         /*
          * Serves a mixin file.
@@ -164,11 +176,15 @@ namespace magic.endpoint.services
         async Task<string> GetMixinFile(string url)
         {
             // Sanity checking invocation, eliminating dplicated requests.
-            if (url.EndsWith("index"))
+            if (url.EndsWith("index") || url.EndsWith("index.html"))
                 return null; // Illegal request to avoid duplicated content.
 
+            // Removing .html part if existing.
+            if (url.EndsWith(".html"))
+                url = url.Substring(0, url.Length - 5);
+
             // Trying to resolve to explicitly specified file first.
-            if (!string.IsNullOrEmpty(url) && await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/" + url + ".html")))
+            if (url != string.Empty && await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/" + url + ".html")))
                 return "/etc/www/" + url + ".html";
 
             // Trying to see if index.html file exists within folder, assuming last parts of URL is a folder.
@@ -216,7 +232,10 @@ namespace magic.endpoint.services
             // Statically served file.
             var result = new MagicResponse();
             var ext = splits.Last().Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).Last();
-            result.Headers["Content-Type"] = _mimeTypes[ext];
+            if (_mimeTypes.ContainsKey(ext))
+                result.Headers["Content-Type"] = _mimeTypes[ext];
+            else
+                result.Headers["Content-Type"] = "application/octet-stream"; // Defaulting to binary content
             result.Content = await _streamService.OpenFileAsync(_rootResolver.AbsolutePath("/etc/www/" + request.URL));
             return result;
         }
