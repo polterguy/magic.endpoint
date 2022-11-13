@@ -55,10 +55,10 @@ namespace magic.endpoint.services
                 "png", "image/png"
             },
             {
-                "giv", "image/giv"
+                "gif", "image/gif"
             },
             {
-                "svg", "image/svg"
+                "svg", "image/svg+xml"
             },
             {
                 "md", "text/markdown"
@@ -212,13 +212,11 @@ namespace magic.endpoint.services
          */
         async Task<string> GetMixinFile(string url)
         {
-            // Checking if this is a request for root index.html file
-            if (url == string.Empty)
-                url = "index.html";
-
-            // Adding ".html" parts if not existing.
-            if (!url.EndsWith(".html"))
-                url += ".html";
+            // Checking if this is a request for a folder, at which point we append "index.html" to it.
+            if (url == string.Empty || url.EndsWith("/"))
+                url += "index.html";
+            else if (!url.EndsWith(".html"))
+                url += ".html"; // Apppending ".html" to resolve correct document.
 
             // Trying to resolve URL as a filename request.
             if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/" + url)))
