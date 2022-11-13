@@ -59,9 +59,6 @@ namespace magic.endpoint.services.utilities
 
             // Splitting up URL in separate entities.
             var splits = url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-            if (!splits.Any())
-                return true; // Request for root index.html page.
-
             foreach (var idx in splits)
             {
                 if (idx.StartsWith("."))
@@ -92,19 +89,15 @@ namespace magic.endpoint.services.utilities
          */
         internal static bool IsHtmlFileRequest(string url)
         {
-            // A mixin page either does not have a file extension or ends with ".html".
+            // A dynamically rendered request either does not have a file extension at all, or ends with ".html".
             var splits = url.Split(new char [] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             if (!splits.Any())
                 return true; // Request for root index.html document
 
             // Finding filename of request.
             var filename = splits.Last();
-
-            if (!filename.Contains("."))
+            if (filename.EndsWith(".html") || !filename.Contains("."))
                 return true; // If filename does not contain "." at all, it's a mixin URL.
-
-            if (filename.EndsWith(".html"))
-                return true; // If URL ends with ".html", it's a mixin URL.
 
             return false; // Defaulting to statically served content.
         }

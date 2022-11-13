@@ -23,7 +23,7 @@ namespace magic.endpoint.services.slots.misc
         public void Signal(ISignaler signaler, Node input)
         {
             signaler.Signal("eval", input);
-            HttpExecutorAsync.AddMimeType(input.GetEx<string>(), input.Children.First().GetEx<string>());
+            HttpFileExecutorAsync.AddMimeType(input.GetEx<string>(), input.Children.First().GetEx<string>());
         }
     }
 }

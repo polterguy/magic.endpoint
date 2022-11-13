@@ -20,7 +20,7 @@ namespace magic.endpoint.services.slots.misc
         /// <param name="input">Arguments to your slot.</param>
         public void Signal(ISignaler signaler, Node input)
         {
-            foreach (var idx in HttpExecutorAsync.GetMimeTypes())
+            foreach (var idx in HttpFileExecutorAsync.GetMimeTypes())
             {
                 input.Add(new Node(idx.Ext, idx.Mime));
             }

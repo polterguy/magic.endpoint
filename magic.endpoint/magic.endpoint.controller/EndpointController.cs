@@ -46,21 +46,11 @@ namespace magic.endpoint.controller
         static readonly Dictionary<string, Func<ISignaler, HttpRequest, Task<Node>>> _payloadHandlers =
             new Dictionary<string, Func<ISignaler, HttpRequest, Task<Node>>>
         {
-            {
-                "application/json", RequestHandlers.JsonHandler
-            },
-            {
-                "application/x-json", RequestHandlers.JsonHandler
-            },
-            {
-                "application/x-www-form-urlencoded", RequestHandlers.UrlEncodedHandler
-            },
-            {
-                "application/www-form-urlencoded", RequestHandlers.UrlEncodedHandler
-            },
-            {
-                "multipart/form-data", RequestHandlers.FormDataHandler
-            },
+            { "application/json", RequestHandlers.JsonHandler },
+            { "application/x-json", RequestHandlers.JsonHandler },
+            { "application/x-www-form-urlencoded", RequestHandlers.UrlEncodedHandler },
+            { "application/www-form-urlencoded", RequestHandlers.UrlEncodedHandler },
+            { "multipart/form-data", RequestHandlers.FormDataHandler },
         };
 
         /*
@@ -141,7 +131,7 @@ namespace magic.endpoint.controller
             // Creating and decorating our request object.
             var request = new MagicRequest
             {
-                URL = WebUtility.UrlDecode(url ?? ""),
+                URL = WebUtility.UrlDecode(url ?? "/"),
                 Verb = verb,
                 Query = Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()),
                 Headers = Request.Headers.ToDictionary(x => x.Key, x => x.Value.ToString()),
