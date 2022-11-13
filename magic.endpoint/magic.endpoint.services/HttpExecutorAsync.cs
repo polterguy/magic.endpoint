@@ -117,6 +117,10 @@ namespace magic.endpoint.services
             if (request.Verb != "get")
                 return new MagicResponse { Result = 404 };
 
+            // Making sure request is legal.
+            if (!IsLegalRequest(request.URL))
+                return new MagicResponse { Result = 404 };
+
             // Checking if this is a mixin file. Mixin files cannot have "." in their URLs.
             if (IsMixinPageUrl(request.URL))
                 return await ServeMixinFileAsync(request); // Mixin file.
@@ -128,14 +132,47 @@ namespace magic.endpoint.services
         #region [ -- Private helper methods -- ]
 
         /*
+         * Returns true if URL is requesting a resource it's allowed to request,
+         * otherwise it returns false.
+         *
+         * Notice, the server does not serve hidden Linux pages or folder.
+         * This allows us to put components and helper Hyperlambda files inside
+         * hidden folders or hidden files, without accidentally resolving these
+         * as pages.
+         */
+        bool IsLegalRequest(string url)
+        {
+            var splits = url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            if (!splits.Any())
+                return true; // Request for root index.html page.
+
+            foreach (var idx in splits)
+            {
+                if (idx.StartsWith("."))
+                    return false; // Hidden file or folder.
+            }
+            return true; // OK URL!
+        }
+
+        /*
          * Returns true if request URL is requesting a mixin page (server side rendered HTML page)
          */
         bool IsMixinPageUrl(string url)
         {
-            if (!url.Contains(".")) // If URL does not contain "." at all, it's a mixin URL.
-                return true;
-            if (url.EndsWith(".html")) // If URL ends with ".html", it's a mixin URL.
-                return true;
+            // A mixin page either does not have a file extension or ends with ".html".
+            var splits = url.Split(new char [] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            if (!splits.Any())
+                return true; // Request for root index.html document
+
+            // Finding filename of request.
+            var filename = splits.Last();
+
+            if (!filename.Contains("."))
+                return true; // If filename does not contain "." at all, it's a mixin URL.
+
+            if (filename.EndsWith(".html"))
+                return true; // If URL ends with ".html", it's a mixin URL.
+
             return false; // Defaulting to statically served content.
         }
 
@@ -175,35 +212,38 @@ namespace magic.endpoint.services
          */
         async Task<string> GetMixinFile(string url)
         {
-            // Sanity checking invocation, eliminating dplicated requests.
-            if (url.EndsWith("index") || url.EndsWith("index.html"))
-                return null; // Illegal request to avoid duplicated content.
+            // Checking if this is a request for root index.html file
+            if (url == string.Empty)
+                url = "index.html";
 
-            // Removing .html part if existing.
-            if (url.EndsWith(".html"))
-                url = url.Substring(0, url.Length - 5);
+            // Adding ".html" parts if not existing.
+            if (!url.EndsWith(".html"))
+                url += ".html";
 
-            // Trying to resolve to explicitly specified file first.
-            if (url != string.Empty && await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/" + url + ".html")))
-                return "/etc/www/" + url + ".html";
+            // Trying to resolve URL as a filename request.
+            if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/" + url)))
+                return "/etc/www/" + url;
 
-            // Trying to see if index.html file exists within folder, assuming last parts of URL is a folder.
-            if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/" + (url == "" ? url : url + "/") + "index.html")))
-                return "/etc/www/" + (url == "" ? url : url + "/") + "index.html";
-
-            // Trying to find an index file inside specified folder.
+            /*
+             * Traversing upwards in folder hierarchy and returning the
+             * first "default.html" page we can find, if any.
+             *
+             * This allows you to have "wildcard resolvers" for entire folder hierarchies.
+             */
             var splits = url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            if (splits.Length > 0)
+                splits = splits.Take(splits.Length - 1).ToArray();
+            while (true)
+            {
+                var cur = string.Join("/", splits) + "/" + "default.html";
+                if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/" + cur)))
+                    return "/etc/www/" + cur;
+                if (splits.Length == 0)
+                    break;
+                splits = splits.Take(splits.Length - 1).ToArray();
+            }
 
-            // Removing last entity such that we can check if index file exists.
-            splits = splits.Take(splits.Length - 1).ToArray();
-
-            // Creating the filepath to index file inside specified folder, and checking if it sxists.
-            var joins = string.Join("/", splits);
-            url = "/etc/www/" + (joins == "" ? joins : joins + "/") + "default.html";
-            if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath(url)))
-                return url;
-
-            // Returning result to caller
+            // Nothing found that can resolve specified URL.
             return null;
         }
 
