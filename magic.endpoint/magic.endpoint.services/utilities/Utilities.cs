@@ -53,6 +53,11 @@ namespace magic.endpoint.services.utilities
          */
         internal static bool IsLegalFileRequest(string url)
         {
+            // Making sure we don't serve Hyperlambda files.
+            if (url.EndsWith(".hl"))
+                return false;
+
+            // Splitting up URL in separate entities.
             var splits = url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             if (!splits.Any())
                 return true; // Request for root index.html page.

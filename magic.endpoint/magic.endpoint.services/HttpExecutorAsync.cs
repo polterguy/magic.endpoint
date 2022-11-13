@@ -149,28 +149,26 @@ namespace magic.endpoint.services
             if (file == null)
                 return new MagicResponse { Content = "Not found", Result = 404 };
 
-            // Loading codebehind file, if existing.
+            // Checking if Hyperlambda codebehind file exists.
             var codebehindFile = file.Substring(0, file.Length - 5) + ".hl";
-            if (!await _fileService.ExistsAsync(_rootResolver.AbsolutePath(codebehindFile)))
-                return await ServeStaticFileAsync(file); // No codebehind file, serving file as static content file.
+            if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath(codebehindFile)))
+                return await ServeDynamicPage(request, file, codebehindFile); // Codebehind file exists.
 
-            // HTML file has a Hyperlambda codebehind file associated with it.
-            return await ServeCodebehindFileAsync(request, file, codebehindFile);
+             // No codebehind file, serving file as static content file.
+            return await ServeStaticFileAsync(file);
         }
 
         /*
          * Serves an HTML file that has an associated Hyperlambda codebehind file.
          */
-        async Task<MagicResponse> ServeCodebehindFileAsync(MagicRequest request, string htmlFile, string codebehindFile)
+        async Task<MagicResponse> ServeDynamicPage(MagicRequest request, string htmlFile, string codebehindFile)
         {
             // Creating our lambda object by loading Hyperlambda file.
             Node codebehind = new Node();
             codebehind = HyperlambdaParser.Parse(await _fileService.LoadAsync(_rootResolver.AbsolutePath(codebehindFile)));
 
             // Applying interceptors.
-            Console.WriteLine(codebehind.ToHyperlambda());
             codebehind = await ApplyHtmlInterceptors(codebehind, codebehindFile, htmlFile);
-            Console.WriteLine(codebehind.ToHyperlambda());
 
             // Attaching arguments.
             _argumentsHandler.Attach(codebehind, request.Query, request.Payload);
