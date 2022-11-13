@@ -63,6 +63,9 @@ namespace magic.endpoint.services
             {
                 "md", "text/markdown"
             },
+            {
+                "html", "text/html"
+            },
         };
 
         /*
@@ -111,106 +114,89 @@ namespace magic.endpoint.services
         {
             // Checking if this is a Magic API type of URL.
             if (request.URL.StartsWith("magic/"))
-                return await ExecuteEndpointAsync(request); // API invocation
+                return await ExecuteEndpointAsync(request); // API invocation.
 
-            // Request is either for a statica file or a mixin file.
-            if (request.Verb != "get")
-                return new MagicResponse { Result = 404 };
-
-            // Making sure request is legal.
-            if (!IsLegalRequest(request.URL))
-                return new MagicResponse { Result = 404 };
-
-            // Checking if this is a mixin file. Mixin files cannot have "." in their URLs.
-            if (IsMixinPageUrl(request.URL))
-                return await ServeMixinFileAsync(request); // Mixin file.
-
-            // Statically served file.
-            return await ServeStaticFileAsync(request);
+            // File request towards "/etc/www/" folder.
+            return await ServeFileAsync(request);
         }
 
         #region [ -- Private helper methods -- ]
 
         /*
-         * Returns true if URL is requesting a resource it's allowed to request,
-         * otherwise it returns false.
-         *
-         * Notice, the server does not serve hidden Linux pages or folder.
-         * This allows us to put components and helper Hyperlambda files inside
-         * hidden folders or hidden files, without accidentally resolving these
-         * as pages.
+         * Serves a file from the "/etc/www/" folder.
          */
-        bool IsLegalRequest(string url)
+        async Task<MagicResponse> ServeFileAsync(MagicRequest request)
         {
-            var splits = url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-            if (!splits.Any())
-                return true; // Request for root index.html page.
+            // Making sure request is legal.
+            if (!Utilities.IsLegalFileRequest(request.URL))
+                return new MagicResponse { Result = 404 };
 
-            foreach (var idx in splits)
-            {
-                if (idx.StartsWith("."))
-                    return false; // Hidden file or folder.
-            }
-            return true; // OK URL!
+            // Checking if this is a mixin file.
+            if (Utilities.IsHtmlFileRequest(request.URL))
+                return await ServeHtmlFileAsync(request); // HTML file, might have Hyperlambda codebehind file.
+
+            // Statically served file.
+            return await ServeStaticFileAsync("/etc/www/" + request.URL);
         }
 
         /*
-         * Returns true if request URL is requesting a mixin page (server side rendered HTML page)
+         * Serves an HTML file that might have a Hyperlambda codebehind file associated with it.
          */
-        bool IsMixinPageUrl(string url)
-        {
-            // A mixin page either does not have a file extension or ends with ".html".
-            var splits = url.Split(new char [] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-            if (!splits.Any())
-                return true; // Request for root index.html document
-
-            // Finding filename of request.
-            var filename = splits.Last();
-
-            if (!filename.Contains("."))
-                return true; // If filename does not contain "." at all, it's a mixin URL.
-
-            if (filename.EndsWith(".html"))
-                return true; // If URL ends with ".html", it's a mixin URL.
-
-            return false; // Defaulting to statically served content.
-        }
-
-        /*
-         * Serves a mixin file.
-         */
-        async Task<MagicResponse> ServeMixinFileAsync(MagicRequest request)
+        async Task<MagicResponse> ServeHtmlFileAsync(MagicRequest request)
         {
             // Getting mixin file and sanity checking request.
-            var file = await GetMixinFile(request.URL);
+            var file = await GetHtmlFilename(request.URL);
             if (file == null)
                 return new MagicResponse { Content = "Not found", Result = 404 };
 
-            // Executing mixing file.
-            var lambda = new Node("mixin", file);
-            foreach (var idx in request.Query)
-            {
-                lambda.Add(new Node(idx.Key, idx.Value));
-            }
+            // Loading codebehind file, if existing.
+            var codebehindFile = file.Substring(0, file.Length - 5) + ".hl";
+            if (!await _fileService.ExistsAsync(_rootResolver.AbsolutePath(codebehindFile)))
+                return await ServeStaticFileAsync(file); // No codebehind file, serving file as static content file.
+
+            // HTML file has a Hyperlambda codebehind file associated with it.
+            return await ServeCodebehindFileAsync(request, file, codebehindFile);
+        }
+
+        /*
+         * Serves an HTML file that has an associated Hyperlambda codebehind file.
+         */
+        async Task<MagicResponse> ServeCodebehindFileAsync(MagicRequest request, string htmlFile, string codebehindFile)
+        {
+            // Creating our lambda object by loading Hyperlambda file.
+            Node codebehind = new Node();
+            codebehind = HyperlambdaParser.Parse(await _fileService.LoadAsync(_rootResolver.AbsolutePath(codebehindFile)));
+
+            // Applying interceptors.
+            Console.WriteLine(codebehind.ToHyperlambda());
+            codebehind = await ApplyHtmlInterceptors(codebehind, codebehindFile, htmlFile);
+            Console.WriteLine(codebehind.ToHyperlambda());
+
+            // Attaching arguments.
+            _argumentsHandler.Attach(codebehind, request.Query, request.Payload);
 
             // Creating our result wrapper, wrapping whatever the endpoint wants to return to the client.
             var response = new MagicResponse();
+            var result = new Node();
             response.Headers["Content-Type"] = "text/html";
             await _signaler.ScopeAsync("http.request", request, async () =>
             {
                 await _signaler.ScopeAsync("http.response", response, async () =>
                 {
-                    await _signaler.SignalAsync("mixin", lambda);
+                    await _signaler.ScopeAsync("slots.result", result, async () =>
+                    {
+                        await _signaler.SignalAsync("eval", codebehind);
+                    });
                 });
             });
-            response.Content = lambda.Value;
+            response.Content = result.Value;
             return response;
         }
 
         /*
          * Returns the filename for the mixin file matching the specified URL, if any.
          */
-        async Task<string> GetMixinFile(string url)
+        async Task<string> GetHtmlFilename(string url)
         {
             // Checking if this is a request for a folder, at which point we append "index.html" to it.
             if (url == string.Empty || url.EndsWith("/"))
@@ -248,33 +234,21 @@ namespace magic.endpoint.services
         /*
          * Serves a static file.
          */
-        async Task<MagicResponse> ServeStaticFileAsync(MagicRequest request)
+        async Task<MagicResponse> ServeStaticFileAsync(string url)
         {
-            /*
-             * Sanity checking invocation to prevent caller from accessing private folder,
-             * implying folders with "." in their names. Only filenames are allowed to contain ".",
-             * implying the last entity once we split on "/".
-             */
-            var splits = request.URL.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var idx in splits.Take(Math.Max(0, splits.Length - 1)))
-            {
-                if (idx.Contains("."))
-                    return new MagicResponse { Result = 404, Content = "Not found" };
-            }
-
             // Transforming to absolute path and verifying file exists.
-            var absPath = _rootResolver.AbsolutePath("/etc/www/" + request.URL);
+            var absPath = _rootResolver.AbsolutePath(url);
             if (!await _fileService.ExistsAsync(absPath))
                 return new MagicResponse { Result = 404, Content = "Not found" };
 
-            // Statically served file.
+            // Creating response and returning to caller.
             var result = new MagicResponse();
-            var ext = splits.Last().Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).Last();
+            var ext = url.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).Last();
             if (_mimeTypes.ContainsKey(ext))
                 result.Headers["Content-Type"] = _mimeTypes[ext];
             else
                 result.Headers["Content-Type"] = "application/octet-stream"; // Defaulting to binary content
-            result.Content = await _streamService.OpenFileAsync(_rootResolver.AbsolutePath("/etc/www/" + request.URL));
+            result.Content = await _streamService.OpenFileAsync(_rootResolver.AbsolutePath(url));
             return result;
         }
 
@@ -302,7 +276,7 @@ namespace magic.endpoint.services
             var lambda = HyperlambdaParser.Parse(await _fileService.LoadAsync(path));
 
             // Applying interceptors.
-            lambda = await ApplyInterceptors(lambda, url);
+            lambda = await ApplyApiInterceptors(lambda, url);
 
             // Attaching arguments.
             _argumentsHandler.Attach(lambda, request.Query, request.Payload);
@@ -314,7 +288,7 @@ namespace magic.endpoint.services
         /*
          * Applies interceptors to specified Node/Lambda object.
          */
-        async Task<Node> ApplyInterceptors(Node result, string url)
+        async Task<Node> ApplyApiInterceptors(Node result, string url)
         {
             // Checking to see if interceptors exists recursively upwards in folder hierarchy.
             var splits = url.Split(new char [] {'/'}, StringSplitOptions.RemoveEmptyEntries);
@@ -328,7 +302,38 @@ namespace magic.endpoint.services
                 // Checking if "current-folder/interceptor.hl" file exists.
                 var current = _rootResolver.AbsolutePath(string.Join("/", folders) + "/interceptor.hl");
                 if (_fileService.Exists(current))
-                    result = await ApplyInterceptor(result, current);
+                    result = await ApplyApiInterceptor(result, current);
+
+                // Checking if we're done, and at root folder, at which point we break while loop.
+                if (!folders.Any())
+                    break; // We're done, no more interceptors!
+
+                // Traversing upwards in hierarchy to be able to nest interceptors upwards in hierarchy.
+                folders = folders.Take(folders.Count() - 1);
+            }
+
+            // Returning result to caller.
+            return result;
+        }
+
+        /*
+         * Applies interceptors to specified Node/Lambda object.
+         */
+        async Task<Node> ApplyHtmlInterceptors(Node result, string hlFile, string htmlFile)
+        {
+            // Checking to see if interceptors exists recursively upwards in folder hierarchy.
+            var splits = hlFile.Split(new char [] {'/'}, StringSplitOptions.RemoveEmptyEntries);
+
+            // Stripping away last entity (filename) of invocation.
+            var folders = splits.Take(splits.Length - 1);
+
+            // Iterating as long as we have more entities in list of folders.
+            while (true)
+            {
+                // Checking if "current-folder/interceptor.hl" file exists.
+                var current = _rootResolver.AbsolutePath(string.Join("/", folders) + "/interceptor.hl");
+                if (_fileService.Exists(current))
+                    result = await ApplyHtmlInterceptor(result, current, htmlFile);
 
                 // Checking if we're done, and at root folder, at which point we break while loop.
                 if (!folders.Any())
@@ -345,7 +350,7 @@ namespace magic.endpoint.services
         /*
          * Applies the specified interceptor and returns the transformed Node/Lambda result.
          */
-        async Task<Node> ApplyInterceptor(Node lambda, string interceptorFile)
+        async Task<Node> ApplyApiInterceptor(Node lambda, string interceptorFile)
         {
             // Getting interceptor lambda.
             var interceptNode = HyperlambdaParser.Parse(await _fileService.LoadAsync(interceptorFile));
@@ -376,6 +381,47 @@ namespace magic.endpoint.services
                     // By cloning node we also support having multiple [.interceptor] nodes.
                     idxLambda.InsertBefore(idx.Clone());
                 }
+
+                // Removing currently iterated [.interceptor] node in interceptor lambda object.
+                idxLambda.Parent.Remove(idxLambda);
+            }
+
+            // Returning interceptor Node/Lambda which is now the root of the execution Lambda object.
+            return interceptNode;
+        }
+
+        /*
+         * Applies the specified interceptor and returns the transformed Node/Lambda result.
+         */
+        async Task<Node> ApplyHtmlInterceptor(Node lambda, string interceptorFile, string html)
+        {
+            // Getting interceptor lambda.
+            var interceptNode = HyperlambdaParser.Parse(await _fileService.LoadAsync(interceptorFile));
+
+            // Moving [.arguments] from endpoint lambda to the top of interceptor lambda if existing.
+            var args = lambda
+                .Children
+                .Where(x =>
+                    x.Name == ".arguments" ||
+                    x.Name == ".description" ||
+                    x.Name == ".type" ||
+                    x.Name == "auth.ticket.verify" ||
+                    x.Name.StartsWith("validators."));
+
+            // Notice, reversing arguments nodes makes sure we apply arguments in order of appearance.
+            foreach (var idx in args.Reverse().ToList())
+            {
+                interceptNode.Insert(0, idx); // Notice, will detach the argument from its original position!
+            }
+
+            // Moving endpoint Lambda to position before any [.interceptor] node found in interceptor lambda.
+            foreach (var idxLambda in new Expression("**/.interceptor").Evaluate(interceptNode).ToList())
+            {
+                // This logic ensures we keep existing order without any fuzz.
+                // By cloning node we also support having multiple [.interceptor] nodes.
+                var cur = new Node("io.file.mixin", html);
+                cur.AddRange(lambda.Clone().Children);
+                idxLambda.InsertBefore(cur);
 
                 // Removing currently iterated [.interceptor] node in interceptor lambda object.
                 idxLambda.Parent.Remove(idxLambda);
