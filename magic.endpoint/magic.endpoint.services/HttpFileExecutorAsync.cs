@@ -137,15 +137,9 @@ namespace magic.endpoint.services
          */
         async Task<MagicResponse> ServeDynamicPage(MagicRequest request, string htmlFile, string codebehindFile)
         {
-            // Creating our lambda object by loading Hyperlambda file.
-            Node codebehind = new Node();
-            codebehind = HyperlambdaParser.Parse(await _fileService.LoadAsync(_rootResolver.AbsolutePath(codebehindFile)));
-
             // Creating our initial lambda object.
             var lambda = new Node("");
-            var mixin = new Node("io.file.mixin", htmlFile);
-            mixin.AddRange(codebehind.Children);
-            lambda.Add(mixin);
+            lambda.Add(new Node("io.file.mixin", htmlFile));
             lambda.Add(new Node("return", new Expression("-")));
 
             // Applying interceptors.

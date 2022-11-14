@@ -112,10 +112,10 @@ namespace magic.endpoint.services.utilities
             IRootResolver rootResolver,
             IFileService fileService,
             Node result,
-            string hlFile)
+            string filename)
         {
             // Checking to see if interceptors exists recursively upwards in folder hierarchy.
-            var splits = hlFile.Split(new char [] {'/'}, StringSplitOptions.RemoveEmptyEntries);
+            var splits = filename.Split(new char [] {'/'}, StringSplitOptions.RemoveEmptyEntries);
 
             // Stripping away last entity (filename) of invocation.
             var folders = splits.Take(splits.Length - 1);
