@@ -141,11 +141,18 @@ namespace magic.endpoint.services
             Node codebehind = new Node();
             codebehind = HyperlambdaParser.Parse(await _fileService.LoadAsync(_rootResolver.AbsolutePath(codebehindFile)));
 
+            // Creating our initial lambda object.
+            var lambda = new Node("");
+            var mixin = new Node("io.file.mixin", htmlFile);
+            mixin.AddRange(codebehind.Children);
+            lambda.Add(mixin);
+            lambda.Add(new Node("return", new Expression("-")));
+
             // Applying interceptors.
-            codebehind = await ApplyInterceptors(codebehind, codebehindFile, htmlFile);
+            lambda = await ApplyInterceptors(lambda, codebehindFile, htmlFile);
 
             // Attaching arguments.
-            _argumentsHandler.Attach(codebehind, request.Query, request.Payload);
+            _argumentsHandler.Attach(lambda, request.Query, request.Payload);
 
             // Creating our result wrapper, wrapping whatever the endpoint wants to return to the client.
             var response = new MagicResponse();
@@ -157,7 +164,7 @@ namespace magic.endpoint.services
                 {
                     await _signaler.ScopeAsync("slots.result", result, async () =>
                     {
-                        await _signaler.SignalAsync("eval", codebehind);
+                        await _signaler.SignalAsync("eval", lambda);
                     });
                 });
             });
@@ -175,8 +182,10 @@ namespace magic.endpoint.services
                 url += "index.html";
             else if (!url.EndsWith(".html"))
                 url += ".html"; // Apppending ".html" to resolve correct document.
+            if (url.StartsWith("/"))
+                url = url.Substring(1);
 
-            // Trying to resolve URL as a filename request.
+            // Trying to resolve URL as a direct filename request.
             if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/" + url)))
                 return "/etc/www/" + url;
 
@@ -282,11 +291,13 @@ namespace magic.endpoint.services
             // Moving endpoint Lambda to position before any [.interceptor] node found in interceptor lambda.
             foreach (var idxLambda in new Expression("**/.interceptor").Evaluate(interceptNode).ToList())
             {
-                // This logic ensures we keep existing order without any fuzz.
-                // By cloning node we also support having multiple [.interceptor] nodes.
-                var cur = new Node("io.file.mixin", html);
-                cur.AddRange(lambda.Clone().Children);
-                idxLambda.InsertBefore(cur);
+                // Iterating through each node in current result and injecting before currently iterated [.lambda] node.
+                foreach (var idx in lambda.Children)
+                {
+                    // This logic ensures we keep existing order without any fuzz.
+                    // By cloning node we also support having multiple [.interceptor] nodes.
+                    idxLambda.InsertBefore(idx.Clone());
+                }
 
                 // Removing currently iterated [.interceptor] node in interceptor lambda object.
                 idxLambda.Parent.Remove(idxLambda);
