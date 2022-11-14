@@ -149,7 +149,7 @@ namespace magic.endpoint.services
             lambda.Add(new Node("return", new Expression("-")));
 
             // Applying interceptors.
-            lambda = await ApplyInterceptors(lambda, codebehindFile, htmlFile);
+            lambda = await Utilities.ApplyInterceptors(_rootResolver, _fileService, lambda, codebehindFile);
 
             // Attaching arguments.
             _argumentsHandler.Attach(lambda, request.Query, request.Payload);
@@ -231,80 +231,6 @@ namespace magic.endpoint.services
                 result.Headers["Content-Type"] = "application/octet-stream"; // Defaulting to binary content
             result.Content = await _streamService.OpenFileAsync(_rootResolver.AbsolutePath(url));
             return result;
-        }
-
-        /*
-         * Applies interceptors to specified Node/Lambda object.
-         */
-        async Task<Node> ApplyInterceptors(Node result, string hlFile, string htmlFile)
-        {
-            // Checking to see if interceptors exists recursively upwards in folder hierarchy.
-            var splits = hlFile.Split(new char [] {'/'}, StringSplitOptions.RemoveEmptyEntries);
-
-            // Stripping away last entity (filename) of invocation.
-            var folders = splits.Take(splits.Length - 1);
-
-            // Iterating as long as we have more entities in list of folders.
-            while (true)
-            {
-                // Checking if "current-folder/interceptor.hl" file exists.
-                var current = _rootResolver.AbsolutePath(string.Join("/", folders) + "/interceptor.hl");
-                if (_fileService.Exists(current))
-                    result = await ApplyInterceptor(result, current, htmlFile);
-
-                // Checking if we're done, and at root folder, at which point we break while loop.
-                if (!folders.Any())
-                    break; // We're done, no more interceptors!
-
-                // Traversing upwards in hierarchy to be able to nest interceptors upwards in hierarchy.
-                folders = folders.Take(folders.Count() - 1);
-            }
-
-            // Returning result to caller.
-            return result;
-        }
-
-        /*
-         * Applies the specified interceptor and returns the transformed Node/Lambda result.
-         */
-        async Task<Node> ApplyInterceptor(Node lambda, string interceptorFile, string html)
-        {
-            // Getting interceptor lambda.
-            var interceptNode = HyperlambdaParser.Parse(await _fileService.LoadAsync(interceptorFile));
-
-            // Moving [.arguments] from endpoint lambda to the top of interceptor lambda if existing.
-            var args = lambda
-                .Children
-                .Where(x =>
-                    x.Name == ".arguments" ||
-                    x.Name == ".description" ||
-                    x.Name == ".type" ||
-                    x.Name == "auth.ticket.verify" ||
-                    x.Name.StartsWith("validators."));
-
-            // Notice, reversing arguments nodes makes sure we apply arguments in order of appearance.
-            foreach (var idx in args.Reverse().ToList())
-            {
-                interceptNode.Insert(0, idx); // Notice, will detach the argument from its original position!
-            }
-
-            // Moving endpoint Lambda to position before any [.interceptor] node found in interceptor lambda.
-            foreach (var idxLambda in new Expression("**/.interceptor").Evaluate(interceptNode).ToList())
-            {
-                // Iterating through each node in current result and injecting before currently iterated [.lambda] node.
-                foreach (var idx in lambda.Children)
-                {
-                    // This logic ensures we keep existing order without any fuzz.
-                    // By cloning node we also support having multiple [.interceptor] nodes.
-                    idxLambda.InsertBefore(idx.Clone());
-                }
-
-                // Removing currently iterated [.interceptor] node in interceptor lambda object.
-                idxLambda.Parent.Remove(idxLambda);
-            }
-
-            // Returning interceptor Node/Lambda which is now the root of the execution Lambda object.
-            return interceptNode;
         }
 
         #endregion
