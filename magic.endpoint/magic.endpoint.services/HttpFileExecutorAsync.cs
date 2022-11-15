@@ -13,7 +13,6 @@ using magic.signals.contracts;
 using magic.endpoint.contracts;
 using magic.endpoint.contracts.poco;
 using magic.endpoint.services.utilities;
-using magic.node.extensions.hyperlambda;
 
 namespace magic.endpoint.services
 {
