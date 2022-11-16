@@ -13,6 +13,7 @@ using magic.signals.contracts;
 using magic.endpoint.contracts;
 using magic.endpoint.contracts.poco;
 using magic.endpoint.services.utilities;
+using magic.node.extensions.hyperlambda;
 
 namespace magic.endpoint.services
 {
@@ -215,13 +216,34 @@ namespace magic.endpoint.services
             if (!await _fileService.ExistsAsync(absPath))
                 return new MagicResponse { Result = 404, Content = "Not found" };
 
-            // Creating response and returning to caller.
+            // Creating response to return to caller.
             var result = new MagicResponse();
             var ext = url.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).Last();
             if (_mimeTypes.ContainsKey(ext))
                 result.Headers["Content-Type"] = _mimeTypes[ext];
             else
                 result.Headers["Content-Type"] = "application/octet-stream"; // Defaulting to binary content
+
+            // Adding default headers from .config file.
+            var config = HyperlambdaParser.Parse(await _fileService.LoadAsync(_rootResolver.AbsolutePath("/etc/www/.config")));
+
+            // Headers that applies for only files with specified extension.
+            var extention = url.Substring(url.LastIndexOf(".") + 1);
+            foreach (var idx in new Expression($"*/static_files/*/headers/*/{extention}/*").Evaluate(config))
+            {
+                // Not checking if header already exists allows us to override Content-Type
+                result.Headers[idx.Name] = idx.GetEx<string>();
+            }
+
+            // Headers that applies for all files.
+            foreach (var idx in new Expression("*/static_files/*/headers/*/\\*/*").Evaluate(config))
+            {
+                // Checking if header already exists makes headers for specific extentions have precedence.
+                if (!result.Headers.ContainsKey(idx.Name))
+                    result.Headers[idx.Name] = idx.GetEx<string>();
+            }
+
+            // Opening file and returning to caller.
             result.Content = await _streamService.OpenFileAsync(_rootResolver.AbsolutePath(url));
             return result;
         }
