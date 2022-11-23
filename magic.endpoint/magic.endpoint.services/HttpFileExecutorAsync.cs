@@ -202,6 +202,20 @@ namespace magic.endpoint.services
                 splits = splits.Take(splits.Length - 1).ToArray();
             }
 
+            // Checking if site has been configured to serve pages as SPA pages (frontend routing type of resolving).
+            var configFilename = _rootResolver.AbsolutePath("/etc/www/.config");
+            if (await _fileService.ExistsAsync(configFilename))
+            {
+                var config = HyperlambdaParser.Parse(await _fileService.LoadAsync(configFilename));
+
+                // Checking if [spa-enabled] node exists, and has a value of boolean true.
+                if (config.Children.FirstOrDefault(x => x.Name == "spa_enabled")?.GetEx<bool>() ?? false)
+                {
+                    if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath("/etc/www/index.html")))
+                        return "/etc/www/index.html";
+                }
+            }
+
             // Nothing found that can resolve specified URL.
             return null;
         }
