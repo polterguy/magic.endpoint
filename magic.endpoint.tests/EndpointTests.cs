@@ -26,7 +26,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/foo-1",
+                    URL = "magic/modules/foo-1",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -51,28 +51,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/not-existing",
-                    Verb = "get",
-                    Query = new Dictionary<string, string>(),
-                    Headers = new Dictionary<string, string>(),
-                    Cookies = new Dictionary<string, string>(),
-                    Host = "localhost",
-                    Scheme = "http"
-                });
-
-            Assert.Equal(404, result.Result);
-        }
-
-        [Fact]
-        public async Task Get404_02()
-        {
-            var svc = Common.Initialize();
-            var executor = svc.GetService(typeof(IHttpExecutorAsync)) as IHttpExecutorAsync;
-
-            var result = await executor.ExecuteAsync(
-                new MagicRequest
-                {
-                    URL = null,
+                    URL = "magic/modules/not-existing",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -93,7 +72,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "foo",
+                    URL = "magic/foo",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -114,7 +93,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/request-header",
+                    URL = "magic/modules/request-header",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>{ { "foo", "bar" } },
@@ -136,7 +115,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/request-cookie",
+                    URL = "magic/modules/request-cookie",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -158,7 +137,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/echo-headers",
+                    URL = "magic/modules/echo-headers",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>{ { "foo1", "bar1" }, { "foo2", "bar2" } },
@@ -183,7 +162,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/echo-cookies",
+                    URL = "magic/modules/echo-cookies",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -209,7 +188,7 @@ namespace magic.endpoint.tests
                 async () => await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/throws",
+                    URL = "magic/modules/throws",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -229,7 +208,7 @@ namespace magic.endpoint.tests
                 async () => await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/throws_$",
+                    URL = "magic/modules/throws_$",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -248,7 +227,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/foo-2",
+                    URL = "magic/modules/foo-2",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -273,7 +252,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/echo",
+                    URL = "magic/modules/echo",
                     Verb = "get",
                     Query = new Dictionary<string, string>{ { "input1", "foo" }, { "input2", "5" }, { "input3", "true" } },
                     Headers = new Dictionary<string, string>(),
@@ -300,7 +279,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/echo",
+                    URL = "magic/modules/echo",
                     Verb = "get",
                     Query = new Dictionary<string, string>{ { "input1", "foo" } },
                     Headers = new Dictionary<string, string>(),
@@ -327,7 +306,7 @@ namespace magic.endpoint.tests
                 async () => await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/echo",
+                    URL = "magic/modules/echo",
                     Verb = "get",
                     Query = new Dictionary<string, string>{ { "inputXXX", "foo" } },
                     Headers = new Dictionary<string, string>(),
@@ -347,7 +326,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/echo-no-declaration",
+                    URL = "magic/modules/echo-no-declaration",
                     Verb = "get",
                     Query = new Dictionary<string, string>{ { "inputXXX", "foo" } },
                     Headers = new Dictionary<string, string>(),
@@ -372,7 +351,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/status",
+                    URL = "magic/modules/status",
                     Verb = "get",
                     Query = new Dictionary<string, string>{ { "inputXXX", "foo" } },
                     Headers = new Dictionary<string, string>(),
@@ -393,7 +372,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/header",
+                    URL = "magic/modules/header",
                     Verb = "get",
                     Query = new Dictionary<string, string>{ { "inputXXX", "foo" } },
                     Headers = new Dictionary<string, string>(),
@@ -415,7 +394,7 @@ namespace magic.endpoint.tests
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/foo-1",
+                    URL = "magic/modules/foo-1",
                     Verb = "delete",
                     Query = new Dictionary<string, string>{ { "inputXXX", "foo" } },
                     Headers = new Dictionary<string, string>(),
@@ -457,7 +436,7 @@ input5
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/echo",
+                    URL = "magic/modules/echo",
                     Verb = "post",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -513,7 +492,7 @@ input5
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/echo",
+                    URL = "magic/modules/echo",
                     Verb = "put",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -556,7 +535,7 @@ input2:int:5");
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/echo",
+                    URL = "magic/modules/echo",
                     Verb = "post",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -584,7 +563,7 @@ input2:int:5");
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/interceptors/foo",
+                    URL = "magic/modules/interceptors/foo",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -613,7 +592,7 @@ input2:int:5");
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/interceptors/foo-args",
+                    URL = "magic/modules/interceptors/foo-args",
                     Verb = "get",
                     Query = new Dictionary<string, string>{ { "foo", "howdy" } },
                     Headers = new Dictionary<string, string>(),
@@ -643,7 +622,7 @@ input2:int:5");
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/interceptors/foo-args",
+                    URL = "magic/modules/interceptors/foo-args",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -674,7 +653,7 @@ input2:int:5");
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/scheme",
+                    URL = "magic/modules/scheme",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),
@@ -699,7 +678,7 @@ input2:int:5");
             var result = await executor.ExecuteAsync(
                 new MagicRequest
                 {
-                    URL = "modules/set-cookie",
+                    URL = "magic/modules/set-cookie",
                     Verb = "get",
                     Query = new Dictionary<string, string>(),
                     Headers = new Dictionary<string, string>(),

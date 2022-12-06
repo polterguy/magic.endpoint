@@ -56,7 +56,7 @@ namespace magic.endpoint.tests
             services.AddTransient<IHttpArgumentsHandler, HttpArgumentsHandler>();
             var types = new SignalsProvider(InstantiateAllTypes<ISlot>(services));
             services.AddTransient<ISignalsProvider>((svc) => types);
-            services.AddTransient<IHttpExecutorAsync, HttpExecutorAsync>();
+            services.AddTransient<IHttpExecutorAsync, HttpApiExecutorAsync>();
             services.AddTransient<IFileService, FileService>();
             services.AddTransient<IFolderService, FolderService>();
             services.AddTransient<IRootResolver, RootResolver>();
