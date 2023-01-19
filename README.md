@@ -308,7 +308,7 @@ slot takes the following arguments.
 Only the **[value]** from above is mandatory. To delete a cookie on the client, set the expiration date to a value
 in the past.
 
-### [mime.add]
+### How to use [mime.add]
 
 This slots associates a file extension with a MIME type. Notice, it will override previous associations if existing.
 Example usage can be found below.
