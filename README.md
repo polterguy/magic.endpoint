@@ -1,5 +1,5 @@
 
-# How Magic resolves URLs and endpoints
+# magic.endpoint
 
 magic.endpoint is a dynamic endpoint URL controller, allowing you to declare endpoints that are dynamically
 resolved using your `IHttpExecutorAsync` service implementation. The default implementation of this interface,
