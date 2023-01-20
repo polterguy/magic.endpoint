@@ -64,7 +64,7 @@ Then invoke the endpoint using the GET verb with the following URL.
 http://localhost:5000/magic/modules/tutorials/foo
 ```
 
-## Arguments
+## Hyperlambda endpoints and arguments
 
 The default `IHttpExecutorAsync` implementation can explicitly declare what arguments the file can
 legally accept, and if an argument is given during invocation that the file doesn't allow for, an
@@ -139,7 +139,7 @@ for instance, these types of objects might contain null values. If they do, no c
 and internally within your endpoint's Hyperlambda code, you might therefor expect to see for instance
 `long` values being in fact _null_, even though technically these are not nullable types in .Net.
 
-## Accepted Content-Type values
+## Accepted Content-Type valuesfor Hyperlambda endpoints
 
 The POST, PUT and PATCH endpoints can intelligently handle any of the following Content-Types.
 
@@ -168,7 +168,7 @@ ways, allowing you to intercept reading with things such as authentication, auth
 where to persist content, etc. To understand how you can handle these streams, check out
 the _"magic.lambda.io"_ project's documentation, and specifically the **[io.stream.xxx]** slots.
 
-### Extending the Content-Type request and response resolver
+### Extending the Hyperlambda Content-Type request and response resolver
 
 The Content-Type resolver/parser is extendible, allowing you to change its behaviour by providing
 your own callback that will be invoked for some specific Content-Type value provided. This is useful
@@ -176,7 +176,7 @@ if you want to be able to for instance handle _"text/xml"_ or _"text/csv"_ types
 objects, and intelligently and automatically create an argument collection from it. Below is example
 code illustrating how to create your own HTTP request resolver for the MIME type of _"application/x-foo"_.
 
-```csharp
+```
 EndpointController.RegisterContentType("application/x-foo", async (signaler, request) =>
 {
    var args = new Node();
@@ -196,7 +196,7 @@ You can also provide your own HTTP response resolver that will be invoked given 
 Content-Type from your Hyperlambda file. This is done in a similar manner using something resembling
 the following.
 
-```csharp
+```
 EndpointController.RegisterContentType("application/x-foo", (response) =>
 {
    /* ... Return some sort of IActionResult here ... */
@@ -208,7 +208,7 @@ The above method should also exclusively be used during startup, and not later,
 since it is _not_ thread safe. The above method assumes you register your Content-Type handlers
 as your application is starting.
 
-## Meta information
+## Hyperlambda endpoints and meta information
 
 Due to the semantic structure of Hyperlambda, retrieving meta information from your HTTP endpoints
 using this module is very easy. The project has one slot called **[endpoints.list]** that returns
@@ -250,7 +250,7 @@ This function will be invoked for _every_ single Hyperlambda file in your system
 every time meta data is retrieved, so you might want to ensure it executes in a fairly short
 amount of time, not clogging the server or HTTP endpoint meta generating process in any ways.
 
-## Slots related to plugin
+## Slots related to endpoints and the HTTP context
 
 In addition to the meta retrieval endpoint described above, the module contains the following
 slots.
@@ -269,7 +269,7 @@ slots.
 * __[response.headers.set]__ - Adds an HTTP header to the response object
 * __[mime.add]__ - Associates a file extension with a MIME type
 
-## Misc
+## Changing your Hyperlambda endpoint's response type
 
 Unless you explicitly change the `Content-Type` of your response object, by using
 the **[response.headers.set]** slot, a Content-Type of `application/json` will be assumed,
@@ -292,7 +292,7 @@ your stream automatically for you afterwards. This allows you to for instance re
 to the client without loading them into memory first. If you do this, you'll have to change
 your `Content-Type` accordingly.
 
-### Cookies
+### Hyperlambda and cookies
 
 Since cookies have more parameters than just a simple key/value declaration, the **[response.cookies.set]**
 slot takes the following arguments.
