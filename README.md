@@ -1,5 +1,5 @@
 
-# magic.endpoint
+# magic.endpoint - How Hyperlambda endpoints are resolved
 
 magic.endpoint is a dynamic endpoint URL controller, allowing you to declare endpoints that are dynamically
 resolved using your `IHttpExecutorAsync` service implementation. The default implementation of this interface,
