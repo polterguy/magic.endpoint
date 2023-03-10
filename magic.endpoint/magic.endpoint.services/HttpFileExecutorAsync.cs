@@ -129,7 +129,33 @@ namespace magic.endpoint.services
             // Getting mixin file and sanity checking request.
             var file = await GetHtmlFilename(request.URL);
             if (file == null)
+            {
+                // Checking if we've got a 404 file.
+                var configFilename = _rootResolver.AbsolutePath("/etc/www/.config");
+                if (await _fileService.ExistsAsync(configFilename))
+                {
+                    var config = HyperlambdaParser.Parse(await _fileService.LoadAsync(configFilename));
+                    var not_found = config.Children.FirstOrDefault(x => x.Name == "not_found")?.Get<string>() ?? "/etc/www/.components/404.html";
+                    if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath(not_found)))
+                    {
+                        // Checking if Hyperlambda codebehind file exists.
+                        var codebehindFile2 = not_found.Substring(0, not_found.Length - 5) + ".hl";
+                        if (await _fileService.ExistsAsync(_rootResolver.AbsolutePath(codebehindFile2)))
+                        {
+                            var tmp = await ServeDynamicPage(request, not_found, codebehindFile2); // Codebehind file exists.
+                            tmp.Result = 404;
+                            return tmp;
+                        }
+
+                        // No codebehind file, serving file as static content file.
+                        var tmp2 = await ServeStaticFileAsync(not_found);
+                        tmp2.Result = 404;
+                        return tmp2;
+                    }
+                    return new MagicResponse { Content = "Not found", Result = 404 };
+                }
                 return new MagicResponse { Content = "Not found", Result = 404 };
+            }
 
             // Checking if Hyperlambda codebehind file exists.
             var codebehindFile = file.Substring(0, file.Length - 5) + ".hl";
