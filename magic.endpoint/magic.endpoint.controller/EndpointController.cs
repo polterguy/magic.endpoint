@@ -131,7 +131,7 @@ namespace magic.endpoint.controller
             // Creating and decorating our request object.
             var request = new MagicRequest
             {
-                URL = WebUtility.UrlDecode(url ?? "/"),
+                URL = WebUtility.UrlDecode(url ?? ""),
                 Verb = verb,
                 Query = Request.Query.ToDictionary(x => x.Key, x => x.Value.ToString()),
                 Headers = Request.Headers.ToDictionary(x => x.Key, x => x.Value.ToString()),

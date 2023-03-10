@@ -103,6 +103,14 @@ namespace magic.endpoint.services
             if (!Utilities.IsLegalFileRequest(request.URL))
                 return new MagicResponse { Result = 404 };
 
+            // Avoiding duplicated content.
+            if (request.URL.EndsWith("/"))
+            {
+                var response = new MagicResponse { Result = 301 };
+                response.Headers["Location"] = request.Scheme + "://" + request.Host + "/" + request.URL.TrimEnd('/');
+                return response;
+            }
+
             // Checking if this is a mixin file.
             if (Utilities.IsHtmlFileRequest(request.URL))
                 return await ServeHtmlFileAsync(request); // HTML file, might have Hyperlambda codebehind file.
@@ -172,8 +180,8 @@ namespace magic.endpoint.services
         async Task<string> GetHtmlFilename(string url)
         {
             // Checking if this is a request for a folder, at which point we append "index.html" to it.
-            if (url.EndsWith("/"))
-                url += "index.html";
+            if (url == "")
+                url = "/index.html";
             else if (!url.EndsWith(".html"))
                 url += ".html"; // Apppending ".html" to resolve correct document.
             if (url.StartsWith("/"))
