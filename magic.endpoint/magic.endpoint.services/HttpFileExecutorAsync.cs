@@ -111,6 +111,14 @@ namespace magic.endpoint.services
                 return response;
             }
 
+            // Avoiding duplicated content.
+            if (request.URL.EndsWith(".html"))
+            {
+                var response = new MagicResponse { Result = 301 };
+                response.Headers["Location"] = request.Scheme + "://" + request.Host + "/" + request.URL.Substring(0, request.URL.Length - 5);
+                return response;
+            }
+
             // Checking if this is a mixin file.
             if (Utilities.IsHtmlFileRequest(request.URL))
                 return await ServeHtmlFileAsync(request); // HTML file, might have Hyperlambda codebehind file.
