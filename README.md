@@ -139,7 +139,7 @@ for instance, these types of objects might contain null values. If they do, no c
 and internally within your endpoint's Hyperlambda code, you might therefor expect to see for instance
 `long` values being in fact _null_, even though technically these are not nullable types in .Net.
 
-## Accepted Content-Type valuesfor Hyperlambda endpoints
+## Accepted Content-Type values for Hyperlambda endpoints
 
 The POST, PUT and PATCH endpoints can intelligently handle any of the following Content-Types.
 
@@ -320,6 +320,60 @@ mime.add:py
 
 Then later when the endpoint resolver is returning files ending with _".py"_, it will return these with
 a `Content-Type` of _"application/python"_.
+
+## Hyperlambda code behind files
+
+The resolver will resolve anything not starting out with `/magic/` as a static file, optionally applied
+as a mixin file having a Hyperlambda code behind file for mixing in dynamic content with any _".html"_
+files. This allows you to render HTML, CSS, JavaScript and _"whatever"_, with the ability to dynamically
+render parts of your HTML files using Hyperlambda. This logic relies upon the **[io.file.mixin]** slot
+from the _"magic.lambda.io"_ project. If you create two files such as follows and put both of these
+files in your _"/etc/www/"_ folder, you can see this logic in action.
+
+**index.html**
+
+```
+<html>
+    <head>
+        <title>Hell world</title>
+    </head>
+    <body>
+        <h1>Hello world</h1>
+        <p>
+           Hello there Thomas Hansen, {{*/.calculate}}
+        </p>
+    </body>
+</html>
+```
+
+**index.hl**
+
+```
+.calculate
+   math.add
+      .:int:2
+      .:int:2
+   return:x:-
+```
+
+The above will substitute your `{{*/.calculate}}` parts with the result of invoking your **[.calculate]** lambda
+object, resulting in 4. To understand how this works, you need to read about the **[io.file.mixin]** slot in
+the _"magic.lambda.io"_ project, and realise that the above will actually transform to the following as the
+mixin logic is executed.
+
+```
+io.file.mixin:/etc/www/index.html
+   .calculate
+      math.add
+         .:int:2
+         .:int:2
+      return:x:-
+```
+
+This allows you to serve dynamically rendered HTML files, where parts of your HTML is substituted with the
+result of invoking some lambda object. If you have an HTML file _without_ a Hyperlambda code behind file,
+it will be served as a static file. CSS files, JavaScript files, and images will also be served as static
+files.
 
 ## Project website for magic.endpoint
 
