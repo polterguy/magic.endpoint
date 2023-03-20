@@ -375,6 +375,11 @@ result of invoking some lambda object. If you have an HTML file _without_ a Hype
 it will be served as a static file. CSS files, JavaScript files, and images will also be served as static
 files.
 
+Notice, interceptor files will be executed as normally, allowing you to apply interceptor files similarly
+to how you apply these with your _"/magic/"_ endpoints. In addition, any file called _"default.html"_ having
+a Hyperlambda counterpart will be used for default URL resolving if no explicit URL is found, allowing
+you to handle dynamica URLs with this file.
+
 ## Project website for magic.endpoint
 
 The source code for this repository can be found at [github.com/polterguy/magic.endpoint](https://github.com/polterguy/magic.endpoint), and you can provide feedback, provide bug reports, etc at the same place.
