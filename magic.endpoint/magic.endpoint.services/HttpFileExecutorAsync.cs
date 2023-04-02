@@ -42,6 +42,7 @@ namespace magic.endpoint.services
             { "js", "application/javascript" },
             { "jpeg", "image/jpeg" },
             { "jpg", "image/jpeg" },
+            { "webp", "image/webp" },
             { "png", "image/png" },
             { "gif", "image/gif" },
             { "svg", "image/svg+xml" },
