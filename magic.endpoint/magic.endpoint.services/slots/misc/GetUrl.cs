@@ -23,6 +23,11 @@ namespace magic.endpoint.services.slots.misc
         {
             var request = signaler.Peek<MagicRequest>("http.request");
             input.Value = request.URL;
+            input.Clear();
+            foreach (var idx in request.Query)
+            {
+                input.Add(new Node(idx.Key, idx.Value));
+            }
         }
     }
 }
