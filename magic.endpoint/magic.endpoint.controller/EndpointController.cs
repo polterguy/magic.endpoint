@@ -232,6 +232,12 @@ namespace magic.endpoint.controller
                 Response.Headers.Add(idx.Key, idx.Value);
             }
 
+#if DEBUG
+            // Making it easier to debug locally by simply turning off all CORS safe guards in DEBUG builds.
+            if (!Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
+                Response.Headers.Add("Access-Control-Allow-Origin", "*");
+#endif
+
             // Making sure we attach all cookies.
             foreach (var idx in response.Cookies)
             {
