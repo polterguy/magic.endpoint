@@ -173,9 +173,9 @@ namespace magic.endpoint.services.slots.misc
                  * We need to inspect content of file to retrieve meta information about it,
                  * such as authorization, description, etc.
                  */
-                var lambda = HyperlambdaParser.Parse(_content.FirstOrDefault(x => x.Filename == filename).Content);
+                var lambda = HyperlambdaParser.Parse(_content.FirstOrDefault(x => x.Filename == filename).Content, true);
 
-                // Extracting different existing components from file.
+                // Extracting components from file.
                 var args = GetInputArguments(lambda, verb);
                 result.AddRange(new Node[] {
                     args,
@@ -203,11 +203,13 @@ namespace magic.endpoint.services.slots.misc
             var args = lambda.Children.FirstOrDefault(x => x.Name == ".arguments");
             if (args != null)
             {
-                foreach (var idx in args.Children)
+                foreach (var idx in args.Children.Where(x => x.Name != ".."))
                 {
                     var node = new Node(".");
                     node.Add(new Node("name", idx.Name));
                     node.Add(new Node("type", idx.Value));
+                    if (idx.Previous != null && idx.Previous.Name == "..")
+                        node.Add(new Node("description", idx.Previous.Value));
                     if (verb == "post" || verb == "put")
                     {
                         // Attaching foreign key information if possible.
@@ -215,6 +217,7 @@ namespace magic.endpoint.services.slots.misc
                             .Children
                             .FirstOrDefault(x => x.Name == ".foreign-keys")?
                             .Children
+                            .Where(x => x.Name != "..")
                             .Where(x => x.Children.Any(x2 => x2.Name == "column" && x2.GetEx<string>() == idx.Name)) ?? Array.Empty<Node>();
                         foreach (var idxFk in fkNodes.Select(x => x.Children))
                         {
