@@ -4,9 +4,9 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>magic.endpoint.contracts</PackageId>
-    <Authors>Aista, Ltd</Authors>
-    <Company>Aista, Ltd</Company>
-    <Copyright>Aista, Ltd</Copyright>
+    <Authors>AINIRO.IO, Ltd</Authors>
+    <Company>AINIRO.IO, Ltd</Company>
+    <Copyright>AINIRO.IO, Ltd</Copyright>
     <Description>Contracts for magic.endpoint that allows you to dynamically execute Magic endpoints, resolving to some executable piece of code. To use package go to https://polterguy.github.io</Description>
     <PackageProjectUrl>https://ainiro.io</PackageProjectUrl>
     <PackOnBuild>true</PackOnBuild>

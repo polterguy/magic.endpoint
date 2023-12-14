@@ -4,9 +4,9 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>magic.endpoint</PackageId>
-    <Authors>Aista, Ltd</Authors>
-    <Company>Aista, Ltd</Company>
-    <Copyright>Aista, Ltd</Copyright>
+    <Authors>AINIRO.IO, Ltd</Authors>
+    <Company>AINIRO.IO, Ltd</Company>
+    <Copyright>AINIRO.IO, Ltd</Copyright>
     <Description>Magic endpoint is a dynamic Hyperlambda endpoint evaluator, allowing you to create HTTP REST API endpoints dynamically, that will execute a Hyperlambda file when evaluated, where the URL is a reference to the physical path on disc to your Hyperlambda file. To use package go to https://polterguy.github.io</Description>
     <PackageProjectUrl>https://ainiro.io</PackageProjectUrl>
     <PackOnBuild>true</PackOnBuild>

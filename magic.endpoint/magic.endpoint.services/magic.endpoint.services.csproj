@@ -4,9 +4,9 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>magic.endpoint.services</PackageId>
-    <Authors>Aista, Ltd</Authors>
-    <Company>Aista, Ltd</Company>
-    <Copyright>Aista, Ltd</Copyright>
+    <Authors>AINIRO.IO, Ltd</Authors>
+    <Company>AINIRO.IO, Ltd</Company>
+    <Copyright>AINIRO.IO, Ltd</Copyright>
     <Description>Service implementations for magic.endpoint, that allows you to dynamically evaluate Hyperlambda files associated with a URL. To use package go to https://polterguy.github.io</Description>
     <PackageProjectUrl>https://ainiro.io</PackageProjectUrl>
     <PackOnBuild>true</PackOnBuild>
