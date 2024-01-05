@@ -3,10 +3,14 @@
 magic.endpoint is a dynamic endpoint URL controller, allowing you to declare endpoints that are dynamically
 resolved using your `IHttpExecutorAsync` service implementation. The default implementation of this interface,
 is the class called `HttpExecutorAsync`, and the rest of this file will be focused on documenting this
-implementation, since it is the default service implementation for magic.endpoint - Although, technically, you
+implementation, since it is the default service implementation for magic.endpoint.
+
+Technically, you
 could exchange this with your own implementation if you wish, completely changing the behaviour of the library
 if you wish to for instance resolve endpoints to Python, Ruby, or any other dynamic programming language
-implementation, and you have some means to execute such code from within a .Net 6 environment.
+implementation, and you have some means to execute such code from within a .Net 8 environment - But that's
+an exercise we will not go through in this document.
+
 The resolver will be invoked for all relative URLs starting with _"magic/"_, for the following verbs.
 
 * `GET`
@@ -16,9 +20,8 @@ The resolver will be invoked for all relative URLs starting with _"magic/"_, for
 * `PATCH`
 
 The default service implementation will resolve everything after the _"magic/"_ parts in the
-given URL, to a Hyperlambda file assumed to be found relatively beneath your _"/files/"_ folder -
-Although, exactly where you physically put your files on disc, can be configured
-through your _"appsettings.json"_ file. The HTTP verb is assumed to be the last parts of your
+given URL, to a Hyperlambda file assumed to be found relatively inside your _"/files/"_ folder.
+The HTTP verb is assumed to be the last parts of your
 filename, before its extension, implying an HTTP request such as the following.
 
 ```
@@ -35,6 +38,7 @@ Only the _"magic"_ part of your URL is rewritten before the verb is appended to 
 finally the extension _".hl"_ appended. Then the file is loaded and parsed as Hyperlambda, and whatever
 arguments you pass in, either as query parameters or as your JSON payload is appended into your
 resulting lambda node's **[.arguments]** node as arguments to your Hyperlambda file invocation.
+
 The resolver will never return files directly, but is only able to execute Hyperlambda files,
 so by default there is no way to get static files, unless you create a Hyperlambda endpoint that returns
 a static file somehow.
@@ -42,12 +46,17 @@ a static file somehow.
 The default resolver will only allow the client to resolve files inside your _"/files/modules/"_
 folder and _"/files/system/"_ folder. This allows you to safely keep files that parts of your system
 relies upon inside your dynamic _"/files/"_ folder, without accidentally creating endpoints clients can
-resolve, resulting in breaches in your security. Only characters a-z, 0-9 and '-', '\_' and '/' are legal
+resolve, resulting in breaches in your security.
+
+Only the characters a-z, 0-9 and '-', '\_' and '/' are legal
 characters for the resolvers, and only lowercase characters to avoid file system incompatibilities between
-Linux and Windows. There is _one exception_ to this rule though, which is that the resolver will resolve
+Linux and Windows.
+
+There is _one exception_ to this rule though, which is that the resolver will resolve
 files and folder starting out with a period (.) character, since this is necessary to allow for having
 _"hidden files"_ being resolved as endpoints - Which is a requirement to make things such as
 Apple's _".well-known"_ endpoints being resolved.
+
 Below is probably the simplest HTTP endpoint you could create. Save the following Hyperlambda in a
 file at the path of `/modules/tutorials/foo.get.hl` using for instance your Magic 
 _"Hyper IDE"_ menu item.
@@ -116,7 +125,9 @@ by setting their values to `*`, such as the following illustrates.
 In the above arguments declaration, **[arg1]** and **[arg2]** will be sanity checked, and input converted
 to `string` or `date` (DateTime) - But the **[arg3]** parts will be completely ignored, allowing the caller
 to invoke it with _anything_ as `arg3` during invocation - Including complete graph JSON objects, assuming
-the above declaration is for a `PUT`, `POST` or `PATCH` Hyperlambda file. The '\*' value for an argument also turn
+the above declaration is for a `PUT`, `POST` or `PATCH` Hyperlambda file.
+
+The '\*' value for an argument also turn
 off all conversion, implying everything will be given to your lambda object with the JSON type the argument
 was passed in as.
 All arguments declared are considered optional, and the file will still resolve if the argument is not given,
@@ -175,7 +186,7 @@ if you want to be able to for instance handle _"text/xml"_ or _"text/csv"_ types
 objects, and intelligently and automatically create an argument collection from it. Below is example
 code illustrating how to create your own HTTP request resolver for the MIME type of _"application/x-foo"_.
 
-```
+```csharp
 EndpointController.RegisterContentType("application/x-foo", async (signaler, request) =>
 {
    var args = new Node();
@@ -191,11 +202,12 @@ your Content-Type handler and the **[.arguments]** declaration in your Hyperlamb
 needs to agree upon the arguments, and if a non-valid argument is specified to a Hyperlambda file,
 an exception will be thrown. Also notice that registering a custom Content-Type is _not_ thread
 safe, and should be done as you start your application, and not during its life time.
+
 You can also provide your own HTTP response resolver that will be invoked given some specified
 Content-Type from your Hyperlambda file. This is done in a similar manner using something resembling
 the following.
 
-```
+```csharp
 EndpointController.RegisterContentType("application/x-foo", (response) =>
 {
    /* ... Return some sort of IActionResult here ... */
@@ -339,7 +351,7 @@ files in your _"/etc/www/"_ folder, you can see this logic in action.
     <body>
         <h1>Hello world</h1>
         <p>
-           Hello there Thomas Hansen, {{*/.calculate}}
+           Hello there Thomas Hansen, {{"{{"}}*/.calculate}}
         </p>
     </body>
 </html>
@@ -355,7 +367,7 @@ files in your _"/etc/www/"_ folder, you can see this logic in action.
    return:x:-
 ```
 
-The above will substitute your `{{*/.calculate}}` parts with the result of invoking your **[.calculate]** lambda
+The above will substitute your `{{"{{"}}*/.calculate}}` parts with the result of invoking your **[.calculate]** lambda
 object, resulting in 4. To understand how this works, you need to read about the **[io.file.mixin]** slot in
 the _"magic.lambda.io"_ project, and realise that the above will actually transform to the following as the
 mixin logic is executed.
@@ -377,7 +389,7 @@ files.
 Notice, interceptor files will be executed as normally, allowing you to apply interceptor files similarly
 to how you apply these with your _"/magic/"_ endpoints. In addition, any file called _"default.html"_ having
 a Hyperlambda counterpart will be used for default URL resolving if no explicit URL is found, allowing
-you to handle dynamica URLs with this file.
+you to handle dynamic URLs with this file.
 
 ## Project website for magic.endpoint
 
