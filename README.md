@@ -1,17 +1,15 @@
 # magic.endpoint - How Hyperlambda endpoints are resolved
 
-magic.endpoint is a dynamic endpoint URL controller, allowing you to declare endpoints that are dynamically
-resolved using your `IHttpExecutorAsync` service implementation. The default implementation of this interface,
-is the class called `HttpExecutorAsync`, and the rest of this file will be focused on documenting this
-implementation, since it is the default service implementation for magic.endpoint.
+magic.endpoint is your dynamic endpoint URL controller responsible for handling all HTTP requests.
+It has two implementations. Which implementation is being used depends upon the URL you specify.
 
-Technically, you
-could exchange this with your own implementation if you wish, completely changing the behaviour of the library
-if you wish to for instance resolve endpoints to Python, Ruby, or any other dynamic programming language
-implementation, and you have some means to execute such code from within a .Net 8 environment - But that's
-an exercise we will not go through in this document.
+* `HttpApiExecutorAsync` - Resolves everything starting out with _"magic/"_ and is your primary API URL resolver
+* `HttpFileExecutorAsync` - Resolving everything else and is your document and HTML resolver
 
-The resolver will be invoked for all relative URLs starting with _"magic/"_, for the following verbs.
+## API URLs
+
+The `HttpApiExecutorAsync` resolver will be invoked for all relative URLs starting with _"magic/"_,
+for the following verbs.
 
 * `GET`
 * `POST`
@@ -20,7 +18,7 @@ The resolver will be invoked for all relative URLs starting with _"magic/"_, for
 * `PATCH`
 
 The default service implementation will resolve everything after the _"magic/"_ parts in the
-given URL, to a Hyperlambda file assumed to be found relatively inside your _"/files/"_ folder.
+given URL to a Hyperlambda file assumed to be found relatively inside your _"/files/"_ folder.
 The HTTP verb is assumed to be the last parts of your
 filename, before its extension, implying an HTTP request such as the following.
 
@@ -72,7 +70,7 @@ Then invoke the endpoint using the GET verb with the following URL.
 http://localhost:5000/magic/modules/tutorials/foo
 ```
 
-## Hyperlambda endpoints and arguments
+### Hyperlambda endpoints and arguments
 
 The default `IHttpExecutorAsync` implementation can explicitly declare what arguments the file can
 legally accept, and if an argument is given during invocation that the file doesn't allow for, an
@@ -149,7 +147,7 @@ for instance, these types of objects might contain null values. If they do, no c
 and internally within your endpoint's Hyperlambda code, you might therefor expect to see for instance
 `long` values being in fact _null_, even though technically these are not nullable types in .Net.
 
-## Accepted Content-Type values for Hyperlambda endpoints
+### Accepted Content-Type values for Hyperlambda endpoints
 
 The POST, PUT and PATCH endpoints can intelligently handle any of the following Content-Types.
 
@@ -178,7 +176,7 @@ ways, allowing you to intercept reading with things such as authentication, auth
 where to persist content, etc. To understand how you can handle these streams, check out
 the _"magic.lambda.io"_ project's documentation, and specifically the **[io.stream.xxx]** slots.
 
-### Extending the Hyperlambda Content-Type request and response resolver
+#### Extending the Hyperlambda Content-Type request and response resolver
 
 The Content-Type resolver/parser is extendible, allowing you to change its behaviour by providing
 your own callback that will be invoked for some specific Content-Type value provided. This is useful
@@ -219,7 +217,7 @@ The above method should also exclusively be used during startup, and not later,
 since it is _not_ thread safe. The above method assumes you register your Content-Type handlers
 as your application is starting.
 
-## Hyperlambda endpoints and meta information
+### Hyperlambda endpoints and meta information
 
 Due to the semantic structure of Hyperlambda, retrieving meta information from your HTTP endpoints
 using this module is very easy. The project has one slot called **[endpoints.list]** that returns
@@ -245,7 +243,7 @@ in the _"Endpoints"_ menu item in the Magic dashboard for instance. The return v
 slot/endpoint again, is what's used as some sort of frontend is being generated using the Magic
 dashboard.
 
-### Extending the meta data retrieval process
+#### Extending the meta data retrieval process
 
 You can extend the meta data retrieval process by
 invoking `ListEndpoints.AddMetaDataResolver`, and pass in your own function. This class can be
@@ -261,26 +259,7 @@ This function will be invoked for _every_ single Hyperlambda file in your system
 every time meta data is retrieved, so you might want to ensure it executes in a fairly short
 amount of time, not clogging the server or HTTP endpoint meta generating process in any ways.
 
-## Slots related to endpoints and the HTTP context
-
-In addition to the meta retrieval endpoint described above, the module contains the following
-slots.
-
-* __[server.ip]__ - Returns the IP address of the server itself
-* __[response.status.set]__ - Sets the status code (e.g. 404) on the response object
-* __[request.cookies.list]__ - Lists all HTTP request cookies
-* __[request.cookies.get]__ - Returns the value of a cookie sent by the request
-* __[response.cookies.set]__ - Creates a cookie that will be returned to the client over the response
-* __[request.headers.list]__ - Lists all HTTP request headers sent by the request
-* __[request.headers.get]__ - Returns a single HTTP header associated with the request
-* __[request.ip]__ - Returns the IP address of the HTTP request
-* __[request.url]__ - Returns the relative URL associated with the request, without its magic/ prefix, and query parameters as children nodes as a key/value list
-* __[request.host]__ - Returns the host name associated with the request
-* __[request.scheme]__ - Returns the scheme associated with the request
-* __[response.headers.set]__ - Adds an HTTP header to the response object
-* __[mime.add]__ - Associates a file extension with a MIME type
-
-## Changing your Hyperlambda endpoint's response type
+### Changing your Hyperlambda endpoint's response type
 
 Unless you explicitly change the `Content-Type` of your response object, by using
 the **[response.headers.set]** slot, a Content-Type of `application/json` will be assumed,
@@ -303,40 +282,11 @@ your stream automatically for you afterwards. This allows you to for instance re
 to the client without loading them into memory first. If you do this, you'll have to change
 your `Content-Type` accordingly.
 
-### Hyperlambda and cookies
-
-Since cookies have more parameters than just a simple key/value declaration, the **[response.cookies.set]**
-slot takes the following arguments.
-
-* __[value]__ - The string content of your cookie
-* __[expires]__ - Absolute expiration date of your cookie, as a Hyperlambda `date` value
-* __[http-only]__ - Boolean value declaring whether or not the cookie should only be accessible on the server
-* __[secure]__ - Boolean value declaring whether or not cookie should only be transmitted from the client to the server over a secure (https) connection
-* __[domain]__ - Domain value of your cookie
-* __[path]__ - Path value of your cookie
-* __[same-site]__ - Same-site value of your cookie
-
-Only the **[value]** from above is mandatory. To delete a cookie on the client, set the expiration date to a value
-in the past.
-
-### How to use [mime.add]
-
-This slots associates a file extension with a MIME type. Notice, it will override previous associations if existing.
-Example usage can be found below.
-
-```
-mime.add:py
-   .:application/python
-```
-
-Then later when the endpoint resolver is returning files ending with _".py"_, it will return these with
-a `Content-Type` of _"application/python"_.
-
 ## Hyperlambda code behind files
 
-The resolver will resolve anything not starting out with `/magic/` as a static file, optionally applied
-as a mixin file having a Hyperlambda code behind file for mixing in dynamic content with any _".html"_
-files. This allows you to render HTML, CSS, JavaScript and _"whatever"_, with the ability to dynamically
+The `HttpFileExecutorAsync` resolver will resolve everything _not_ starting out with `/magic/` as a static file,
+optionally applied as a mixin file having a Hyperlambda code behind file for mixing in dynamic content with
+any _".html"_ files. This allows you to render HTML, CSS, JavaScript and _"whatever"_, with the ability to dynamically
 render parts of your HTML files using Hyperlambda. This logic relies upon the **[io.file.mixin]** slot
 from the _"magic.lambda.io"_ project. If you create two files such as follows and put both of these
 files in your _"/etc/www/"_ folder, you can see this logic in action.
@@ -386,10 +336,115 @@ result of invoking some lambda object. If you have an HTML file _without_ a Hype
 it will be served as a static file. CSS files, JavaScript files, and images will also be served as static
 files.
 
+This resolver will resolve to everything within your _"/etc/www/"_ folder. If you've got an _"index.html"_ page in some folder, this file will be assumed to be the default document of that folder.
+
 Notice, interceptor files will be executed as normally, allowing you to apply interceptor files similarly
 to how you apply these with your _"/magic/"_ endpoints. In addition, any file called _"default.html"_ having
 a Hyperlambda counterpart will be used for default URL resolving if no explicit URL is found, allowing
 you to handle dynamic URLs with this file.
+
+### Dynamic URLs
+
+If you've got a file called _"default.html"_, coupled with a _"default.hl"_ file, and the client is requesting a URL that does not have an associated physical file existing for the absolute path specified - Then your _"default.html/hl"_ files will resolve the specified URL. This allows you to use dynamic URLs, to for instance lookup files from your database and serve back as dynamic content.
+
+## Interceptors
+
+An interceptor is a Hyperlambda file named _"interceptor.hl"_. It will intercept all requests going to the folder it's located, or a sub-folder, and create a combined lambda object consisting of both the interceptor.hl file, and the file responsible for resolving the URL.
+
+To understand interceptors, imagining the following two Hyperlambda files.
+
+**/modules/foo/interceptor.hl**
+
+```
+data.connect:magic
+   .interceptor
+```
+
+**/modules/foo/bar.get.hl**
+
+```
+data.read
+   table:roles
+   columns
+      name
+```
+
+When an HTTP GET request enters your backend with the URL of _"magic/modules/foo/bar"_ , the Hyperlambda that actually executes becomes the following.
+
+```
+data.connect:magic
+   data.read
+      table:roles
+      columns
+         name
+```
+
+The above **[.interceptor]** node in your interceptor will be replaced by the content of your resolved Hyperlambda file. This allows you to create more DRY code, by having commonalities inside a common Hyperlambda file, one common file for each folder, and/or its sub-folders. You _can_ have as many **[.interceptor]** nodes as you wish in your interceptors, but for obvious reasons we recommend only having _one_.
+
+Interceptors such as the above are recursively applied, allowing you to create as many levels of interceptors as you wish.
+
+## Exception handlers
+
+If you've got a file named _"exceptions.hl"_ inside one of your folders, it will be invoked if an unhandled exception occurs. Your exception handler will be invoked only for unhandled exceptions for requests inside the folder where it exists physically, allowing you to have different exceptions handlers for different parts of your app.
+
+Notice, contrary to interceptors exception handlers will _not_ be recursively applied, and only the inner most exception handler will be invoked. Below is a simple exception handler that simply creates a log entry, returning a static message to the client, with the message propagating to the client, and its status code being 456.
+
+```
+log.error:x:@.arguments/*/message
+   url:x:@.arguments/*/path
+return
+   message:Jo dude! Erred!
+   public:bool:true
+   status:int:456
+```
+
+## Slots related to endpoints and the HTTP context
+
+In addition to the meta retrieval endpoint described above, the module contains the following
+slots.
+
+* __[server.ip]__ - Returns the IP address of the server itself
+* __[response.status.set]__ - Sets the status code (e.g. 404) on the response object
+* __[request.cookies.list]__ - Lists all HTTP request cookies
+* __[request.cookies.get]__ - Returns the value of a cookie sent by the request
+* __[response.cookies.set]__ - Creates a cookie that will be returned to the client over the response
+* __[request.headers.list]__ - Lists all HTTP request headers sent by the request
+* __[request.headers.get]__ - Returns a single HTTP header associated with the request
+* __[request.ip]__ - Returns the IP address of the HTTP request
+* __[request.url]__ - Returns the relative URL associated with the request, without its magic/ prefix, and query parameters as children nodes as a key/value list
+* __[request.host]__ - Returns the host name associated with the request
+* __[request.scheme]__ - Returns the scheme associated with the request
+* __[response.headers.set]__ - Adds an HTTP header to the response object
+* __[mime.add]__ - Associates a file extension with a MIME type
+
+### Hyperlambda and cookies
+
+Since cookies have more parameters than just a simple key/value declaration, the **[response.cookies.set]**
+slot takes the following arguments.
+
+* __[value]__ - The string content of your cookie
+* __[expires]__ - Absolute expiration date of your cookie, as a Hyperlambda `date` value
+* __[http-only]__ - Boolean value declaring whether or not the cookie should only be accessible on the server
+* __[secure]__ - Boolean value declaring whether or not cookie should only be transmitted from the client to the server over a secure (https) connection
+* __[domain]__ - Domain value of your cookie
+* __[path]__ - Path value of your cookie
+* __[same-site]__ - Same-site value of your cookie
+
+Only the **[value]** from above is mandatory. To delete a cookie on the client, set the expiration date to a value
+in the past.
+
+### How to use [mime.add]
+
+This slots associates a file extension with a MIME type. Notice, it will override previous associations if existing.
+Example usage can be found below.
+
+```
+mime.add:py
+   .:application/python
+```
+
+Then later when the endpoint resolver is returning files ending with _".py"_, it will return these with
+a `Content-Type` of _"application/python"_.
 
 ## Project website for magic.endpoint
 
