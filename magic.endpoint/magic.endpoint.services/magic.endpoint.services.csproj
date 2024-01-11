@@ -10,7 +10,7 @@
     <Description>Service implementations for magic.endpoint, that allows you to dynamically evaluate Hyperlambda files associated with a URL. To use package go to https://polterguy.github.io</Description>
     <PackageProjectUrl>https://ainiro.io</PackageProjectUrl>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>17.1.5</PackageVersion>
+    <PackageVersion>17.1.6</PackageVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/polterguy/magic.endpoint</RepositoryUrl>
@@ -46,8 +46,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="magic.node.extensions" Version="17.1.5" />
-    <PackageReference Include="magic.signals.contracts" Version="17.1.5" />
+    <PackageReference Include="magic.node.extensions" Version="17.1.6" />
+    <PackageReference Include="magic.signals.contracts" Version="17.1.6" />
   </ItemGroup>
 
   <ItemGroup>
