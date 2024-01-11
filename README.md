@@ -302,7 +302,7 @@ files in your _"/etc/www/"_ folder, you can see this logic in action.
         <h1>Hello world</h1>
         <p>
            Hello there Thomas Hansen,
-           2+2 equals {{"{{"}}*/.calculate}}
+           2+2 equals {{"{ {"}}*/.calculate} }
         </p>
     </body>
 </html>
@@ -318,7 +318,9 @@ files in your _"/etc/www/"_ folder, you can see this logic in action.
    return:x:-
 ```
 
-The above will substitute your `{{"{{"}}*/.calculate}}` parts with the result of invoking your **[.calculate]** lambda
+Notice, in the above code there are SP characters between the `{` characters. These should be _removed_ if you copy and paste the code to execute it.
+
+The above will substitute your `{{"{ {"}}*/.calculate} }` parts with the result of invoking your **[.calculate]** lambda
 object, resulting in 4. To understand how this works, you need to read about the **[io.file.mixin]** slot in
 the _"magic.lambda.io"_ project, and realise that the above will actually transform to the following as the
 mixin logic is executed.
