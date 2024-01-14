@@ -478,6 +478,10 @@ mime.add:py
 Then later when the endpoint resolver is returning files ending with _".py"_, it will return these with
 a `Content-Type` of _"application/python"_.
 
+## Magic's GitHub project page
+
+Magic is 100% Open Source and you can find the primary project GitHub page [here](https://github.com/polterguy/magic).
+
 ## Project website for magic.endpoint
 
 The source code for this repository can be found at [github.com/polterguy/magic.endpoint](https://github.com/polterguy/magic.endpoint), and you can provide feedback, provide bug reports, etc at the same place.
