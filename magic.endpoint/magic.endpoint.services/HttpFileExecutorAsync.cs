@@ -128,6 +128,29 @@ namespace magic.endpoint.services
                 return response;
             }
 
+            // Checking if we've got a redirect for URL.
+            var configFilename = _rootResolver.AbsolutePath("/etc/www/.config");
+            if (await _fileService.ExistsAsync(configFilename))
+            {
+                var config = HyperlambdaParser.Parse(await _fileService.LoadAsync(configFilename));
+                var redirectNode = config.Children.FirstOrDefault(x => x.Name == "redirect");
+                if (redirectNode != null)
+                {
+                    foreach (var idxRedirect in redirectNode.Children)
+                    {
+                        System.Console.WriteLine(request.URL);
+                        if (idxRedirect.Children.Any(x => x.Name == "from" && x.Get<string>() == request.URL))
+                        {
+                            // Redirecting.
+                            var response = new MagicResponse();
+                            response.Result = 301;
+                            response.Headers["Location"] = idxRedirect.Children.FirstOrDefault(x => x.Name == "to").Get<string>();
+                            return response;
+                        }
+                    }
+                }
+            }
+
             // Checking if this is a mixin file.
             if (Utilities.IsHtmlFileRequest(request.URL))
                 return await ServeHtmlFileAsync(request); // HTML file, might have Hyperlambda codebehind file.
