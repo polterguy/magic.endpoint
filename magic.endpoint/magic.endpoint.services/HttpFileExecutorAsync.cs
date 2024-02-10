@@ -138,7 +138,6 @@ namespace magic.endpoint.services
                 {
                     foreach (var idxRedirect in redirectNode.Children)
                     {
-                        System.Console.WriteLine(request.URL);
                         if (idxRedirect.Children.Any(x => x.Name == "from" && x.Get<string>() == request.URL))
                         {
                             // Redirecting.
